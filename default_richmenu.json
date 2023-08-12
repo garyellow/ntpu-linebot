@@ -1,0 +1,52 @@
+{
+    "name": "NTPU-ID",
+    "size": {
+        "width": 1200,
+        "height": 405
+    },
+    "chatBarText": "(｡･∀･)ﾉﾞ",
+    "selected": true,
+    "areas": [
+        {
+            "bounds": {
+                "x": 0,
+                "y": 0,
+                "width": 400,
+                "height": 405
+            },
+            "action": {
+                "label": "使用說明",
+                "type": "postback",
+                "data": "使用說明",
+                "displayText": "使用說明",
+                "inputOption": "openKeyboard"
+            }
+        },
+        {
+            "bounds": {
+                "x": 401,
+                "y": 0,
+                "width": 400,
+                "height": 405
+            },
+            "action": {
+                "label": "GitHub連結",
+                "type": "uri",
+                "uri": "https://github.com/garyellow/ntpu-student-id-linebot"
+            }
+        },
+        {
+            "bounds": {
+                "x": 801,
+                "y": 0,
+                "width": 400,
+                "height": 405
+            },
+            "action": {
+                "label": "安妮亞",
+                "type": "uri",
+                "uri": "https://www.youtube.com/watch?v=ud6ih1e8UJ8"
+            }
+        }
+    ]
+}
