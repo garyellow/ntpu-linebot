@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "ntpu-student-id-linebot"
+version = "1.0.0"
+description = "可以查詢北大學生學號及姓名的Line機器人"
+authors = ["garyellow <gary20011110@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "ntpu_student_id_linebot"}]
+
+[tool.poetry.dependencies]
+python = "~3.11"
+requests = "^2.31.0"
+beautifulsoup4 = "^4.12.2"
+Flask = "^2.3.2"
+line-bot-sdk = "^3.2.0"
+gunicorn = "^21.2.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
