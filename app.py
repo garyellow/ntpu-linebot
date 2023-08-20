@@ -538,7 +538,7 @@ def handle_postback(event: PostbackEvent):
             TemplateMessage(
                 alt_text="選擇學院群",
                 template=ButtonsTemplate(
-                    thumbnail_imageUrl="https://new.ntpu.edu.tw/assets/logo/ntpu_logo.png",
+                    thumbnail_image_url="https://new.ntpu.edu.tw/assets/logo/ntpu_logo.png",
                     title="選擇學院群",
                     text="請選擇科系所屬學院群",
                     actions=[
@@ -641,7 +641,7 @@ def handle_postback(event: PostbackEvent):
             TemplateMessage(
                 alt_text="選擇科系",
                 template=ButtonsTemplate(
-                    thumbnail_imageUrl="https://walkinto.in/upload/-192z7YDP8-JlchfXtDvI.JPG",
+                    thumbnail_image_url="https://walkinto.in/upload/-192z7YDP8-JlchfXtDvI.JPG",
                     title="選擇科系",
                     text="請選擇要查詢的科系",
                     actions=[
@@ -678,7 +678,7 @@ def handle_postback(event: PostbackEvent):
             TemplateMessage(
                 alt_text="選擇組別",
                 template=ButtonsTemplate(
-                    thumbnail_imageUrl="https://walkinto.in/upload/byupdk9PvIZyxupOy9Dw8.JPG",
+                    thumbnail_image_url="https://walkinto.in/upload/byupdk9PvIZyxupOy9Dw8.JPG",
                     title="選擇組別",
                     text="請選擇要查詢的組別",
                     actions=[
@@ -715,7 +715,7 @@ def handle_postback(event: PostbackEvent):
             TemplateMessage(
                 alt_text="選擇科系",
                 template=ButtonsTemplate(
-                    thumbnail_imageUrl="https://walkinto.in/upload/ZJum7EYwPUZkedmXNtvPL.JPG",
+                    thumbnail_image_url="https://walkinto.in/upload/ZJum7EYwPUZkedmXNtvPL.JPG",
                     title="選擇科系",
                     text="請選擇科系 (休運系請直接點圖片)",
                     default_action=PostbackAction(
@@ -764,7 +764,7 @@ def handle_postback(event: PostbackEvent):
             TemplateMessage(
                 alt_text="選擇科系",
                 template=ButtonsTemplate(
-                    thumbnail_imageUrl="https://walkinto.in/upload/ZJhs4wEaDIWklhiVwV6DI.jpg",
+                    thumbnail_image_url="https://walkinto.in/upload/ZJhs4wEaDIWklhiVwV6DI.jpg",
                     title="選擇科系",
                     text="請選擇要查詢的科系",
                     actions=[
@@ -801,7 +801,7 @@ def handle_postback(event: PostbackEvent):
             TemplateMessage(
                 alt_text="選擇科系",
                 template=ButtonsTemplate(
-                    thumbnail_imageUrl="https://walkinto.in/upload/WyPbshN6DIZ1gvZo2NTvU.JPG",
+                    thumbnail_image_url="https://walkinto.in/upload/WyPbshN6DIZ1gvZo2NTvU.JPG",
                     title="選擇科系",
                     text="請選擇科系",
                     actions=[
@@ -838,7 +838,7 @@ def handle_postback(event: PostbackEvent):
             TemplateMessage(
                 alt_text="選擇科系",
                 template=ButtonsTemplate(
-                    thumbnail_imageUrl="https://walkinto.in/upload/bJ9zWWHaPLWJg9fW-STD8.png",
+                    thumbnail_image_url="https://walkinto.in/upload/bJ9zWWHaPLWJg9fW-STD8.png",
                     title="選擇科系",
                     text="請選擇科系",
                     actions=[
