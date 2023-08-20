@@ -14,15 +14,13 @@ SPY_FAMILY_URLS = [
     "https://spy-family.net/tvseries/special/special9.php",
 ]
 
-
 # 載入貼圖(爬蟲)
-def load_stickers() -> None:
-    for url in SPY_FAMILY_URLS:
-        response = requests.get(url)
-        soup = BS4(response.text, "html.parser")
-        temp = soup.select("ul.icondlLists > li > a > img")
+for url in SPY_FAMILY_URLS:
+    response = requests.get(url)
+    soup = BS4(response.text, "html.parser")
+    temp = soup.select("ul.icondlLists > li > a > img")
 
-        for i in temp:
-            stickers.append("https://spy-family.net/" + i["src"][3:])
+    for i in temp:
+        stickers.append("https://spy-family.net/" + i["src"][3:])
 
-        time.sleep(0.5)
+    time.sleep(0.25)

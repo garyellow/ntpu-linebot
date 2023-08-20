@@ -33,7 +33,7 @@ from linebot.v3.messaging.models import (
 )
 
 from src.lineBotUtil import handler, reply_message
-from src.sticker import stickers, load_stickers
+from src.sticker import stickers
 
 app = Flask(__name__)
 
@@ -93,9 +93,6 @@ DEPARTMENT_NAME = {v: k for k, v in DEPARTMENT_CODE.items()}
 # 科系代碼 -> 科系全名
 FULL_DEPARTMENT_NAME = {v: k for k, v in FULL_DEPARTMENT_CODE.items()}
 
-sticker_thread = threading.Thread(target=load_stickers)
-sticker_thread.start()
-
 search_url = ""
 
 
@@ -135,10 +132,10 @@ def renew_student() -> Response:
             for dep in DEPARTMENT_CODE.values():
                 time.sleep(random.uniform(2.5, 5))
                 url = (
-                        search_url
-                        + "portfolio/search.php?fmScope=2&page=1&fmKeyword=4"
-                        + str(year)
-                        + dep
+                    search_url
+                    + "portfolio/search.php?fmScope=2&page=1&fmKeyword=4"
+                    + str(year)
+                    + dep
                 )
                 raw_data = s.get(url)
                 raw_data.encoding = "utf-8"
@@ -153,12 +150,12 @@ def renew_student() -> Response:
                 for i in range(2, pages):
                     time.sleep(random.uniform(2.5, 5))
                     url = (
-                            search_url
-                            + "portfolio/search.php?fmScope=2&page="
-                            + str(i)
-                            + "&fmKeyword=4"
-                            + str(year)
-                            + dep
+                        search_url
+                        + "portfolio/search.php?fmScope=2&page="
+                        + str(i)
+                        + "&fmKeyword=4"
+                        + str(year)
+                        + dep
                     )
                     raw_data = s.get(url)
                     raw_data.encoding = "utf-8"
@@ -259,9 +256,9 @@ def handle_text_message(event: MessageEvent) -> None:
                 name = student_list[receive_message]
             else:
                 url = (
-                        search_url
-                        + "portfolio/search.php?fmScope=2&page=1&fmKeyword="
-                        + receive_message
+                    search_url
+                    + "portfolio/search.php?fmScope=2&page=1&fmKeyword="
+                    + receive_message
                 )
                 web = requests.get(url)
                 web.encoding = "utf-8"
@@ -291,9 +288,9 @@ def handle_text_message(event: MessageEvent) -> None:
 
             if receive_message[0] == "4":
                 over_99 = len(receive_message) == 9
-                year = receive_message[1: over_99 + 3]
+                year = receive_message[1 : over_99 + 3]
 
-                department = receive_message[over_99 + 3: over_99 + 5]
+                department = receive_message[over_99 + 3 : over_99 + 5]
                 if department in [
                     DEPARTMENT_CODE["法律"],
                     DEPARTMENT_CODE["社學"][0:2],
@@ -302,7 +299,7 @@ def handle_text_message(event: MessageEvent) -> None:
 
                 if department[0:2] == DEPARTMENT_CODE["法律"]:
                     show_text = (
-                            "搜尋" + year + "學年度法律系" + DEPARTMENT_NAME[department] + "組"
+                        "搜尋" + year + "學年度法律系" + DEPARTMENT_NAME[department] + "組"
                     )
                 else:
                     show_text = "搜尋" + year + "學年度" + DEPARTMENT_NAME[department] + "系"
@@ -432,10 +429,10 @@ def handle_text_message(event: MessageEvent) -> None:
 
                 over_99 = len(key) == 9
 
-                year = key[1: over_99 + 3]
+                year = key[1 : over_99 + 3]
                 message += year + " "
 
-                department = key[over_99 + 3: over_99 + 5]
+                department = key[over_99 + 3 : over_99 + 5]
                 if department in [
                     DEPARTMENT_CODE["法律"],
                     DEPARTMENT_CODE["社學"][0:2],
@@ -514,10 +511,10 @@ def handle_postback(event: PostbackEvent):
             ),
             TextMessage(
                 text="For example~~\n學號：412345678\n姓名：林某某 or 某某\n系名：資工系 or 資訊工程學系\n系代碼：85\n"
-                     + "入學學年："
-                     + str(time.localtime(time.time()).tm_year - 1911)
-                     + " or "
-                     + str(time.localtime(time.time()).tm_year),
+                + "入學學年："
+                + str(time.localtime(time.time()).tm_year - 1911)
+                + " or "
+                + str(time.localtime(time.time()).tm_year),
                 sender=mes_sender,
             ),
         ]
@@ -546,10 +543,15 @@ def handle_postback(event: PostbackEvent):
                     text="請選擇科系所屬學院群",
                     actions=[
                         PostbackAction(
-                            label="文法商", display_text="文法商", data="文法商" + year, input_option="closeRichMenu",
+                            label="文法商",
+                            display_text="文法商",
+                            data="文法商" + year,
+                            input_option="closeRichMenu",
                         ),
                         PostbackAction(
-                            label="公社電資", display_text="公社電資", data="公社電資" + year,
+                            label="公社電資",
+                            display_text="公社電資",
+                            data="公社電資" + year,
                             input_option="closeRichMenu",
                         ),
                     ],
@@ -571,15 +573,22 @@ def handle_postback(event: PostbackEvent):
                     text="請選擇科系所屬學院",
                     actions=[
                         PostbackAction(
-                            label="人文學院", display_text="人文學院", data="人文學院" + year,
+                            label="人文學院",
+                            display_text="人文學院",
+                            data="人文學院" + year,
                             input_option="closeRichMenu",
                         ),
                         PostbackAction(
-                            label="法律學院", display_text="法律學院", data="法律學院" + year,
+                            label="法律學院",
+                            display_text="法律學院",
+                            data="法律學院" + year,
                             input_option="closeRichMenu",
                         ),
                         PostbackAction(
-                            label="商學院", display_text="商學院", data="商學院" + year, input_option="closeRichMenu",
+                            label="商學院",
+                            display_text="商學院",
+                            data="商學院" + year,
+                            input_option="closeRichMenu",
                         ),
                     ],
                 ),
@@ -600,15 +609,21 @@ def handle_postback(event: PostbackEvent):
                     text="請選擇科系所屬學院",
                     actions=[
                         PostbackAction(
-                            label="公共事務學院", display_text="公共事務學院", data="公共事務學院" + year,
+                            label="公共事務學院",
+                            display_text="公共事務學院",
+                            data="公共事務學院" + year,
                             input_option="closeRichMenu",
                         ),
                         PostbackAction(
-                            label="社會科學學院", display_text="社會科學學院", data="社會科學學院" + year,
+                            label="社會科學學院",
+                            display_text="社會科學學院",
+                            data="社會科學學院" + year,
                             input_option="closeRichMenu",
                         ),
                         PostbackAction(
-                            label="電機資訊學院", display_text="電機資訊學院", data="電機資訊學院" + year,
+                            label="電機資訊學院",
+                            display_text="電機資訊學院",
+                            data="電機資訊學院" + year,
                             input_option="closeRichMenu",
                         ),
                     ],
@@ -626,20 +641,26 @@ def handle_postback(event: PostbackEvent):
             TemplateMessage(
                 alt_text="選擇科系",
                 template=ButtonsTemplate(
-                    thumbnail_imageUrl='https://walkinto.in/upload/-192z7YDP8-JlchfXtDvI.JPG',
+                    thumbnail_imageUrl="https://walkinto.in/upload/-192z7YDP8-JlchfXtDvI.JPG",
                     title="選擇科系",
                     text="請選擇要查詢的科系",
                     actions=[
                         PostbackAction(
-                            label="中國文學系", display_text="中國文學系", data="中國文學系" + year,
+                            label="中國文學系",
+                            display_text="中國文學系",
+                            data="中國文學系" + year,
                             input_option="closeRichMenu",
                         ),
                         PostbackAction(
-                            label="應用外語學系", display_text="應用外語學系", data="應用外語學系" + year,
+                            label="應用外語學系",
+                            display_text="應用外語學系",
+                            data="應用外語學系" + year,
                             input_option="closeRichMenu",
                         ),
                         PostbackAction(
-                            label="歷史學系", display_text="歷史學系", data="歷史學系" + year,
+                            label="歷史學系",
+                            display_text="歷史學系",
+                            data="歷史學系" + year,
                             input_option="closeRichMenu",
                         ),
                     ],
@@ -861,9 +882,9 @@ def handle_postback(event: PostbackEvent):
                 s.keep_alive = False
 
                 url = (
-                        search_url
-                        + "portfolio/search.php?fmScope=2&page=1&fmKeyword=4"
-                        + yd
+                    search_url
+                    + "portfolio/search.php?fmScope=2&page=1&fmKeyword=4"
+                    + yd
                 )
                 web = s.get(url)
                 web.encoding = "utf-8"
@@ -879,11 +900,11 @@ def handle_postback(event: PostbackEvent):
                     time.sleep(random.uniform(0.05, 0.2))
 
                     url = (
-                            search_url
-                            + "portfolio/search.php?fmScope=2&page="
-                            + str(i)
-                            + "&fmKeyword=4"
-                            + yd
+                        search_url
+                        + "portfolio/search.php?fmScope=2&page="
+                        + str(i)
+                        + "&fmKeyword=4"
+                        + yd
                     )
                     web = s.get(url)
                     web.encoding = "utf-8"
@@ -898,23 +919,23 @@ def handle_postback(event: PostbackEvent):
 
         if event.postback.data.split(" ")[1][0:2] == DEPARTMENT_CODE["法律"]:
             message += (
-                    "\n\n"
-                    + event.postback.data.split(" ")[0]
-                    + "學年度法律系"
-                    + DEPARTMENT_NAME[event.postback.data.split(" ")[1]]
-                    + "組共有"
-                    + str(len(temp))
-                    + "位學生"
+                "\n\n"
+                + event.postback.data.split(" ")[0]
+                + "學年度法律系"
+                + DEPARTMENT_NAME[event.postback.data.split(" ")[1]]
+                + "組共有"
+                + str(len(temp))
+                + "位學生"
             )
         else:
             message += (
-                    "\n\n"
-                    + event.postback.data.split(" ")[0]
-                    + "學年度"
-                    + DEPARTMENT_NAME[event.postback.data.split(" ")[1]]
-                    + "系共有"
-                    + str(len(temp))
-                    + "位學生"
+                "\n\n"
+                + event.postback.data.split(" ")[0]
+                + "學年度"
+                + DEPARTMENT_NAME[event.postback.data.split(" ")[1]]
+                + "系共有"
+                + str(len(temp))
+                + "位學生"
             )
 
         messages = [
@@ -948,5 +969,4 @@ def handle_follow_join(event):
 
 
 if __name__ == "__main__":
-    sticker_thread.join()
     app.run(host="0.0.0.0", port=80)

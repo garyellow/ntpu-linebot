@@ -4,7 +4,6 @@ import os
 from typing import Any
 
 from linebot.v3 import WebhookHandler
-
 from linebot.v3.messaging.api.messaging_api import MessagingApi
 from linebot.v3.messaging.api_client import ApiClient
 from linebot.v3.messaging.configuration import Configuration
@@ -25,7 +24,6 @@ if channel_access_token is None:
 
 handler = WebhookHandler(channel_secret)
 configuration = Configuration(access_token=channel_access_token)
-
 
 def reply_message(reply_token: str, message: Any) -> None:
     with ApiClient(configuration) as api_client:
