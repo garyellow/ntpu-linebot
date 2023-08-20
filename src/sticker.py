@@ -14,8 +14,6 @@ SPY_FAMILY_URLS = [
     "https://spy-family.net/tvseries/special/special9.php",
 ]
 
-ICHIGOPRODUCTION_URL = "https://ichigoproduction.com/special/present_icon.html"
-
 
 # 載入貼圖(爬蟲)
 def load_stickers() -> None:
@@ -28,10 +26,3 @@ def load_stickers() -> None:
             stickers.append("https://spy-family.net/" + i["src"][3:])
 
         time.sleep(0.5)
-
-    r = requests.get(ICHIGOPRODUCTION_URL)
-    soup = BS4(r.text, "html.parser")
-    temp = soup.select("a.img_link")
-
-    for i in temp:
-        stickers.append("https://ichigoproduction.com/" + i["href"][3:])

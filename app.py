@@ -32,8 +32,8 @@ from linebot.v3.messaging.models import (
     ButtonsTemplate,
 )
 
-from lineBotUtil import handler, reply_message
-from sticker import stickers, load_stickers
+from src.lineBotUtil import handler, reply_message
+from src.sticker import stickers, load_stickers
 
 app = Flask(__name__)
 
