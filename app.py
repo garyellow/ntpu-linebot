@@ -192,6 +192,8 @@ def healthy() -> Response:
         renew_thread = threading.Thread(target=renew_student)
         renew_thread.start()
 
+        usage = 0
+
     return Response(response="OK", status=200)
 
 
@@ -486,7 +488,7 @@ def handle_text_message(event: MessageEvent) -> None:
 
 
 @handler.add(MessageEvent, message=StickerMessageContent)
-def handle_sticker_message(event: MessageEvent):
+def handle_sticker_message(event: MessageEvent) -> None:
     sticker = random.choice(stickers)
 
     messages = [
@@ -501,7 +503,7 @@ def handle_sticker_message(event: MessageEvent):
 
 
 @handler.add(PostbackEvent)
-def handle_postback(event: PostbackEvent):
+def handle_postback(event: PostbackEvent) -> None:
     if event.postback.data == "使用說明":
         mes_sender = Sender(iconUrl=random.choice(stickers))
         messages = [
@@ -951,7 +953,7 @@ def handle_postback(event: PostbackEvent):
 @handler.add(FollowEvent)
 @handler.add(JoinEvent)
 @handler.add(MemberJoinedEvent)
-def handle_follow_join(event):
+def handle_follow_join(event) -> None:
     mes_sender = Sender(iconUrl=random.choice(stickers))
 
     messages = [
