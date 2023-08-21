@@ -121,6 +121,7 @@ def check_url():
 student_list: Dict[str, str] = {}
 
 
+# 更新學生名單
 def renew_student() -> Response:
     global student_list
 
@@ -132,10 +133,10 @@ def renew_student() -> Response:
             for dep in DEPARTMENT_CODE.values():
                 time.sleep(random.uniform(2.5, 5))
                 url = (
-                    search_url
-                    + "portfolio/search.php?fmScope=2&page=1&fmKeyword=4"
-                    + str(year)
-                    + dep
+                        search_url
+                        + "portfolio/search.php?fmScope=2&page=1&fmKeyword=4"
+                        + str(year)
+                        + dep
                 )
                 raw_data = s.get(url)
                 raw_data.encoding = "utf-8"
@@ -150,12 +151,12 @@ def renew_student() -> Response:
                 for i in range(2, pages):
                     time.sleep(random.uniform(2.5, 5))
                     url = (
-                        search_url
-                        + "portfolio/search.php?fmScope=2&page="
-                        + str(i)
-                        + "&fmKeyword=4"
-                        + str(year)
-                        + dep
+                            search_url
+                            + "portfolio/search.php?fmScope=2&page="
+                            + str(i)
+                            + "&fmKeyword=4"
+                            + str(year)
+                            + dep
                     )
                     raw_data = s.get(url)
                     raw_data.encoding = "utf-8"
@@ -258,9 +259,9 @@ def handle_text_message(event: MessageEvent) -> None:
                 name = student_list[receive_message]
             else:
                 url = (
-                    search_url
-                    + "portfolio/search.php?fmScope=2&page=1&fmKeyword="
-                    + receive_message
+                        search_url
+                        + "portfolio/search.php?fmScope=2&page=1&fmKeyword="
+                        + receive_message
                 )
                 web = requests.get(url)
                 web.encoding = "utf-8"
@@ -290,9 +291,9 @@ def handle_text_message(event: MessageEvent) -> None:
 
             if receive_message[0] == "4":
                 over_99 = len(receive_message) == 9
-                year = receive_message[1 : over_99 + 3]
+                year = receive_message[1: over_99 + 3]
 
-                department = receive_message[over_99 + 3 : over_99 + 5]
+                department = receive_message[over_99 + 3: over_99 + 5]
                 if department in [
                     DEPARTMENT_CODE["法律"],
                     DEPARTMENT_CODE["社學"][0:2],
@@ -301,7 +302,7 @@ def handle_text_message(event: MessageEvent) -> None:
 
                 if department[0:2] == DEPARTMENT_CODE["法律"]:
                     show_text = (
-                        "搜尋" + year + "學年度法律系" + DEPARTMENT_NAME[department] + "組"
+                            "搜尋" + year + "學年度法律系" + DEPARTMENT_NAME[department] + "組"
                     )
                 else:
                     show_text = "搜尋" + year + "學年度" + DEPARTMENT_NAME[department] + "系"
@@ -424,17 +425,17 @@ def handle_text_message(event: MessageEvent) -> None:
 
     elif receive_message in student_list.values():
         message = ""
-        for key, value in student_list:
+        for key, value in student_list.items():
             if value == receive_message:
                 if message != "":
                     message += "\n"
 
                 over_99 = len(key) == 9
 
-                year = key[1 : over_99 + 3]
+                year = key[1: over_99 + 3]
                 message += year + " "
 
-                department = key[over_99 + 3 : over_99 + 5]
+                department = key[over_99 + 3: over_99 + 5]
                 if department in [
                     DEPARTMENT_CODE["法律"],
                     DEPARTMENT_CODE["社學"][0:2],
@@ -513,10 +514,10 @@ def handle_postback(event: PostbackEvent) -> None:
             ),
             TextMessage(
                 text="For example~~\n學號：412345678\n姓名：林某某 or 某某\n系名：資工系 or 資訊工程學系\n系代碼：85\n"
-                + "入學學年："
-                + str(time.localtime(time.time()).tm_year - 1911)
-                + " or "
-                + str(time.localtime(time.time()).tm_year),
+                     + "入學學年："
+                     + str(time.localtime(time.time()).tm_year - 1911)
+                     + " or "
+                     + str(time.localtime(time.time()).tm_year),
                 sender=mes_sender,
             ),
         ]
@@ -884,9 +885,9 @@ def handle_postback(event: PostbackEvent) -> None:
                 s.keep_alive = False
 
                 url = (
-                    search_url
-                    + "portfolio/search.php?fmScope=2&page=1&fmKeyword=4"
-                    + yd
+                        search_url
+                        + "portfolio/search.php?fmScope=2&page=1&fmKeyword=4"
+                        + yd
                 )
                 web = s.get(url)
                 web.encoding = "utf-8"
@@ -902,11 +903,11 @@ def handle_postback(event: PostbackEvent) -> None:
                     time.sleep(random.uniform(0.05, 0.2))
 
                     url = (
-                        search_url
-                        + "portfolio/search.php?fmScope=2&page="
-                        + str(i)
-                        + "&fmKeyword=4"
-                        + yd
+                            search_url
+                            + "portfolio/search.php?fmScope=2&page="
+                            + str(i)
+                            + "&fmKeyword=4"
+                            + yd
                     )
                     web = s.get(url)
                     web.encoding = "utf-8"
@@ -921,23 +922,23 @@ def handle_postback(event: PostbackEvent) -> None:
 
         if event.postback.data.split(" ")[1][0:2] == DEPARTMENT_CODE["法律"]:
             message += (
-                "\n\n"
-                + event.postback.data.split(" ")[0]
-                + "學年度法律系"
-                + DEPARTMENT_NAME[event.postback.data.split(" ")[1]]
-                + "組共有"
-                + str(len(temp))
-                + "位學生"
+                    "\n\n"
+                    + event.postback.data.split(" ")[0]
+                    + "學年度法律系"
+                    + DEPARTMENT_NAME[event.postback.data.split(" ")[1]]
+                    + "組共有"
+                    + str(len(temp))
+                    + "位學生"
             )
         else:
             message += (
-                "\n\n"
-                + event.postback.data.split(" ")[0]
-                + "學年度"
-                + DEPARTMENT_NAME[event.postback.data.split(" ")[1]]
-                + "系共有"
-                + str(len(temp))
-                + "位學生"
+                    "\n\n"
+                    + event.postback.data.split(" ")[0]
+                    + "學年度"
+                    + DEPARTMENT_NAME[event.postback.data.split(" ")[1]]
+                    + "系共有"
+                    + str(len(temp))
+                    + "位學生"
             )
 
         messages = [
