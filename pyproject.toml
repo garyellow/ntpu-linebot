@@ -11,7 +11,7 @@ packages = [{include = "ntpu_student_id_linebot"}]
 python = "~3.11"
 requests = "^2.31.0"
 beautifulsoup4 = "^4.12.2"
-Flask = "^2.3.2"
+Flask = "^2.3.3"
 line-bot-sdk = "^3.2.0"
 gunicorn = "^21.2.0"
 
