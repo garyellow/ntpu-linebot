@@ -1,24 +1,13 @@
 # -*- coding:utf-8 -*-
+import math
 import random
 import string
-import time
 import threading
-from typing import Dict
-from copy import deepcopy
+import time
 
 import requests
-from bs4 import BeautifulSoup as BS4
 from flask import Flask, Response, request, redirect
 from linebot.v3.exceptions import InvalidSignatureError
-from linebot.v3.webhooks import (
-    MessageEvent,
-    PostbackEvent,
-    TextMessageContent,
-    StickerMessageContent,
-    FollowEvent,
-    JoinEvent,
-    MemberJoinedEvent,
-)
 from linebot.v3.messaging.models import (
     Sender,
     QuickReply,
@@ -31,150 +20,67 @@ from linebot.v3.messaging.models import (
     ConfirmTemplate,
     ButtonsTemplate,
 )
+from linebot.v3.webhooks import (
+    MessageEvent,
+    PostbackEvent,
+    TextMessageContent,
+    StickerMessageContent,
+    FollowEvent,
+    JoinEvent,
+    MemberJoinedEvent,
+)
 
 from src.lineBotUtil import handler, reply_message
-from src.sticker import stickers
+from src.requestUtil import (
+    student_list,
+    check_url,
+    get_students_by_year_and_department,
+)
+from src.stickerUtil import stickers
+from src.studentUtil import (
+    DEPARTMENT_CODE,
+    DEPARTMENT_NAME,
+    FULL_DEPARTMENT_CODE,
+    FULL_DEPARTMENT_NAME,
+    Order,
+    student_info_format,
+    renew_student_list,
+)
 
 app = Flask(__name__)
 
-# 科系名稱 -> 科系代碼
-DEPARTMENT_CODE = {
-    "法律": "71",
-    "法學": "712",
-    "司法": "714",
-    "財法": "716",
-    "公行": "72",
-    "經濟": "73",
-    "社學": "742",
-    "社工": "744",
-    "財政": "75",
-    "不動": "76",
-    "會計": "77",
-    "統計": "78",
-    "企管": "79",
-    "金融": "80",
-    "中文": "81",
-    "應外": "82",
-    "歷史": "83",
-    "休運": "84",
-    "資工": "85",
-    "通訊": "86",
-    "電機": "87",
-}
-
-# 科系全名 -> 科系代碼
-FULL_DEPARTMENT_CODE = {
-    "法律學系": "71",
-    "法學組": "712",
-    "司法組": "714",
-    "財經法組": "716",
-    "公共行政暨政策學系": "72",
-    "經濟學系": "73",
-    "社會學系": "742",
-    "社會工作學系": "744",
-    "財政學系": "75",
-    "不動產與城鄉環境學系": "76",
-    "會計學系": "77",
-    "統計學系": "78",
-    "企業管理學系": "79",
-    "金融與合作經營學系": "80",
-    "中國文學系": "81",
-    "應用外語學系": "82",
-    "歷史學系": "83",
-    "休閒運動管理學系": "84",
-    "資訊工程學系": "85",
-    "通訊工程學系": "86",
-    "電機工程學系": "87",
-}
-
-# 科系代碼 -> 科系名稱
-DEPARTMENT_NAME = {v: k for k, v in DEPARTMENT_CODE.items()}
-
-# 科系代碼 -> 科系全名
-FULL_DEPARTMENT_NAME = {v: k for k, v in FULL_DEPARTMENT_CODE.items()}
-
-search_url = ""
-
-
-# 檢查網址是否還可用
-def check_url():
-    global search_url
-
-    try:
-        requests.get(search_url, timeout=1)
-    except requests.exceptions.RequestException:
-        ip_url = "http://120.126.197.52/"
-        ip2_url = "https://120.126.197.52/"
-        real_url = "https://lms.ntpu.edu.tw/"
-
-        for url in [ip_url, ip2_url, real_url]:
-            try:
-                requests.get(url, timeout=1)
-                search_url = url
-                return Response(response="OK", status=200)
-            except requests.exceptions.RequestException:
-                continue
-
-    return Response(response="Service Unavailable", status=503)
-
-
-student_list: Dict[str, str] = {}
-
-
-# 更新學生名單
-def renew_student() -> Response:
-    global student_list
-
-    cur_year = time.localtime(time.time()).tm_year - 1911
-    new_student_list: Dict[str, str] = {}
-
-    with requests.Session() as s:
-        for year in range(cur_year - 6, cur_year + 1):
-            for dep in DEPARTMENT_CODE.values():
-                time.sleep(random.uniform(2.5, 5))
-                url = (
-                        search_url
-                        + "portfolio/search.php?fmScope=2&page=1&fmKeyword=4"
-                        + str(year)
-                        + dep
-                )
-                raw_data = s.get(url)
-                raw_data.encoding = "utf-8"
-
-                data = BS4(raw_data.text, "html.parser")
-                for item in data.find_all("div", {"class": "bloglistTitle"}):
-                    name = item.find("a").text
-                    number = item.find("a").get("href").split("/")[-1]
-                    new_student_list[number] = name
-
-                pages = len(data.find_all("span", {"class": "item"}))
-                for i in range(2, pages):
-                    time.sleep(random.uniform(2.5, 5))
-                    url = (
-                            search_url
-                            + "portfolio/search.php?fmScope=2&page="
-                            + str(i)
-                            + "&fmKeyword=4"
-                            + str(year)
-                            + dep
-                    )
-                    raw_data = s.get(url)
-                    raw_data.encoding = "utf-8"
-
-                    data = BS4(raw_data.text, "html.parser")
-                    for item in data.find_all("div", {"class": "bloglistTitle"}):
-                        name = item.find("a").text
-                        number = item.find("a").get("href").split("/")[-1]
-                        new_student_list[number] = name
-
-    student_list = deepcopy(new_student_list)
-    return Response(response="OK", status=200)
-
-
+url_state = False
 renew_thread: threading.Thread
 
-RENEW_USAGE = 1000
-usage = RENEW_USAGE
+
+# 回覆者資訊
+def get_sender_info() -> Sender:
+    return Sender(
+        name="學號魔術師",
+        iconUrl=random.choice(stickers),
+    )
+
+
+# 使用說明
+def instruction(event: MessageEvent | PostbackEvent) -> None:
+    mes_sender = get_sender_info()
+    messages = [
+        TextMessage(
+            text="輸入學號可查詢姓名\n輸入姓名可查詢學號\n輸入系名可查詢系代碼\n輸入系代碼可查詢系名\n輸入入學學年再選科系獲取學生名單",
+            sender=mes_sender,
+        ),
+        TextMessage(
+            text="For example~~\n學號：412345678\n姓名：林某某 or 某某\n系名：資工系 or 資訊工程學系\n系代碼：85\n"
+                 + "入學學年："
+                 + str(time.localtime(time.time()).tm_year - 1911)
+                 + " or "
+                 + str(time.localtime(time.time()).tm_year),
+            sender=mes_sender,
+        ),
+        TextMessage(text="部分資訊是由學號推斷\n不一定為正確資料\n資料來源：國立臺北大學數位學苑2.0", sender=mes_sender),
+    ]
+
+    reply_message(event.reply_token, messages)
 
 
 @app.route("/")
@@ -184,23 +90,23 @@ def github() -> Response:
 
 @app.route("/check")
 def healthy() -> Response:
-    global usage, renew_thread
+    global url_state, renew_thread
 
-    if usage >= RENEW_USAGE:
-        if check_url().response == "Service Unavailable":
+    if not url_state:
+        if not check_url():
             return Response(response="Service Unavailable", status=503)
 
-        renew_thread = threading.Thread(target=renew_student)
+        renew_thread = threading.Thread(target=renew_student_list)
         renew_thread.start()
 
-        usage = 0
+        url_state = True
 
     return Response(response="OK", status=200)
 
 
 @app.route("/callback", methods=["POST"])
 def callback() -> Response:
-    global usage
+    global url_state
 
     # get X-Line-Signature header value
     signature = request.headers["X-Line-Signature"]
@@ -214,14 +120,12 @@ def callback() -> Response:
         handler.handle(body, signature)
 
     except InvalidSignatureError:
-        app.logger.info(
-            "Invalid signature. Please check your channel access token/channel secret."
-        )
+        app.logger.info("Invalid signature. Please check your channel access token/channel secret.")
         return Response(response="Internal Server Error", status=500)
 
     except requests.exceptions.Timeout:
         app.logger.info("Request Timeout.")
-        usage = RENEW_USAGE
+        url_state = False
         return Response(response="Request Timeout", status=408)
 
     return Response(response="OK", status=200)
@@ -229,17 +133,13 @@ def callback() -> Response:
 
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_text_message(event: MessageEvent) -> None:
-    global student_list
+    input_message = "".join(x for x in event.message.text if x not in string.whitespace + string.punctuation)
 
-    receive_message = "".join(
-        x for x in event.message.text if x not in string.whitespace + string.punctuation
-    )
-
-    if receive_message.isdecimal():
-        if receive_message in FULL_DEPARTMENT_NAME:
+    if input_message.isdecimal():
+        if input_message in FULL_DEPARTMENT_NAME:
             messages = [
                 TextMessage(
-                    text=FULL_DEPARTMENT_NAME[receive_message],
+                    text=FULL_DEPARTMENT_NAME[input_message],
                     quick_reply=QuickReply(
                         items=[
                             QuickReplyItem(
@@ -247,86 +147,17 @@ def handle_text_message(event: MessageEvent) -> None:
                             ),
                         ]
                     ),
-                    sender=Sender(iconUrl=random.choice(stickers)),
+                    sender=get_sender_info(),
                 ),
             ]
 
             reply_message(event.reply_token, messages)
 
-        elif 8 <= len(receive_message) <= 9:
-            name = ""
-            if receive_message in student_list:
-                name = student_list[receive_message]
-            else:
-                url = (
-                        search_url
-                        + "portfolio/search.php?fmScope=2&page=1&fmKeyword="
-                        + receive_message
-                )
-                web = requests.get(url)
-                web.encoding = "utf-8"
-
-                html = BS4(web.text, "html.parser")
-                person = html.find("div", {"class": "bloglistTitle"})
-
-                if person is not None:
-                    name = str(person.find("a").text)
-                else:
-                    messages = [
-                        TextMessage(
-                            text="學號" + receive_message + "不存在OAO",
-                            sender=Sender(iconUrl=random.choice(stickers)),
-                        ),
-                    ]
-
-                    reply_message(event.reply_token, messages)
-                    return
-
-            messages = [
-                TextMessage(
-                    text=name,
-                    sender=Sender(iconUrl=random.choice(stickers)),
-                ),
-            ]
-
-            if receive_message[0] == "4":
-                over_99 = len(receive_message) == 9
-                year = receive_message[1: over_99 + 3]
-
-                department = receive_message[over_99 + 3: over_99 + 5]
-                if department in [
-                    DEPARTMENT_CODE["法律"],
-                    DEPARTMENT_CODE["社學"][0:2],
-                ]:
-                    department += receive_message[over_99 + 5]
-
-                if department[0:2] == DEPARTMENT_CODE["法律"]:
-                    show_text = (
-                            "搜尋" + year + "學年度法律系" + DEPARTMENT_NAME[department] + "組"
-                    )
-                else:
-                    show_text = "搜尋" + year + "學年度" + DEPARTMENT_NAME[department] + "系"
-
-                messages[0].quick_reply = QuickReply(
-                    items=[
-                        QuickReplyItem(
-                            action=PostbackAction(
-                                label=show_text,
-                                display_text="正在" + show_text,
-                                data=year + " " + department,
-                                input_option="closeRichMenu",
-                            ),
-                        ),
-                    ],
-                )
-
-            reply_message(event.reply_token, messages)
-
-        elif 2 <= len(receive_message) <= 4:
+        elif 2 <= len(input_message) <= 4:
             year = (
-                int(receive_message)
-                if int(receive_message) < 1911
-                else int(receive_message) - 1911
+                int(input_message)
+                if int(input_message) < 1911
+                else int(input_message) - 1911
             )
 
             messages = []
@@ -334,21 +165,21 @@ def handle_text_message(event: MessageEvent) -> None:
                 messages.append(
                     TextMessage(
                         text="你未來人？(⊙ˍ⊙)",
-                        sender=Sender(iconUrl=random.choice(stickers)),
+                        sender=get_sender_info(),
                     )
                 )
             elif year < 90:
                 messages.append(
                     TextMessage(
                         text="學校都還沒蓋好(￣▽￣)",
-                        sender=Sender(iconUrl=random.choice(stickers)),
+                        sender=get_sender_info(),
                     )
                 )
             elif year < 95:
                 messages.append(
                     TextMessage(
-                        text="數位學苑還沒出生",
-                        sender=Sender(iconUrl=random.choice(stickers)),
+                        text="數位學苑還沒出生喔~~",
+                        sender=get_sender_info(),
                     )
                 )
             else:
@@ -372,120 +203,137 @@ def handle_text_message(event: MessageEvent) -> None:
                                 ),
                             ],
                         ),
-                        sender=Sender(iconUrl=random.choice(stickers)),
+                        sender=get_sender_info(),
                     )
                 )
 
             reply_message(event.reply_token, messages)
 
-    elif receive_message == "所有系代碼":
-        message = "\n".join([x + "系 -> " + y for x, y in DEPARTMENT_CODE.items()])
-        messages = [
-            TextMessage(
-                text=message,
-                sender=Sender(iconUrl=random.choice(stickers)),
-            ),
-        ]
+        elif 8 <= len(input_message) <= 9:
+            students = student_info_format(input_message, order=[Order.YEAR, Order.FULL_DEPARTMENT, Order.NAME],
+                                           space=2)
 
-        reply_message(event.reply_token, messages)
+            if not students:
+                messages = [
+                    TextMessage(
+                        text="學號 " + input_message + " 不存在OAO",
+                        sender=get_sender_info(),
+                    ),
+                ]
 
-    elif receive_message.strip("系") in DEPARTMENT_CODE:
-        messages = [
-            TextMessage(
-                text=DEPARTMENT_CODE[receive_message.strip("系")],
-                quick_reply=QuickReply(
-                    items=[
-                        QuickReplyItem(
-                            action=MessageAction(label="所有系代碼", text="所有系代碼")
-                        ),
-                    ]
+                reply_message(event.reply_token, messages)
+                return
+
+            messages = [
+                TextMessage(
+                    text=students,
+                    sender=get_sender_info(),
                 ),
-                sender=Sender(iconUrl=random.choice(stickers)),
-            ),
-        ]
+            ]
 
-        reply_message(event.reply_token, messages)
+            if input_message[0] == "4":
+                over_99 = len(input_message) == 9
+                year = input_message[1: over_99 + 3]
 
-    elif receive_message in FULL_DEPARTMENT_CODE:
-        messages = [
-            TextMessage(
-                text=FULL_DEPARTMENT_CODE[receive_message],
-                quick_reply=QuickReply(
-                    items=[
-                        QuickReplyItem(
-                            action=MessageAction(label="所有系代碼", text="所有系代碼")
-                        ),
-                    ]
-                ),
-                sender=Sender(iconUrl=random.choice(stickers)),
-            ),
-        ]
-
-        reply_message(event.reply_token, messages)
-
-    elif receive_message in student_list.values():
-        message = ""
-        for key, value in student_list.items():
-            if value == receive_message:
-                if message != "":
-                    message += "\n"
-
-                over_99 = len(key) == 9
-
-                year = key[1: over_99 + 3]
-                message += year + " "
-
-                department = key[over_99 + 3: over_99 + 5]
+                department = input_message[over_99 + 3: over_99 + 5]
                 if department in [
                     DEPARTMENT_CODE["法律"],
                     DEPARTMENT_CODE["社學"][0:2],
                 ]:
-                    department += key[over_99 + 5]
+                    department += input_message[over_99 + 5]
 
                 if department[0:2] == DEPARTMENT_CODE["法律"]:
-                    message += "法律系 " + DEPARTMENT_NAME[department] + "組 "
-                elif department[0:2] == DEPARTMENT_CODE["社學"][0:2]:
-                    message += DEPARTMENT_NAME[department] + "系 "
+                    show_text = "搜尋" + year + "學年度法律系" + DEPARTMENT_NAME[department] + "組"
                 else:
-                    message += DEPARTMENT_NAME[department] + "系 "
+                    show_text = "搜尋" + year + "學年度" + DEPARTMENT_NAME[department] + "系"
 
-                message += key
+                messages[0].quick_reply = QuickReply(
+                    items=[
+                        QuickReplyItem(
+                            action=PostbackAction(
+                                label=show_text,
+                                display_text="正在" + show_text,
+                                data=year + " " + department,
+                                input_option="closeRichMenu",
+                            ),
+                        ),
+                    ],
+                )
 
-        messages = [
-            TextMessage(
-                text=message,
-                sender=Sender(iconUrl=random.choice(stickers)),
-            ),
-        ]
+            reply_message(event.reply_token, messages)
 
-        reply_message(event.reply_token, messages)
+    else:
+        if input_message in ["使用說明", "help"]:
+            instruction(event)
 
-    elif receive_message[0] in string.ascii_letters or len(receive_message) < 6:
-        if not student_list:
+        elif input_message == "所有系代碼":
+            students = "\n".join([x + "系 -> " + y for x, y in DEPARTMENT_CODE.items()])
             messages = [
                 TextMessage(
-                    text="資料未建檔，請稍後再試😅",
-                    sender=Sender(iconUrl=random.choice(stickers)),
+                    text=students,
+                    sender=get_sender_info(),
                 ),
             ]
 
             reply_message(event.reply_token, messages)
-            return
 
-        temp = []
-        for key, value in student_list.items():
-            if receive_message in value:
-                temp.append(key.ljust(11, " ") + value)
-
-        if temp:
+        elif input_message.strip("系") in DEPARTMENT_CODE:
             messages = [
                 TextMessage(
-                    text="\n".join(temp if len(temp) < 250 else temp[-250:]),
-                    sender=Sender(iconUrl=random.choice(stickers)),
+                    text=DEPARTMENT_CODE[input_message.strip("系")],
+                    quick_reply=QuickReply(
+                        items=[
+                            QuickReplyItem(
+                                action=MessageAction(label="所有系代碼", text="所有系代碼")
+                            ),
+                        ]
+                    ),
+                    sender=get_sender_info(),
                 ),
             ]
 
             reply_message(event.reply_token, messages)
+
+        elif input_message in FULL_DEPARTMENT_CODE:
+            messages = [
+                TextMessage(
+                    text=FULL_DEPARTMENT_CODE[input_message],
+                    quick_reply=QuickReply(
+                        items=[
+                            QuickReplyItem(
+                                action=MessageAction(label="所有系代碼", text="所有系代碼")
+                            ),
+                        ]
+                    ),
+                    sender=get_sender_info(),
+                ),
+            ]
+
+            reply_message(event.reply_token, messages)
+
+        elif input_message[0] in string.ascii_letters or len(input_message) < 6:
+            students = []
+            for key, value in student_list.items():
+                if input_message in value:
+                    students.append((key, value))
+
+            messages = []
+            if students:
+                students = sorted(students, key=lambda x: (not len(x[0]), int(x[0])))
+
+                for i in range(min(math.ceil(len(students) / 100), 5), 0, -1):
+                    students_info = "\n".join(
+                        [student_info_format(x[0], x[1]) for x in students[-i * 100: -(i - 1) * 100]]
+                    )
+
+                    messages.append(
+                        TextMessage(
+                            text=students_info,
+                            sender=get_sender_info(),
+                        )
+                    )
+
+                reply_message(event.reply_token, messages)
 
 
 @handler.add(MessageEvent, message=StickerMessageContent)
@@ -506,29 +354,13 @@ def handle_sticker_message(event: MessageEvent) -> None:
 @handler.add(PostbackEvent)
 def handle_postback(event: PostbackEvent) -> None:
     if event.postback.data == "使用說明":
-        mes_sender = Sender(iconUrl=random.choice(stickers))
-        messages = [
-            TextMessage(
-                text="輸入學號可查詢姓名\n輸入姓名可查詢學號\n輸入系名可查詢系代碼\n輸入系代碼可查詢系名\n輸入入學學年再選科系獲取學生名單",
-                sender=mes_sender,
-            ),
-            TextMessage(
-                text="For example~~\n學號：412345678\n姓名：林某某 or 某某\n系名：資工系 or 資訊工程學系\n系代碼：85\n"
-                     + "入學學年："
-                     + str(time.localtime(time.time()).tm_year - 1911)
-                     + " or "
-                     + str(time.localtime(time.time()).tm_year),
-                sender=mes_sender,
-            ),
-        ]
-
-        reply_message(event.reply_token, messages)
+        instruction(event)
 
     elif event.postback.data == "兇":
         messages = [
             TextMessage(
                 text="泥好兇喔~~இ௰இ",
-                sender=Sender(iconUrl=random.choice(stickers)),
+                sender=get_sender_info(),
             ),
         ]
 
@@ -559,7 +391,7 @@ def handle_postback(event: PostbackEvent) -> None:
                         ),
                     ],
                 ),
-                sender=Sender(iconUrl=random.choice(stickers)),
+                sender=get_sender_info(),
             ),
         ]
 
@@ -595,7 +427,7 @@ def handle_postback(event: PostbackEvent) -> None:
                         ),
                     ],
                 ),
-                sender=Sender(iconUrl=random.choice(stickers)),
+                sender=get_sender_info(),
             ),
         ]
 
@@ -631,7 +463,7 @@ def handle_postback(event: PostbackEvent) -> None:
                         ),
                     ],
                 ),
-                sender=Sender(iconUrl=random.choice(stickers)),
+                sender=get_sender_info(),
             ),
         ]
 
@@ -668,7 +500,7 @@ def handle_postback(event: PostbackEvent) -> None:
                         ),
                     ],
                 ),
-                sender=Sender(iconUrl=random.choice(stickers)),
+                sender=get_sender_info(),
             ),
         ]
 
@@ -705,7 +537,7 @@ def handle_postback(event: PostbackEvent) -> None:
                         ),
                     ],
                 ),
-                sender=Sender(iconUrl=random.choice(stickers)),
+                sender=get_sender_info(),
             ),
         ]
 
@@ -754,7 +586,7 @@ def handle_postback(event: PostbackEvent) -> None:
                         ),
                     ],
                 ),
-                sender=Sender(iconUrl=random.choice(stickers)),
+                sender=get_sender_info(),
             ),
         ]
 
@@ -791,7 +623,7 @@ def handle_postback(event: PostbackEvent) -> None:
                         ),
                     ],
                 ),
-                sender=Sender(iconUrl=random.choice(stickers)),
+                sender=get_sender_info(),
             ),
         ]
 
@@ -828,7 +660,7 @@ def handle_postback(event: PostbackEvent) -> None:
                         ),
                     ],
                 ),
-                sender=Sender(iconUrl=random.choice(stickers)),
+                sender=get_sender_info(),
             ),
         ]
 
@@ -865,86 +697,44 @@ def handle_postback(event: PostbackEvent) -> None:
                         ),
                     ],
                 ),
-                sender=Sender(iconUrl=random.choice(stickers)),
+                sender=get_sender_info(),
             ),
         ]
 
         reply_message(event.reply_token, messages)
 
     else:
-        yd = "".join(event.postback.data.split(" "))
-        temp = []
-
-        if student_list:
-            for key, value in student_list.items():
-                if key.startswith("4" + yd):
-                    temp.append(key.ljust(11, " ") + value)
-
-        else:
-            with requests.Session() as s:
-                s.keep_alive = False
-
-                url = (
-                        search_url
-                        + "portfolio/search.php?fmScope=2&page=1&fmKeyword=4"
-                        + yd
-                )
-                web = s.get(url)
-                web.encoding = "utf-8"
-
-                html = BS4(web.text, "html.parser")
-                for item in html.find_all("div", {"class": "bloglistTitle"}):
-                    name = item.find("a").text
-                    number = item.find("a").get("href").split("/")[-1]
-                    temp.append(number.ljust(11, " ") + name)
-
-                pages = len(html.find_all("span", {"class": "item"}))
-                for i in range(2, pages):
-                    time.sleep(random.uniform(0.05, 0.2))
-
-                    url = (
-                            search_url
-                            + "portfolio/search.php?fmScope=2&page="
-                            + str(i)
-                            + "&fmKeyword=4"
-                            + yd
-                    )
-                    web = s.get(url)
-                    web.encoding = "utf-8"
-
-                    html = BS4(web.text, "html.parser")
-                    for item in html.find_all("div", {"class": "bloglistTitle"}):
-                        name = item.find("a").text
-                        number = item.find("a").get("href").split("/")[-1]
-                        temp.append(number.ljust(11, " ") + name)
-
-        message = "\n".join(temp)
+        year, department = event.postback.data.split(" ")
+        students = get_students_by_year_and_department(int(year), int(department))
+        students_info = "\n".join(
+            [student_info_format(x, y, [Order.ID, Order.NAME], 3) for x, y in students.items()]
+        )
 
         if event.postback.data.split(" ")[1][0:2] == DEPARTMENT_CODE["法律"]:
-            message += (
+            students_info += (
                     "\n\n"
-                    + event.postback.data.split(" ")[0]
+                    + year
                     + "學年度法律系"
-                    + DEPARTMENT_NAME[event.postback.data.split(" ")[1]]
+                    + DEPARTMENT_NAME[department]
                     + "組共有"
-                    + str(len(temp))
+                    + str(len(students))
                     + "位學生"
             )
         else:
-            message += (
+            students_info += (
                     "\n\n"
-                    + event.postback.data.split(" ")[0]
+                    + year
                     + "學年度"
-                    + DEPARTMENT_NAME[event.postback.data.split(" ")[1]]
+                    + DEPARTMENT_NAME[department]
                     + "系共有"
-                    + str(len(temp))
+                    + str(len(students))
                     + "位學生"
             )
 
         messages = [
             TextMessage(
-                text=message,
-                sender=Sender(iconUrl=random.choice(stickers)),
+                text=students_info,
+                sender=get_sender_info(),
             ),
         ]
 
@@ -955,17 +745,18 @@ def handle_postback(event: PostbackEvent) -> None:
 @handler.add(JoinEvent)
 @handler.add(MemberJoinedEvent)
 def handle_follow_join(event) -> None:
-    mes_sender = Sender(iconUrl=random.choice(stickers))
+    mes_sender = get_sender_info()
 
     messages = [
         TextMessage(
-            text="泥好~~我是學號姓名查詢小工具🔍\n可以用學號查詢到姓名\n也可以用姓名查詢到學號\n詳細使用說明請點選下方選單",
+            text="泥好~~我是學號姓名查詢小工具🔍\n可以用學號查詢到姓名\n也可以用姓名查詢到學號",
             sender=mes_sender,
         ),
+        TextMessage(text="詳細使用說明請點選下方選單\n或輸入「使用說明」", sender=mes_sender),
         TextMessage(
             text="有疑問可以先去看常見問題\n若無法解決或有發現 Bug\n可以再到 GitHub 提出", sender=mes_sender
         ),
-        TextMessage(text="資料來源：國立臺北大學數位學苑2.0", sender=mes_sender),
+        TextMessage(text="部分資訊是由學號推斷\n不一定為正確資料\n資料來源：國立臺北大學數位學苑2.0", sender=mes_sender),
     ]
 
     reply_message(event.reply_token, messages)
