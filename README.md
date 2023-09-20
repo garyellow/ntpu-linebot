@@ -1,6 +1,6 @@
 # ntpu-student-id-linebot
 
-A line bot about NTPU student id  
+A line bot about NTPU student id
 
 ID：[@148wrcch](https://lin.ee/QiMmPBv)
 <br><br>
@@ -9,6 +9,7 @@ ID：[@148wrcch](https://lin.ee/QiMmPBv)
 ![qrcode](/qr_code/M_gainfriends_qr.png)
 
 ## 使用方式
+
 1. **學號**查**姓名** (日夜)
 2. **姓名**查**學號** (日)
 3. **系名**查**系代碼** (日)
@@ -16,4 +17,5 @@ ID：[@148wrcch](https://lin.ee/QiMmPBv)
 5. **系級**查**學生名單** (日)
 
 ## 其他
+
 有 bug 或想多什麼功能都可以聯繫我
