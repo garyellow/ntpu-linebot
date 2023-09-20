@@ -10,10 +10,10 @@ readme = "README.md"
 python = "~3.11"
 requests = "^2.31.0"
 beautifulsoup4 = "^4.12.2"
-Flask = "^2.3.2"
 line-bot-sdk = "^3.2.0"
-gunicorn = "^21.2.0"
 cachetools = "^5.3.1"
+fastapi = "^0.103.1"
+uvicorn = { extras = ["standard"], version = "^0.23.2" }
 
 
 [build-system]

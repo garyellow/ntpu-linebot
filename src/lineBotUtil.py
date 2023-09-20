@@ -1,15 +1,13 @@
 # -*- coding:utf-8 -*-
 import os
 import sys
-from typing import Any
+from typing import List
 
-from linebot.v3 import WebhookHandler
-from linebot.v3.messaging.api.messaging_api import MessagingApi
-from linebot.v3.messaging.api_client import ApiClient
+from linebot.v3 import WebhookParser
+from linebot.v3.messaging.api.async_messaging_api import AsyncMessagingApi
+from linebot.v3.messaging.async_api_client import AsyncApiClient
 from linebot.v3.messaging.configuration import Configuration
-from linebot.v3.messaging.models import (
-    ReplyMessageRequest,
-)
+from linebot.v3.messaging.models import Message, ReplyMessageRequest
 
 # get channel_secret and channel_access_token from your environment variable
 channel_secret = os.getenv("LINE_CHANNEL_SECRET", None)
@@ -22,16 +20,16 @@ if channel_access_token is None:
     print("Specify LINE_CHANNEL_ACCESS_TOKEN as environment variable.")
     sys.exit(1)
 
-handler = WebhookHandler(channel_secret)
+parser = WebhookParser(channel_secret)
 configuration = Configuration(access_token=channel_access_token)
+async_api_client = AsyncApiClient(configuration)
+line_bot_api = AsyncMessagingApi(async_api_client)
 
 
-def reply_message(reply_token: str, message: Any) -> None:
-    with ApiClient(configuration) as api_client:
-        line_bot_api = MessagingApi(api_client)
-        line_bot_api.reply_message(
-            ReplyMessageRequest(
-                reply_token=reply_token,
-                messages=message,
-            ),
-        )
+async def reply_message(reply_token: str, message: List[Message]) -> None:
+    await line_bot_api.reply_message(
+        ReplyMessageRequest(
+            reply_token=reply_token,
+            messages=message,
+        ),
+    )

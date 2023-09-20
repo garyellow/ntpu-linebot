@@ -6,7 +6,8 @@ import threading
 import time
 
 import requests
-from flask import Flask, Response, request, redirect
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.responses import PlainTextResponse, RedirectResponse
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.messaging.models import (
     Sender,
@@ -30,7 +31,7 @@ from linebot.v3.webhooks import (
     MemberJoinedEvent,
 )
 
-from src.lineBotUtil import handler, reply_message
+from src.lineBotUtil import parser, reply_message
 from src.requestUtil import (
     student_list,
     check_url,
@@ -47,7 +48,7 @@ from src.studentUtil import (
     renew_student_list,
 )
 
-app = Flask(__name__)
+app = FastAPI()
 
 url_state = False
 renew_thread: threading.Thread
@@ -62,7 +63,7 @@ def get_sender_info() -> Sender:
 
 
 # 使用說明
-def instruction(event: MessageEvent | PostbackEvent) -> None:
+async def instruction(event: MessageEvent | PostbackEvent) -> None:
     mes_sender = get_sender_info()
     messages = [
         TextMessage(
@@ -80,59 +81,69 @@ def instruction(event: MessageEvent | PostbackEvent) -> None:
         TextMessage(text="部分資訊是由學號推斷\n不一定為正確資料\n資料來源：國立臺北大學數位學苑2.0", sender=mes_sender),
     ]
 
-    reply_message(event.reply_token, messages)
+    await reply_message(event.reply_token, messages)
 
 
-@app.route("/")
-def github() -> Response:
-    return redirect("https://github.com/garyellow/ntpu-student-id-linebot")
+@app.get("/")
+def github() -> RedirectResponse:
+    return RedirectResponse(status_code=302, url="https://github.com/garyellow/ntpu-student-id-linebot")
 
 
-@app.route("/check")
-def healthy() -> Response:
+@app.get("/check")
+def healthy() -> PlainTextResponse:
     global url_state, renew_thread
 
     if not url_state:
         if not check_url():
-            return Response(response="Service Unavailable", status=503)
+            raise HTTPException(status_code=503, detail="Service Unavailable")
 
         renew_thread = threading.Thread(target=renew_student_list)
         renew_thread.start()
 
         url_state = True
 
-    return Response(response="OK", status=200)
+    return PlainTextResponse(status_code=200, content="OK")
 
 
-@app.route("/callback", methods=["POST"])
-def callback() -> Response:
+@app.post("/callback")
+async def callback(request: Request) -> PlainTextResponse:
     global url_state
 
     # get X-Line-Signature header value
     signature = request.headers["X-Line-Signature"]
 
     # get request body as text
-    body = request.get_data(as_text=True)
-    app.logger.info("Request body: " + body)
+    body = await request.body()
+    body = body.decode()
 
     # handle webhook body
     try:
-        handler.handle(body, signature)
+        events = parser.parse(body, signature)
 
     except InvalidSignatureError:
-        app.logger.info("Invalid signature. Please check your channel access token/channel secret.")
-        return Response(response="Internal Server Error", status=500)
+        raise HTTPException(status_code=500, detail="Invalid signature")
 
     except requests.exceptions.Timeout:
-        app.logger.info("Request Timeout.")
         url_state = False
-        return Response(response="Request Timeout", status=408)
+        raise HTTPException(status_code=408, detail="Request Timeout")
 
-    return Response(response="OK", status=200)
+    for event in events:
+        if isinstance(event, MessageEvent):
+            if isinstance(event.message, TextMessageContent):
+                await handle_text_message(event)
+            if isinstance(event.message, StickerMessageContent):
+                await handle_sticker_message(event)
+
+        elif isinstance(event, PostbackEvent):
+            await handle_postback_event(event)
+
+        elif isinstance(event, FollowEvent) or isinstance(event, JoinEvent) or isinstance(event, MemberJoinedEvent):
+            await handle_follow_join_event(event)
+
+    return PlainTextResponse(status_code=200, content="OK")
 
 
-@handler.add(MessageEvent, message=TextMessageContent)
-def handle_text_message(event: MessageEvent) -> None:
+async def handle_text_message(event: MessageEvent) -> None:
     input_message = "".join(x for x in event.message.text if x not in string.whitespace + string.punctuation)
 
     if input_message.isdecimal():
@@ -151,7 +162,7 @@ def handle_text_message(event: MessageEvent) -> None:
                 ),
             ]
 
-            reply_message(event.reply_token, messages)
+            await reply_message(event.reply_token, messages)
 
         elif 2 <= len(input_message) <= 4:
             year = (
@@ -207,7 +218,7 @@ def handle_text_message(event: MessageEvent) -> None:
                     )
                 )
 
-            reply_message(event.reply_token, messages)
+            await reply_message(event.reply_token, messages)
 
         elif 8 <= len(input_message) <= 9:
             students = student_info_format(input_message, order=[Order.YEAR, Order.FULL_DEPARTMENT, Order.NAME],
@@ -221,7 +232,7 @@ def handle_text_message(event: MessageEvent) -> None:
                     ),
                 ]
 
-                reply_message(event.reply_token, messages)
+                await reply_message(event.reply_token, messages)
                 return
 
             messages = [
@@ -260,11 +271,11 @@ def handle_text_message(event: MessageEvent) -> None:
                     ],
                 )
 
-            reply_message(event.reply_token, messages)
+            await reply_message(event.reply_token, messages)
 
     else:
         if input_message in ["使用說明", "help"]:
-            instruction(event)
+            await instruction(event)
 
         elif input_message == "所有系代碼":
             students = "\n".join([x + "系 -> " + y for x, y in DEPARTMENT_CODE.items()])
@@ -275,7 +286,7 @@ def handle_text_message(event: MessageEvent) -> None:
                 ),
             ]
 
-            reply_message(event.reply_token, messages)
+            await reply_message(event.reply_token, messages)
 
         elif input_message.strip("系") in DEPARTMENT_CODE:
             messages = [
@@ -292,7 +303,7 @@ def handle_text_message(event: MessageEvent) -> None:
                 ),
             ]
 
-            reply_message(event.reply_token, messages)
+            await reply_message(event.reply_token, messages)
 
         elif input_message in FULL_DEPARTMENT_CODE:
             messages = [
@@ -309,7 +320,7 @@ def handle_text_message(event: MessageEvent) -> None:
                 ),
             ]
 
-            reply_message(event.reply_token, messages)
+            await reply_message(event.reply_token, messages)
 
         elif input_message[0] in string.ascii_letters or len(input_message) < 6:
             students = []
@@ -323,7 +334,7 @@ def handle_text_message(event: MessageEvent) -> None:
 
                 for i in range(min(math.ceil(len(students) / 100), 5), 0, -1):
                     students_info = "\n".join(
-                        [student_info_format(x[0], x[1]) for x in students[-i * 100: -(i - 1) * 100]]
+                        [student_info_format(x[0], x[1]) for x in students[-i * 100: -(i - 1) * 100 if i - 1 else None]]
                     )
 
                     messages.append(
@@ -333,11 +344,10 @@ def handle_text_message(event: MessageEvent) -> None:
                         )
                     )
 
-                reply_message(event.reply_token, messages)
+                await reply_message(event.reply_token, messages)
 
 
-@handler.add(MessageEvent, message=StickerMessageContent)
-def handle_sticker_message(event: MessageEvent) -> None:
+async def handle_sticker_message(event: MessageEvent) -> None:
     sticker = random.choice(stickers)
 
     messages = [
@@ -348,13 +358,12 @@ def handle_sticker_message(event: MessageEvent) -> None:
         ),
     ]
 
-    reply_message(event.reply_token, messages)
+    await reply_message(event.reply_token, messages)
 
 
-@handler.add(PostbackEvent)
-def handle_postback(event: PostbackEvent) -> None:
+async def handle_postback_event(event: PostbackEvent) -> None:
     if event.postback.data == "使用說明":
-        instruction(event)
+        await instruction(event)
 
     elif event.postback.data == "兇":
         messages = [
@@ -364,7 +373,7 @@ def handle_postback(event: PostbackEvent) -> None:
             ),
         ]
 
-        reply_message(event.reply_token, messages)
+        await reply_message(event.reply_token, messages)
 
     elif event.postback.data.startswith("搜尋全系"):
         year = event.postback.data.split("搜尋全系")[1]
@@ -395,7 +404,7 @@ def handle_postback(event: PostbackEvent) -> None:
             ),
         ]
 
-        reply_message(event.reply_token, messages)
+        await reply_message(event.reply_token, messages)
 
     elif event.postback.data.startswith("文法商"):
         year = event.postback.data.split("文法商")[1]
@@ -431,7 +440,7 @@ def handle_postback(event: PostbackEvent) -> None:
             ),
         ]
 
-        reply_message(event.reply_token, messages)
+        await reply_message(event.reply_token, messages)
 
     elif event.postback.data.startswith("公社電資"):
         year = event.postback.data.split("公社電資")[1]
@@ -467,7 +476,7 @@ def handle_postback(event: PostbackEvent) -> None:
             ),
         ]
 
-        reply_message(event.reply_token, messages)
+        await reply_message(event.reply_token, messages)
 
     elif event.postback.data.startswith("人文學院"):
         year = event.postback.data.split("人文學院")[1]
@@ -504,7 +513,7 @@ def handle_postback(event: PostbackEvent) -> None:
             ),
         ]
 
-        reply_message(event.reply_token, messages)
+        await reply_message(event.reply_token, messages)
 
     elif event.postback.data.startswith("法律學院"):
         year = event.postback.data.split("法律學院")[1]
@@ -541,7 +550,7 @@ def handle_postback(event: PostbackEvent) -> None:
             ),
         ]
 
-        reply_message(event.reply_token, messages)
+        await reply_message(event.reply_token, messages)
 
     elif event.postback.data.startswith("商學院"):
         year = event.postback.data.split("商學院")[1]
@@ -590,7 +599,7 @@ def handle_postback(event: PostbackEvent) -> None:
             ),
         ]
 
-        reply_message(event.reply_token, messages)
+        await reply_message(event.reply_token, messages)
 
     elif event.postback.data.startswith("公共事務學院"):
         year = event.postback.data.split("公共事務學院")[1]
@@ -627,7 +636,7 @@ def handle_postback(event: PostbackEvent) -> None:
             ),
         ]
 
-        reply_message(event.reply_token, messages)
+        await reply_message(event.reply_token, messages)
 
     elif event.postback.data.startswith("社會科學學院"):
         year = event.postback.data.split("社會科學學院")[1]
@@ -664,7 +673,7 @@ def handle_postback(event: PostbackEvent) -> None:
             ),
         ]
 
-        reply_message(event.reply_token, messages)
+        await reply_message(event.reply_token, messages)
 
     elif event.postback.data.startswith("電機資訊學院"):
         year = event.postback.data.split("電機資訊學院")[1]
@@ -701,7 +710,7 @@ def handle_postback(event: PostbackEvent) -> None:
             ),
         ]
 
-        reply_message(event.reply_token, messages)
+        await reply_message(event.reply_token, messages)
 
     else:
         year, department = event.postback.data.split(" ")
@@ -738,13 +747,10 @@ def handle_postback(event: PostbackEvent) -> None:
             ),
         ]
 
-        reply_message(event.reply_token, messages)
+        await reply_message(event.reply_token, messages)
 
 
-@handler.add(FollowEvent)
-@handler.add(JoinEvent)
-@handler.add(MemberJoinedEvent)
-def handle_follow_join(event) -> None:
+async def handle_follow_join_event(event) -> None:
     mes_sender = get_sender_info()
 
     messages = [
@@ -759,8 +765,4 @@ def handle_follow_join(event) -> None:
         TextMessage(text="部分資訊是由學號推斷\n不一定為正確資料\n資料來源：國立臺北大學數位學苑2.0", sender=mes_sender),
     ]
 
-    reply_message(event.reply_token, messages)
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    await reply_message(event.reply_token, messages)
