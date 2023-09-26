@@ -156,7 +156,7 @@ async def handle_text_message(event: MessageEvent) -> None:
                     quick_reply=QuickReply(
                         items=[
                             QuickReplyItem(
-                                action=MessageAction(label="所有系代碼", test="所有系代碼")
+                                action=MessageAction(label="系代碼", text="系代碼")
                             ),
                         ]
                     ),
@@ -210,7 +210,7 @@ async def handle_text_message(event: MessageEvent) -> None:
                                 ),
                                 PostbackAction(
                                     label="我在想想",
-                                    display_text="再啦ㄍಠ_ಠ",
+                                    display_text="再啦乾ಠ_ಠ",
                                     data="兇",
                                     input_option="openKeyboard",
                                 ),
@@ -223,8 +223,11 @@ async def handle_text_message(event: MessageEvent) -> None:
             await reply_message(event.reply_token, messages)
 
         elif 8 <= len(input_message) <= 9:
-            students = student_info_format(input_message, order=[Order.YEAR, Order.FULL_DEPARTMENT, Order.NAME],
-                                           space=2)
+            students = student_info_format(
+                input_message,
+                order=[Order.YEAR, Order.FULL_DEPARTMENT, Order.NAME],
+                space=2
+            )
 
             if not students:
                 messages = [
@@ -279,7 +282,7 @@ async def handle_text_message(event: MessageEvent) -> None:
         if input_message in ["使用說明", "help"]:
             await instruction(event)
 
-        elif input_message == "所有系代碼":
+        elif input_message == "系代碼":
             students = "\n".join([x + "系 -> " + y for x, y in DEPARTMENT_CODE.items()])
             messages = [
                 TextMessage(
@@ -297,7 +300,7 @@ async def handle_text_message(event: MessageEvent) -> None:
                     quick_reply=QuickReply(
                         items=[
                             QuickReplyItem(
-                                action=MessageAction(label="所有系代碼", text="所有系代碼")
+                                action=MessageAction(label="系代碼", text="系代碼")
                             ),
                         ]
                     ),
@@ -314,7 +317,7 @@ async def handle_text_message(event: MessageEvent) -> None:
                     quick_reply=QuickReply(
                         items=[
                             QuickReplyItem(
-                                action=MessageAction(label="所有系代碼", text="所有系代碼")
+                                action=MessageAction(label="系代碼", text="系代碼")
                             ),
                         ]
                     ),
@@ -336,7 +339,8 @@ async def handle_text_message(event: MessageEvent) -> None:
 
                 for i in range(min(math.ceil(len(students) / 100), 5), 0, -1):
                     students_info = "\n".join(
-                        [student_info_format(x[0], x[1]) for x in students[-i * 100: -(i - 1) * 100 if i - 1 else None]]
+                        [student_info_format(x[0], x[1])
+                         for x in students[-i * 100: -(i - 1) * 100 if i - 1 else None]]
                     )
 
                     messages.append(
