@@ -62,6 +62,29 @@ def get_sender_info() -> Sender:
     )
 
 
+# 學院 postback
+def college_postback(college_name: str, year: str) -> PostbackAction:
+    return PostbackAction(
+        label=college_name,
+        display_text=college_name,
+        data=college_name + year,
+        input_option="closeRichMenu",
+    )
+
+
+# 科系 postback
+def department_postback(department_code: str, year: str) -> PostbackAction:
+    return PostbackAction(
+        label=FULL_DEPARTMENT_NAME[department_code],
+        display_text="正在搜尋" + year + "學年度" +
+                     ("法律系" if department_code[0:2] == DEPARTMENT_CODE["法律"] else "") +
+                     DEPARTMENT_NAME[department_code] +
+                     ("組" if department_code[0:2] == DEPARTMENT_CODE["法律"] else "系"),
+        data=year + " " + department_code,
+        input_option="closeRichMenu",
+    )
+
+
 # 使用說明
 async def instruction(event: MessageEvent | PostbackEvent) -> None:
     mes_sender = get_sender_info()
@@ -392,18 +415,8 @@ async def handle_postback_event(event: PostbackEvent) -> None:
                     title="選擇學院群",
                     text="請選擇科系所屬學院群",
                     actions=[
-                        PostbackAction(
-                            label="文法商",
-                            display_text="文法商",
-                            data="文法商" + year,
-                            input_option="closeRichMenu",
-                        ),
-                        PostbackAction(
-                            label="公社電資",
-                            display_text="公社電資",
-                            data="公社電資" + year,
-                            input_option="closeRichMenu",
-                        ),
+                        college_postback("文法商", year),
+                        college_postback("公社電資", year),
                     ],
                 ),
                 sender=get_sender_info(),
@@ -422,24 +435,9 @@ async def handle_postback_event(event: PostbackEvent) -> None:
                     title="選擇學院",
                     text="請選擇科系所屬學院",
                     actions=[
-                        PostbackAction(
-                            label="人文學院",
-                            display_text="人文學院",
-                            data="人文學院" + year,
-                            input_option="closeRichMenu",
-                        ),
-                        PostbackAction(
-                            label="法律學院",
-                            display_text="法律學院",
-                            data="法律學院" + year,
-                            input_option="closeRichMenu",
-                        ),
-                        PostbackAction(
-                            label="商學院",
-                            display_text="商學院",
-                            data="商學院" + year,
-                            input_option="closeRichMenu",
-                        ),
+                        college_postback("人文學院", year),
+                        college_postback("法律學院", year),
+                        college_postback("商學院", year),
                     ],
                 ),
                 sender=get_sender_info(),
@@ -458,24 +456,9 @@ async def handle_postback_event(event: PostbackEvent) -> None:
                     title="選擇學院",
                     text="請選擇科系所屬學院",
                     actions=[
-                        PostbackAction(
-                            label="公共事務學院",
-                            display_text="公共事務學院",
-                            data="公共事務學院" + year,
-                            input_option="closeRichMenu",
-                        ),
-                        PostbackAction(
-                            label="社會科學學院",
-                            display_text="社會科學學院",
-                            data="社會科學學院" + year,
-                            input_option="closeRichMenu",
-                        ),
-                        PostbackAction(
-                            label="電機資訊學院",
-                            display_text="電機資訊學院",
-                            data="電機資訊學院" + year,
-                            input_option="closeRichMenu",
-                        ),
+                        college_postback("公共事務學院", year),
+                        college_postback("社會科學學院", year),
+                        college_postback("電機資訊學院", year),
                     ],
                 ),
                 sender=get_sender_info(),
@@ -495,24 +478,9 @@ async def handle_postback_event(event: PostbackEvent) -> None:
                     title="選擇科系",
                     text="請選擇要查詢的科系",
                     actions=[
-                        PostbackAction(
-                            label="中國文學系",
-                            display_text="中國文學系",
-                            data="中國文學系" + year,
-                            input_option="closeRichMenu",
-                        ),
-                        PostbackAction(
-                            label="應用外語學系",
-                            display_text="應用外語學系",
-                            data="應用外語學系" + year,
-                            input_option="closeRichMenu",
-                        ),
-                        PostbackAction(
-                            label="歷史學系",
-                            display_text="歷史學系",
-                            data="歷史學系" + year,
-                            input_option="closeRichMenu",
-                        ),
+                        department_postback(DEPARTMENT_CODE["中文"], year),
+                        department_postback(DEPARTMENT_CODE["應外"], year),
+                        department_postback(DEPARTMENT_CODE["歷史"], year),
                     ],
                 ),
                 sender=get_sender_info(),
@@ -532,24 +500,9 @@ async def handle_postback_event(event: PostbackEvent) -> None:
                     title="選擇組別",
                     text="請選擇要查詢的組別",
                     actions=[
-                        PostbackAction(
-                            label="法學組",
-                            display_text="正在搜尋" + year + "學年度法律系法學組",
-                            data=year + " " + DEPARTMENT_CODE["法學"],
-                            input_option="closeRichMenu",
-                        ),
-                        PostbackAction(
-                            label="司法組",
-                            display_text="正在搜尋" + year + "學年度法律系司法組",
-                            data=year + " " + DEPARTMENT_CODE["司法"],
-                            input_option="closeRichMenu",
-                        ),
-                        PostbackAction(
-                            label="財經法組",
-                            display_text="正在搜尋" + year + "學年度法律系財法組",
-                            data=year + " " + DEPARTMENT_CODE["財法"],
-                            input_option="closeRichMenu",
-                        ),
+                        department_postback(DEPARTMENT_CODE["法學"], year),
+                        department_postback(DEPARTMENT_CODE["司法"], year),
+                        department_postback(DEPARTMENT_CODE["財法"], year),
                     ],
                 ),
                 sender=get_sender_info(),
@@ -568,37 +521,12 @@ async def handle_postback_event(event: PostbackEvent) -> None:
                     thumbnail_image_url="https://walkinto.in/upload/ZJum7EYwPUZkedmXNtvPL.JPG",
                     title="選擇科系",
                     text="請選擇科系 (休運系請直接點圖片)",
-                    default_action=PostbackAction(
-                        label="休閒運動管理學系",
-                        display_text="正在搜尋" + year + "學年度休運系",
-                        data=year + " " + DEPARTMENT_CODE["休運"],
-                        input_option="closeRichMenu",
-                    ),
+                    default_action=department_postback(DEPARTMENT_CODE["休運"], year),
                     actions=[
-                        PostbackAction(
-                            label="企業管理學系",
-                            display_text="正在搜尋" + year + "學年度企管系",
-                            data=year + " " + DEPARTMENT_CODE["企管"],
-                            input_option="closeRichMenu",
-                        ),
-                        PostbackAction(
-                            label="金融與合作經營學系",
-                            display_text="正在搜尋" + year + "學年度金融系",
-                            data=year + " " + DEPARTMENT_CODE["金融"],
-                            input_option="closeRichMenu",
-                        ),
-                        PostbackAction(
-                            label="會計學系",
-                            display_text="正在搜尋" + year + "學年度會計系",
-                            data=year + " " + DEPARTMENT_CODE["會計"],
-                            input_option="closeRichMenu",
-                        ),
-                        PostbackAction(
-                            label="統計學系",
-                            display_text="正在搜尋" + year + "學年度統計系",
-                            data=year + " " + DEPARTMENT_CODE["統計"],
-                            input_option="closeRichMenu",
-                        ),
+                        department_postback(DEPARTMENT_CODE["企管"], year),
+                        department_postback(DEPARTMENT_CODE["金融"], year),
+                        department_postback(DEPARTMENT_CODE["會計"], year),
+                        department_postback(DEPARTMENT_CODE["統計"], year),
                     ],
                 ),
                 sender=get_sender_info(),
@@ -618,24 +546,9 @@ async def handle_postback_event(event: PostbackEvent) -> None:
                     title="選擇科系",
                     text="請選擇要查詢的科系",
                     actions=[
-                        PostbackAction(
-                            label="公共行政暨政策學系",
-                            display_text="正在搜尋" + year + "學年度公行系",
-                            data=year + " " + DEPARTMENT_CODE["公行"],
-                            input_option="closeRichMenu",
-                        ),
-                        PostbackAction(
-                            label="不動產與城鄉環境學系",
-                            display_text="正在搜尋" + year + "學年度不動系",
-                            data=year + " " + DEPARTMENT_CODE["不動"],
-                            input_option="closeRichMenu",
-                        ),
-                        PostbackAction(
-                            label="財政學系",
-                            display_text="正在搜尋" + year + "學年度財政系",
-                            data=year + " " + DEPARTMENT_CODE["財政"],
-                            input_option="closeRichMenu",
-                        ),
+                        department_postback(DEPARTMENT_CODE["公行"], year),
+                        department_postback(DEPARTMENT_CODE["不動"], year),
+                        department_postback(DEPARTMENT_CODE["財政"], year),
                     ],
                 ),
                 sender=get_sender_info(),
@@ -655,24 +568,9 @@ async def handle_postback_event(event: PostbackEvent) -> None:
                     title="選擇科系",
                     text="請選擇科系",
                     actions=[
-                        PostbackAction(
-                            label="經濟學系",
-                            display_text="正在搜尋" + year + "學年度經濟系",
-                            data=year + " " + DEPARTMENT_CODE["經濟"],
-                            input_option="closeRichMenu",
-                        ),
-                        PostbackAction(
-                            label="社會學系",
-                            display_text="正在搜尋" + year + "學年度社學系",
-                            data=year + " " + DEPARTMENT_CODE["社學"],
-                            input_option="closeRichMenu",
-                        ),
-                        PostbackAction(
-                            label="社會工作學系",
-                            display_text="正在搜尋" + year + "學年度社工系",
-                            data=year + " " + DEPARTMENT_CODE["社工"],
-                            input_option="closeRichMenu",
-                        ),
+                        department_postback(DEPARTMENT_CODE["經濟"], year),
+                        department_postback(DEPARTMENT_CODE["社學"], year),
+                        department_postback(DEPARTMENT_CODE["社工"], year),
                     ],
                 ),
                 sender=get_sender_info(),
@@ -692,24 +590,9 @@ async def handle_postback_event(event: PostbackEvent) -> None:
                     title="選擇科系",
                     text="請選擇科系",
                     actions=[
-                        PostbackAction(
-                            label="電機工程學系",
-                            display_text="正在搜尋" + year + "學年度電機系",
-                            data=year + " " + DEPARTMENT_CODE["電機"],
-                            input_option="closeRichMenu",
-                        ),
-                        PostbackAction(
-                            label="資訊工程學系",
-                            display_text="正在搜尋" + year + "學年度資工系",
-                            data=year + " " + DEPARTMENT_CODE["資工"],
-                            input_option="closeRichMenu",
-                        ),
-                        PostbackAction(
-                            label="通訊工程學系",
-                            display_text="正在搜尋" + year + "學年度通訊系",
-                            data=year + " " + DEPARTMENT_CODE["通訊"],
-                            input_option="closeRichMenu",
-                        ),
+                        department_postback(DEPARTMENT_CODE["電機"], year),
+                        department_postback(DEPARTMENT_CODE["資工"], year),
+                        department_postback(DEPARTMENT_CODE["通訊"], year),
                     ],
                 ),
                 sender=get_sender_info(),
@@ -725,26 +608,11 @@ async def handle_postback_event(event: PostbackEvent) -> None:
             [student_info_format(x, y, [Order.ID, Order.NAME], 3) for x, y in students.items()]
         )
 
-        if event.postback.data.split(" ")[1][0:2] == DEPARTMENT_CODE["法律"]:
-            students_info += (
-                    "\n\n"
-                    + year
-                    + "學年度法律系"
-                    + DEPARTMENT_NAME[department]
-                    + "組共有"
-                    + str(len(students))
-                    + "位學生"
-            )
-        else:
-            students_info += (
-                    "\n\n"
-                    + year
-                    + "學年度"
-                    + DEPARTMENT_NAME[department]
-                    + "系共有"
-                    + str(len(students))
-                    + "位學生"
-            )
+        students_info += "\n\n" + year + "學年度" + \
+                         ("法律系" if department[0:2] == DEPARTMENT_CODE["法律"] else "") + \
+                         DEPARTMENT_NAME[department] + \
+                         ("組" if department[0:2] == DEPARTMENT_CODE["法律"] else "系") + \
+                         "共有" + str(len(students)) + "位學生"
 
         messages = [
             TextMessage(
