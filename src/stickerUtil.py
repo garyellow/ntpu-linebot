@@ -8,12 +8,13 @@ from bs4 import BeautifulSoup as Bs4
 stickers: List[str] = []
 
 SPY_FAMILY_URLS = [
-    "https://spy-family.net/tvseries/special/special1.php",
-    "https://spy-family.net/tvseries/special/special2.php",
-    "https://spy-family.net/tvseries/special/special9.php",
-    "https://spy-family.net/tvseries/special/special13.php",
-    "https://spy-family.net/tvseries/special/special16.php",
-    "https://spy-family.net/tvseries/special/special17.php",
+    "https://spy-family.net/tvseries/special/special1_season1.php",
+    "https://spy-family.net/tvseries/special/special2_season1.php",
+    "https://spy-family.net/tvseries/special/special9_season1.php",
+    "https://spy-family.net/tvseries/special/special13_season1.php",
+    "https://spy-family.net/tvseries/special/special16_season1.php",
+    "https://spy-family.net/tvseries/special/special17_season1.php",
+    "https://spy-family.net/tvseries/special/special3.php",
 ]
 
 ICHIGO_PRODUCTION_URL = "https://ichigoproduction.com/special/present_icon.html"
