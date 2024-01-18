@@ -73,7 +73,12 @@ class Order(Enum):
 
 
 # 格式化學生資訊
-def student_info_format(student_id: str, name: str = None, order: List[Order] = None, space: int = 1) -> str:
+def student_info_format(
+    student_id: str,
+    name: str = None,
+    order: List[Order] = None,
+    space: int = 1,
+) -> str:
     if name is None:
         name = get_student_by_id(int(student_id))
 
@@ -92,16 +97,16 @@ def student_info_format(student_id: str, name: str = None, order: List[Order] = 
         elif o == Order.NAME:
             message.append(name)
         elif o == Order.YEAR:
-            year = student_id[1: over_99 + 3]
+            year = student_id[1 : over_99 + 3]
             message.append(year)
         elif o == Order.DEPARTMENT:
-            department = student_id[over_99 + 3: over_99 + 5]
+            department = student_id[over_99 + 3 : over_99 + 5]
             if department == DEPARTMENT_CODE["社學"][0:2]:
                 department += student_id[over_99 + 5]
 
             message.append(DEPARTMENT_NAME[department] + "系")
         elif o == Order.FULL_DEPARTMENT:
-            department = student_id[over_99 + 3: over_99 + 5]
+            department = student_id[over_99 + 3 : over_99 + 5]
             if department in [
                 DEPARTMENT_CODE["法律"],
                 DEPARTMENT_CODE["社學"][0:2],
