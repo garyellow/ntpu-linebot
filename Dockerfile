@@ -1,4 +1,4 @@
-# 第一階段：安裝 poetry 和依賴項
+# 第一階段：安裝 poetry 並建立依賴清單
 FROM python:3.11 AS builder
 
 WORKDIR /app
@@ -6,10 +6,13 @@ WORKDIR /app
 # 安裝 poetry
 RUN pip install poetry
 
-# 複製 pyproject.toml 和 poetry.lock (如果存在的話)
+# 將 pyproject.toml 和 poetry.lock(如果有) 複製到容器中
 COPY pyproject.toml poetry.lock* /app/
 
-# 安裝依賴項
+# 若 poetry.lock 不存在，則執行 poetry lock 建立
+RUN if [ ! -f poetry.lock ]; then poetry lock; fi
+
+# 建立依賴清單
 RUN poetry export -f requirements.txt --output requirements.txt --without-hashes
 RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt
 
@@ -18,7 +21,7 @@ FROM python:3.11-slim AS runner
 
 WORKDIR /app
 
-# 複製第一階段的輪子檔案
+# 複製第一階段的 wheels 和 requirements.txt
 COPY --from=builder /app/wheels /wheels
 COPY --from=builder /app/requirements.txt .
 
