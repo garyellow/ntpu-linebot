@@ -52,6 +52,7 @@ jobs:
 
       - name: Create Render service preview
         uses: fjogeleit/http-request-action@v1
+        id: render
         with:
           url: "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/preview"
           method: "POST"
