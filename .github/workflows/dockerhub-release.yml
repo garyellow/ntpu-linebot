@@ -1,0 +1,44 @@
+# This Action requires setting the following secrets:
+#
+# - DOCKERHUB_USERNAME
+# - DOCKERHUB_ACCESS_TOKEN (create in Docker Hub)
+# - RENDER_API_KEY (create from the Account Settings page)
+# - RENDER_SERVICE_ID (the service to create a preview for)
+#
+# You must also set env.DOCKERHUB_REPOSITORY below.
+
+name: Release Docker Image to Docker Hub
+
+# Fires whenever commits are pushed to the preview branch
+on:
+  push:
+    branches:
+      - "master"
+
+env:
+  DOCKERHUB_REPOSITORY: garyellow/ntpu-id-linebot
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Build the Docker image
+        run: docker build -t ${{ env.DOCKERHUB_REPOSITORY }}:latest .
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        id: build
+        with:
+          context: .
+          push: true
+          tags: ${{ env.DOCKERHUB_REPOSITORY }}:latest

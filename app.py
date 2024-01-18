@@ -76,10 +76,12 @@ def college_postback(college_name: str, year: str) -> PostbackAction:
 def department_postback(department_code: str, year: str) -> PostbackAction:
     return PostbackAction(
         label=FULL_DEPARTMENT_NAME[department_code],
-        display_text="正在搜尋" + year + "學年度" +
-                     ("法律系" if department_code[0:2] == DEPARTMENT_CODE["法律"] else "") +
-                     DEPARTMENT_NAME[department_code] +
-                     ("組" if department_code[0:2] == DEPARTMENT_CODE["法律"] else "系"),
+        display_text="正在搜尋"
+        + year
+        + "學年度"
+        + ("法律系" if department_code[0:2] == DEPARTMENT_CODE["法律"] else "")
+        + DEPARTMENT_NAME[department_code]
+        + ("組" if department_code[0:2] == DEPARTMENT_CODE["法律"] else "系"),
         data=year + " " + department_code,
         input_option="closeRichMenu",
     )
@@ -95,10 +97,10 @@ async def instruction(event: MessageEvent | PostbackEvent) -> None:
         ),
         TextMessage(
             text="For example~~\n學號：412345678\n姓名：林某某 or 某某\n系名：資工系 or 資訊工程學系\n系代碼：85\n"
-                 + "入學學年："
-                 + str(time.localtime(time.time()).tm_year - 1911)
-                 + " or "
-                 + str(time.localtime(time.time()).tm_year),
+            + "入學學年："
+            + str(time.localtime(time.time()).tm_year - 1911)
+            + " or "
+            + str(time.localtime(time.time()).tm_year),
             sender=mes_sender,
         ),
         TextMessage(text="部分資訊是由學號推斷\n不一定為正確資料\n資料來源：國立臺北大學數位學苑2.0", sender=mes_sender),
@@ -110,7 +112,9 @@ async def instruction(event: MessageEvent | PostbackEvent) -> None:
 @app.head("/")
 @app.get("/")
 def github() -> RedirectResponse:
-    return RedirectResponse(status_code=302, url="https://github.com/garyellow/ntpu-student-id-linebot")
+    return RedirectResponse(
+        status_code=302, url="https://github.com/garyellow/ntpu-student-id-linebot"
+    )
 
 
 @app.head("/check")
@@ -162,14 +166,20 @@ async def callback(request: Request) -> PlainTextResponse:
         elif isinstance(event, PostbackEvent):
             await handle_postback_event(event)
 
-        elif isinstance(event, FollowEvent) or isinstance(event, JoinEvent) or isinstance(event, MemberJoinedEvent):
+        elif (
+            isinstance(event, FollowEvent)
+            or isinstance(event, JoinEvent)
+            or isinstance(event, MemberJoinedEvent)
+        ):
             await handle_follow_join_event(event)
 
     return PlainTextResponse(status_code=200, content="OK")
 
 
 async def handle_text_message(event: MessageEvent) -> None:
-    input_message = "".join(x for x in event.message.text if x not in string.whitespace + string.punctuation)
+    input_message = "".join(
+        x for x in event.message.text if x not in string.whitespace + string.punctuation
+    )
 
     if input_message.isdecimal():
         if input_message in FULL_DEPARTMENT_NAME:
@@ -249,7 +259,7 @@ async def handle_text_message(event: MessageEvent) -> None:
             students = student_info_format(
                 input_message,
                 order=[Order.YEAR, Order.FULL_DEPARTMENT, Order.NAME],
-                space=2
+                space=2,
             )
 
             if not students:
@@ -272,9 +282,9 @@ async def handle_text_message(event: MessageEvent) -> None:
 
             if input_message[0] == "4":
                 over_99 = len(input_message) == 9
-                year = input_message[1: over_99 + 3]
+                year = input_message[1 : over_99 + 3]
 
-                department = input_message[over_99 + 3: over_99 + 5]
+                department = input_message[over_99 + 3 : over_99 + 5]
                 if department in [
                     DEPARTMENT_CODE["法律"],
                     DEPARTMENT_CODE["社學"][0:2],
@@ -282,7 +292,9 @@ async def handle_text_message(event: MessageEvent) -> None:
                     department += input_message[over_99 + 5]
 
                 if department[0:2] == DEPARTMENT_CODE["法律"]:
-                    show_text = "搜尋" + year + "學年度法律系" + DEPARTMENT_NAME[department] + "組"
+                    show_text = (
+                        "搜尋" + year + "學年度法律系" + DEPARTMENT_NAME[department] + "組"
+                    )
                 else:
                     show_text = "搜尋" + year + "學年度" + DEPARTMENT_NAME[department] + "系"
 
@@ -362,8 +374,12 @@ async def handle_text_message(event: MessageEvent) -> None:
 
                 for i in range(min(math.ceil(len(students) / 100), 5), 0, -1):
                     students_info = "\n".join(
-                        [student_info_format(x[0], x[1])
-                         for x in students[-i * 100: -(i - 1) * 100 if i - 1 else None]]
+                        [
+                            student_info_format(x[0], x[1])
+                            for x in students[
+                                -i * 100 : -(i - 1) * 100 if i - 1 else None
+                            ]
+                        ]
                     )
 
                     messages.append(
@@ -605,14 +621,23 @@ async def handle_postback_event(event: PostbackEvent) -> None:
         year, department = event.postback.data.split(" ")
         students = get_students_by_year_and_department(int(year), int(department))
         students_info = "\n".join(
-            [student_info_format(x, y, [Order.ID, Order.NAME], 3) for x, y in students.items()]
+            [
+                student_info_format(x, y, [Order.ID, Order.NAME], 3)
+                for x, y in students.items()
+            ]
         )
 
-        students_info += "\n\n" + year + "學年度" + \
-                         ("法律系" if department[0:2] == DEPARTMENT_CODE["法律"] else "") + \
-                         DEPARTMENT_NAME[department] + \
-                         ("組" if department[0:2] == DEPARTMENT_CODE["法律"] else "系") + \
-                         "共有" + str(len(students)) + "位學生"
+        students_info += (
+            "\n\n"
+            + year
+            + "學年度"
+            + ("法律系" if department[0:2] == DEPARTMENT_CODE["法律"] else "")
+            + DEPARTMENT_NAME[department]
+            + ("組" if department[0:2] == DEPARTMENT_CODE["法律"] else "系")
+            + "共有"
+            + str(len(students))
+            + "位學生"
+        )
 
         messages = [
             TextMessage(

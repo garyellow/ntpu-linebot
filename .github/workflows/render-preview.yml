@@ -1,0 +1,69 @@
+# This Action requires setting the following secrets:
+#
+# - DOCKERHUB_USERNAME
+# - DOCKERHUB_ACCESS_TOKEN (create in Docker Hub)
+# - RENDER_API_KEY (create from the Account Settings page)
+# - RENDER_SERVICE_ID (the service to create a preview for)
+#
+# You must also set env.DOCKERHUB_REPOSITORY below.
+
+name: Preview Docker Image on Render
+
+# Fires whenever commits are pushed to the preview branch
+on:
+  pull_request:
+    paths:
+      - Dockerfile
+      - pyproject.toml
+      - poetry.lock
+      - app.py
+      - src/*
+
+env:
+  DOCKERHUB_REPOSITORY: garyellow/ntpu-id-linebot
+  TAGS: ${{ github.head_ref }}
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Build the Docker image
+        run: docker build -t ${{ env.DOCKERHUB_REPOSITORY }}:${{ env.TAGS }} .
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        id: build
+        with:
+          context: .
+          push: true
+          tags: ${{ env.DOCKERHUB_REPOSITORY }}:${{ env.TAGS }}
+
+      - name: Create Render service preview
+        uses: fjogeleit/http-request-action@v1
+        id: render
+        with:
+          url: "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/preview"
+          method: "POST"
+          bearerToken: ${{ secrets.RENDER_API_KEY }}
+          data: '{"imagePath": "docker.io/${{ env.DOCKERHUB_REPOSITORY }}:${{ env.TAGS }}"}'
+
+      - name: Comment Pull Request
+        uses: thollander/actions-comment-pull-request@v2
+
+        with:
+          message: |
+            Your [Render](https://render.com) PR Server URL is ${{ fromJson(steps.render.outputs.response).service.serviceDetails.url }}.
+
+            Follow its progress at https://dashboard.render.com/web/${{ fromJson(steps.render.outputs.response).service.id }}.

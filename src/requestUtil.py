@@ -42,7 +42,9 @@ def check_url() -> bool:
 @cached(TTLCache(maxsize=99999, ttl=60 * 60 * 24 * 7 * 4))
 def get_student_by_id(number: int) -> str:
     if student_list[str(number)] == "":
-        res = requests.get(base_url + "portfolio/search.php?fmScope=2&page=1&fmKeyword=" + str(number))
+        res = requests.get(
+            base_url + "portfolio/search.php?fmScope=2&page=1&fmKeyword=" + str(number)
+        )
         res.encoding = "utf-8"
         soup = Bs4(res.text, "html.parser")
         student = soup.find("div", {"class": "bloglistTitle"})
@@ -59,10 +61,10 @@ def get_student_by_id(number: int) -> str:
 def get_students_by_year_and_department(year: int, department: int) -> Dict[str, str]:
     students: Dict[str, str] = {}
     url = (
-            base_url
-            + "portfolio/search.php?fmScope=2&page=1&fmKeyword=4"
-            + str(year)
-            + str(department)
+        base_url
+        + "portfolio/search.php?fmScope=2&page=1&fmKeyword=4"
+        + str(year)
+        + str(department)
     )
 
     with requests.Session() as s:
@@ -73,12 +75,12 @@ def get_students_by_year_and_department(year: int, department: int) -> Dict[str,
         for i in range(1, pages):
             time.sleep(random.uniform(0.05, 0.25))
             url = (
-                    base_url
-                    + "portfolio/search.php?fmScope=2&page="
-                    + str(i)
-                    + "&fmKeyword=4"
-                    + str(year)
-                    + str(department)
+                base_url
+                + "portfolio/search.php?fmScope=2&page="
+                + str(i)
+                + "&fmKeyword=4"
+                + str(year)
+                + str(department)
             )
             res = s.get(url)
             res.encoding = "utf-8"
