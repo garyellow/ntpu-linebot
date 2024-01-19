@@ -24,7 +24,7 @@ jobs:
       - name: Login to Docker Hub
         id: login
         run: |
-          echo "::set-output name=token::$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "${{ secrets.DOCKERHUB_USERNAME }}", "password": "${{ secrets.DOCKERHUB_ACCESS_TOKEN }}"}' https://hub.docker.com/v2/users/login/ | jq -r .token)"
+          echo "token==$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "${{ secrets.DOCKERHUB_USERNAME }}", "password": "${{ secrets.DOCKERHUB_ACCESS_TOKEN }}"}' https://hub.docker.com/v2/users/login/ | jq -r .token)" >> $GITHUB_OUTPUT
 
       - name: Delete image tag
         run: |
@@ -37,7 +37,7 @@ jobs:
     steps:
       - name: Generaten Tags substring(0~8)
         id: tag
-        run: echo ::set-output name=service-name::$(echo ${{ github.head_ref }} | cut -c 1-8)
+        run: echo "service-name==$(echo ${{ github.head_ref }} | cut -c 1-8)" >> $GITHUB_OUTPUT
 
       - name: Get Render Preview services
         uses: fjogeleit/http-request-action@v1
