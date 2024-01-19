@@ -55,7 +55,7 @@ jobs:
     steps:
       - name: Generaten Tags substring(0~8)
         id: tag
-        run: echo service-name==$(echo ${{ github.head_ref }} | cut -c 1-8) >> $GITHUB_OUTPUT
+        run: echo service-name=$(echo ${{ github.head_ref }} | cut -c 1-8) >> $GITHUB_OUTPUT
 
       - name: Get Render Preview services
         uses: fjogeleit/http-request-action@v1
