@@ -5,21 +5,18 @@
 # - RENDER_API_KEY (create from the Account Settings page)
 # - RENDER_SERVICE_ID (the service to create a preview for)
 #
-# You must also set env.DOCKERHUB_REPOSITORY below.
+# And the following variables:
+#
+# - DOCKERHUB_REPOSITORY (the Docker Hub repository to push to)
 
-name: Create Preview on Render
+name: Create Preview
 
-# Fires whenever commits are pushed to the preview branch
 on:
   pull_request:
     types: [opened, reopened]
 
-env:
-  DOCKERHUB_REPOSITORY: garyellow/ntpu-id-linebot
-  TAGS: ${{ github.head_ref }}
-
 jobs:
-  preview-ci:
+  docker-hub:
     name: PUSH PREVIEW TO DOCKER HUB
     runs-on: ubuntu-latest
 
@@ -40,12 +37,12 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: ${{ env.DOCKERHUB_REPOSITORY }}:${{ env.TAGS }}
+          tags: ${{ vars.DOCKERHUB_REPOSITORY }}:${{ github.head_ref }}
 
-  preview-cd:
+  render:
     name: CREATE PREVIEW ON RENDER
     runs-on: ubuntu-latest
-    needs: preview-ci
+    needs: docker-hub
     permissions:
       pull-requests: write
 
@@ -55,14 +52,15 @@ jobs:
         id: render
         with:
           url: "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/preview"
-          method: "POST"
           bearerToken: ${{ secrets.RENDER_API_KEY }}
-          data: '{"imagePath": "docker.io/${{ env.DOCKERHUB_REPOSITORY }}:${{ env.TAGS }}"}'
+          data: '{"imagePath": "docker.io/${{ vars.DOCKERHUB_REPOSITORY }}:${{ github.head_ref }}"}'
 
       - name: Comment Pull Request
         uses: thollander/actions-comment-pull-request@v2
         with:
           message: |
-            Your [Render](https://render.com) PR Server URL is ${{ fromJson(steps.render.outputs.response).service.serviceDetails.url }}.
+            ## Preview Server is created!
+
+            Your [Render](https://render.com) Preview Server URL is ${{ fromJson(steps.render.outputs.response).service.serviceDetails.url }}.
 
             Follow its progress at https://dashboard.render.com/web/${{ fromJson(steps.render.outputs.response).service.id }}.
