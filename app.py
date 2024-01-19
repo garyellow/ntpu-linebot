@@ -111,15 +111,15 @@ async def instruction(event: MessageEvent | PostbackEvent) -> None:
 
 @app.head("/")
 @app.get("/")
-def github() -> RedirectResponse:
+def index() -> RedirectResponse:
     return RedirectResponse(
         status_code=302, url="https://github.com/garyellow/ntpu-student-id-linebot"
     )
 
 
-@app.head("/check")
-@app.get("/check")
-def healthy() -> PlainTextResponse:
+@app.head("/healthz")
+@app.get("/healthz")
+def healthz() -> PlainTextResponse:
     global url_state, renew_thread
 
     if not url_state:
