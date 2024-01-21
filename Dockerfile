@@ -19,6 +19,11 @@ RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.t
 # 第二階段：建立執行環境
 FROM python:3.11-slim AS runner
 
+# 設定 LABEL
+LABEL org.opencontainers.image.source=https://github.com/garyellow/ntpu-id-linebot
+LABEL org.opencontainers.image.description="NTPU ID Linebot"
+LABEL org.opencontainers.image.licenses=MIT
+
 WORKDIR /app
 
 # 複製第一階段的 wheels 和 requirements.txt
