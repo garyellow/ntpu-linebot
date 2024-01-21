@@ -1,13 +1,11 @@
 # This Action requires setting the following secrets:
 #
-# - DOCKERHUB_USERNAME
-# - DOCKERHUB_ACCESS_TOKEN (create in Docker Hub)
 # - RENDER_API_KEY (create from the Account Settings page)
 # - RENDER_SERVICE_ID (the service to create a preview for)
 #
 # And the following variables:
 #
-# - DOCKERHUB_REPOSITORY (the Docker Hub repository to push to)
+# - REGISTRY (the registry to push the image to, e.g. docker.io)
 
 name: Release
 
@@ -18,7 +16,7 @@ on:
 
 jobs:
   ci:
-    name: RELEASE TO DOCKER HUB
+    name: RELEASE IMAGE TO REGISTRY
     runs-on: ubuntu-latest
 
     steps:
@@ -31,14 +29,15 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
+          registry: ${{ vars.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and Push Docker image
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: ${{ vars.DOCKERHUB_REPOSITORY }}:latest
+          tags: ${{ github.repository }}:latest
 
   cd:
     name: DEPLOY TO RENDER

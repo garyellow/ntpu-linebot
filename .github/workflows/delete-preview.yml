@@ -1,13 +1,11 @@
 # This Action requires setting the following secrets:
 #
-# - DOCKERHUB_USERNAME
-# - DOCKERHUB_ACCESS_TOKEN (create in Docker Hub)
 # - RENDER_API_KEY (create from the Account Settings page)
 # - RENDER_SERVICE_ID (the service to create a preview for)
 #
 # And the following variables:
 #
-# - DOCKERHUB_REPOSITORY (the Docker Hub repository to push to)
+# - REGISTRY (the registry to push the image to, e.g. docker.io)
 
 name: Delete Preview
 
@@ -17,25 +15,25 @@ on:
 
 jobs:
   docker-hub:
-    name: DELETE IMAGE TAG
+    name: DELETE PREVIEW IMAGE
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
 
     steps:
-      - name: Login to Docker Hub
-        id: login
-        run: |
-          echo "token=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "${{ secrets.DOCKERHUB_USERNAME }}", "password": "${{ secrets.DOCKERHUB_ACCESS_TOKEN }}"}' https://hub.docker.com/v2/users/login/ | jq -r .token)" >> $GITHUB_OUTPUT
-
-      - name: Delete image tag
-        run: |
-          curl -X DELETE -H "Authorization: JWT ${{ steps.login.outputs.token }}" https://hub.docker.com/v2/repositories/${{ vars.DOCKERHUB_REPOSITORY }}/tags/${{ github.head_ref }}
+      - name: Delete Preview Image
+        uses: quartx-analytics/ghcr-cleaner@v1
+        with:
+          owner-type: user
+          token: ${{ secrets.GITHUB_TOKEN }}
+          filter-tags: ${{ github.head_ref }}
 
   render:
     name: DELETE RENDER PREVIEW
     runs-on: ubuntu-latest
 
     steps:
-      - name: Generaten Tags substring(0~8)
+      - name: Generaten Tags substring
         id: tag
         run: echo "service-name=$(echo ${{ github.head_ref }} | cut -c 1-8)" >> $GITHUB_OUTPUT
 

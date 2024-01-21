@@ -1,13 +1,11 @@
 # This Action requires setting the following secrets:
 #
-# - DOCKERHUB_USERNAME
-# - DOCKERHUB_ACCESS_TOKEN (create in Docker Hub)
 # - RENDER_API_KEY (create from the Account Settings page)
 # - RENDER_SERVICE_ID (the service to create a preview for)
 #
 # And the following variables:
 #
-# - DOCKERHUB_REPOSITORY (the Docker Hub repository to push to)
+# - REGISTRY (the registry to push the image to, e.g. docker.io)
 
 name: Create Preview
 
@@ -17,7 +15,7 @@ on:
 
 jobs:
   docker-hub:
-    name: PUSH PREVIEW TO DOCKER HUB
+    name: PUSH PREVIEW IMAGE TO REGISTRY
     runs-on: ubuntu-latest
 
     steps:
@@ -30,14 +28,15 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
+          registry: ${{ vars.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and Push Docker image
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: ${{ vars.DOCKERHUB_REPOSITORY }}:${{ github.head_ref }}
+          tags: ${{ github.repository }}:${{ github.head_ref }}
 
   render:
     name: CREATE PREVIEW ON RENDER
@@ -53,13 +52,15 @@ jobs:
         with:
           url: "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/preview"
           bearerToken: ${{ secrets.RENDER_API_KEY }}
-          data: '{"imagePath": "docker.io/${{ vars.DOCKERHUB_REPOSITORY }}:${{ github.head_ref }}"}'
+          data: '{"imagePath": "${{ vars.REGISTRY }}/${{ github.repository }}:${{ github.head_ref }}"}'
 
       - name: Comment Pull Request
         uses: thollander/actions-comment-pull-request@v2
         with:
           message: |
-            ## Preview Server is created!
+            ## Preview is created!
+
+            Your Preview Image url is https://${{ vars.REGISTRY }}/${{ github.repository }}:${{ github.head_ref }}.
 
             Your [Render](https://render.com) Preview Server URL is ${{ fromJson(steps.render.outputs.response).service.serviceDetails.url }}.
 
