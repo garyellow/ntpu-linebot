@@ -1,13 +1,12 @@
 # This Action requires setting the following secrets:
 #
-# - DOCKERHUB_USERNAME
-# - DOCKERHUB_ACCESS_TOKEN (create in Docker Hub)
 # - RENDER_API_KEY (create from the Account Settings page)
 # - RENDER_SERVICE_ID (the service to create a preview for)
+# - DOCKERHUB_TOKEN (create from https://hub.docker.com/settings/security)
 #
 # And the following variables:
 #
-# - DOCKERHUB_REPOSITORY (the Docker Hub repository to push to)
+# - REGISTRY (the registry to push the image to, e.g. docker.io)
 
 name: Release
 
@@ -17,9 +16,13 @@ on:
       - "master"
 
 jobs:
-  ci:
-    name: RELEASE TO DOCKER HUB
+  registry:
+    name: RELEASE IMAGE TO REGISTRY
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - name: Set up QEMU
@@ -28,22 +31,47 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Docker Hub
+      - name: Log in to Registry
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
+          registry: ${{ vars.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and Push Docker image
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: ${{ vars.DOCKERHUB_REPOSITORY }}:latest
+          tags: ${{ vars.REGISTRY }}/${{ github.repository }}:latest
 
-  cd:
+  backup:
+    name: BACKUP TO DOCKER HUB
+    runs-on: ubuntu-latest
+    needs: registry
+
+    steps:
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Registry
+        uses: docker/login-action@v3
+        with:
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: ${{ vars.REGISTRY }}/${{ github.repository }}:latest
+
+  render:
     name: DEPLOY TO RENDER
     runs-on: ubuntu-latest
-    needs: ci
+    needs: registry
 
     steps:
       - name: Deploy to Render
