@@ -1,11 +1,6 @@
 # This Action requires setting the following secrets:
 #
 # - RENDER_API_KEY (create from the Account Settings page)
-# - RENDER_SERVICE_ID (the service to create a preview for)
-#
-# And the following variables:
-#
-# - REGISTRY (the registry to push the image to, e.g. docker.io)
 
 name: Delete Preview
 
@@ -18,12 +13,14 @@ jobs:
     name: DELETE PREVIEW IMAGE
     runs-on: ubuntu-latest
 
+    permissions:
+      packages: write
+
     steps:
       - name: Delete Preview and Untagged Image
-        uses: vlaurin/action-ghcr-prune@v0.5.0
-        continue-on-error: true
+        uses: vlaurin/action-ghcr-prune@v0.6.0
         with:
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           container: ${{ github.event.repository.name }}
           prune-tags-regexes: ^${{ github.head_ref }}$
           prune-untagged: true
