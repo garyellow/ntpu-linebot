@@ -34,7 +34,8 @@ COPY --from=builder /app/requirements.txt .
 RUN pip install --no-cache-dir --no-index --find-links=/wheels -r requirements.txt
 
 # 複製應用程式
-COPY . .
+COPY app.py .
+COPY src/* src/
 
 # 使用 uvicorn 執行
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "10000"]
