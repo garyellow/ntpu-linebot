@@ -1,9 +1,10 @@
+# -*- coding:utf-8 -*-
 import random
 import time
-from enum import Enum, unique, auto
+from enum import Enum, auto, unique
 from typing import List
 
-from src.requestUtil import get_student_by_id, get_students_by_year_and_department
+from .requestUtil import get_student_by_id, get_students_by_year_and_department
 
 # 科系名稱 -> 科系代碼
 DEPARTMENT_CODE = {
@@ -80,7 +81,7 @@ def student_info_format(
     space: int = 1,
 ) -> str:
     if name is None:
-        name = get_student_by_id(int(student_id))
+        name = get_student_by_id(student_id)
 
     if not name:
         return ""
@@ -128,7 +129,7 @@ def student_info_format(
 def renew_student_list() -> None:
     cur_year = time.localtime(time.time()).tm_year - 1911
 
-    for year in range(cur_year + 1, cur_year - 6, -1):
+    for year in range(cur_year - 5, cur_year + 1):
         for dep in DEPARTMENT_CODE.values():
-            time.sleep(random.uniform(5, 10))
-            get_students_by_year_and_department(year, dep)
+            get_students_by_year_and_department(str(year), str(dep))
+            time.sleep(random.uniform(5, 15))
