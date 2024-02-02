@@ -13,11 +13,11 @@ on:
   pull_request:
     types: [synchronize]
     paths:
-      - Dockerfile
-      - pyproject.toml
-      - poetry.lock
       - app.py
       - src/*
+      - pyproject.toml
+      - poetry.lock
+      - Dockerfile
 
 jobs:
   registry:
