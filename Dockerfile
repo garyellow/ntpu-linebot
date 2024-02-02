@@ -20,7 +20,7 @@ RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.t
 FROM python:3.11-slim AS runner
 
 # 設定 LABEL
-LABEL org.opencontainers.image.source=https://github.com/garyellow/ntpu-id-linebot
+LABEL org.opencontainers.image.source=https://github.com/garyellow/ntpu-linebot
 LABEL org.opencontainers.image.description="NTPU ID Linebot"
 LABEL org.opencontainers.image.licenses=MIT
 

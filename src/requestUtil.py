@@ -6,7 +6,7 @@ from typing import Dict
 
 import requests
 from bs4 import BeautifulSoup as Bs4
-from cachetools import cached, TTLCache
+from cachetools import TTLCache, cached
 
 base_url = ""
 student_list = defaultdict(str)
@@ -39,32 +39,32 @@ def check_url() -> bool:
 
 
 # 取得單一學生的資料
-@cached(TTLCache(maxsize=99999, ttl=60 * 60 * 24 * 7 * 4))
-def get_student_by_id(number: int) -> str:
-    if student_list[str(number)] == "":
+@cached(TTLCache(maxsize=9999, ttl=60 * 60 * 24 * 7))
+def get_student_by_id(number: str) -> str:
+    if student_list[number] == "":
         res = requests.get(
-            base_url + "portfolio/search.php?fmScope=2&page=1&fmKeyword=" + str(number)
+            base_url + "portfolio/search.php?fmScope=2&page=1&fmKeyword=" + number
         )
         res.encoding = "utf-8"
         soup = Bs4(res.text, "html.parser")
         student = soup.find("div", {"class": "bloglistTitle"})
 
         if student is not None:
-            student_list[str(number)] = student.find("a").text
+            student_list[number] = student.find("a").text
         else:
             return ""
 
-    return student_list[str(number)]
+    return student_list[number]
 
 
-@cached(TTLCache(maxsize=999, ttl=60 * 60 * 24 * 7 * 4))
-def get_students_by_year_and_department(year: int, department: int) -> Dict[str, str]:
+@cached(TTLCache(maxsize=99, ttl=60 * 60 * 24 * 7))
+def get_students_by_year_and_department(year: str, department: str) -> Dict[str, str]:
     students: Dict[str, str] = {}
     url = (
         base_url
         + "portfolio/search.php?fmScope=2&page=1&fmKeyword=4"
-        + str(year)
-        + str(department)
+        + year
+        + department
     )
 
     with requests.Session() as s:
@@ -79,8 +79,8 @@ def get_students_by_year_and_department(year: int, department: int) -> Dict[str,
                 + "portfolio/search.php?fmScope=2&page="
                 + str(i)
                 + "&fmKeyword=4"
-                + str(year)
-                + str(department)
+                + year
+                + department
             )
             res = s.get(url)
             res.encoding = "utf-8"
