@@ -9,11 +9,11 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "~3.11"
 requests = "^2.31.0"
-beautifulsoup4 = "^4.12.2"
+beautifulsoup4 = "^4.12.3"
 line-bot-sdk = "^3.7.0"
 cachetools = "^5.3.2"
 fastapi = "^0.109.0"
-uvicorn = {extras = ["standard"], version = "^0.26.0"}
+uvicorn = {extras = ["standard"], version = "^0.27.0.post1"}
 
 
 [build-system]
