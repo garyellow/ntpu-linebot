@@ -4,7 +4,7 @@ import time
 from enum import Enum, auto, unique
 from typing import List
 
-from .requestUtil import get_student_by_id, get_students_by_year_and_department
+from src.request_util import get_student_by_id, get_students_by_year_and_department
 
 # 科系名稱 -> 科系代碼
 DEPARTMENT_CODE = {
@@ -66,6 +66,8 @@ FULL_DEPARTMENT_NAME = {v: k for k, v in FULL_DEPARTMENT_CODE.items()}
 # 學生資訊排序
 @unique
 class Order(Enum):
+    """輸出項目排序"""
+
     ID = auto()
     NAME = auto()
     YEAR = auto()
@@ -73,13 +75,14 @@ class Order(Enum):
     FULL_DEPARTMENT = auto()
 
 
-# 格式化學生資訊
 def student_info_format(
     student_id: str,
     name: str = None,
     order: List[Order] = None,
     space: int = 1,
 ) -> str:
+    """學生資訊格式化"""
+
     if name is None:
         name = get_student_by_id(student_id)
 
@@ -125,8 +128,9 @@ def student_info_format(
     return (" " * space).join(message)
 
 
-# 更新學生名單
 def renew_student_list() -> None:
+    """更新學生名單"""
+
     cur_year = time.localtime(time.time()).tm_year - 1911
 
     for year in range(cur_year - 5, cur_year + 1):

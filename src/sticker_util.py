@@ -21,7 +21,7 @@ ICHIGO_PRODUCTION_URL = "https://ichigoproduction.com/special/present_icon.html"
 
 # 載入貼圖(爬蟲)
 for url in SPY_FAMILY_URLS:
-    response = requests.get(url)
+    response = requests.get(url, timeout=5)
     soup = Bs4(response.text, "html.parser")
     temp = soup.select("ul.icondlLists > li > a > img")
 
@@ -30,7 +30,7 @@ for url in SPY_FAMILY_URLS:
 
     time.sleep(0.05)
 
-response = requests.get(ICHIGO_PRODUCTION_URL)
+response = requests.get(ICHIGO_PRODUCTION_URL, timeout=5)
 soup = Bs4(response.text, "html.parser")
 temp = soup.select("ul.tp5 > li > div.ph > a")
 

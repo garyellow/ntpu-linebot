@@ -4,21 +4,26 @@ import random
 from linebot.v3.messaging.models import ImageMessage, Sender, TextMessage
 from linebot.v3.webhooks import MessageEvent, PostbackEvent
 
-from .idBot import IDBot
-from .lineBotUtil import get_sender, reply_message
-
-from .stickerUtil import stickers
+from src.id_bot import id_bot
+from src.line_bot_util import get_sender, reply_message
+from src.sticker_util import stickers
 
 
 async def handle_text_message(event: MessageEvent) -> None:
-    await IDBot.handle_text_message(event)
+    """處理文字訊息"""
+
+    await id_bot.handle_text_message(event)
 
 
 async def handle_postback_event(event: PostbackEvent) -> None:
-    await IDBot.handle_postback_event(event)
+    """處理回傳事件"""
+
+    await id_bot.handle_postback_event(event)
 
 
 async def handle_sticker_message(event: MessageEvent) -> None:
+    """處理貼圖訊息"""
+
     sticker = random.choice(stickers)
 
     messages = [
@@ -33,6 +38,8 @@ async def handle_sticker_message(event: MessageEvent) -> None:
 
 
 async def handle_follow_join_event(event) -> None:
+    """處理加入好友與加入群組事件"""
+
     mes_sender = get_sender()
 
     messages = [
