@@ -63,17 +63,16 @@ async def instruction(reply_token: str) -> None:
     """使用說明"""
 
     mes_sender = get_sender()
+    cur_year = time.localtime(time.time()).tm_year
     messages = [
         TextMessage(
-            text="輸入學號可查詢姓名\n輸入姓名可查詢學號\n輸入系名可查詢系代碼\n輸入系代碼可查詢系名\n輸入入學學年再選科系獲取學生名單",
+            text="輸入學號可查詢姓名\n輸入姓名可查詢學號\n"
+            + "輸入系名可查詢系代碼\n輸入系代碼可查詢系名\n輸入入學學年再選科系獲取學生名單",
             sender=mes_sender,
         ),
         TextMessage(
-            text="For example~~\n學號：412345678\n姓名：林某某 or 某某\n系名：資工系 or 資訊工程學系\n系代碼：85\n"
-            + "入學學年："
-            + str(time.localtime(time.time()).tm_year - 1911)
-            + " or "
-            + str(time.localtime(time.time()).tm_year),
+            text="For example~~\n學號：412345678\n姓名：林某某 or 某某\n"
+            + f"系名：資工系 or 資訊工程學系\n系代碼：85\n入學學年：{cur_year - 1911} or {cur_year}",
             sender=mes_sender,
         ),
         TextMessage(

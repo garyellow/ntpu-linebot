@@ -48,7 +48,7 @@ def get_student_by_id(number: str) -> str:
 
     if student_list[number] == "":
         res = requests.get(
-            base_url + "portfolio/search.php?fmScope=2&page=1&fmKeyword=" + number,
+            f"{base_url}portfolio/search.php?fmScope=2&page=1&fmKeyword={number}",
             timeout=5,
         )
         res.encoding = "utf-8"
@@ -69,10 +69,7 @@ def get_students_by_year_and_department(year: str, department: str) -> Dict[str,
 
     students: Dict[str, str] = {}
     url = (
-        base_url
-        + "portfolio/search.php?fmScope=2&page=1&fmKeyword=4"
-        + year
-        + department
+        f"{base_url}portfolio/search.php?fmScope=2&page=1&fmKeyword=4{year}{department}"
     )
 
     with requests.Session() as s:
@@ -82,14 +79,7 @@ def get_students_by_year_and_department(year: str, department: str) -> Dict[str,
         pages = len(data.find_all("span", {"class": "item"}))
         for i in range(1, pages):
             time.sleep(random.uniform(0.05, 0.25))
-            url = (
-                base_url
-                + "portfolio/search.php?fmScope=2&page="
-                + str(i)
-                + "&fmKeyword=4"
-                + year
-                + department
-            )
+            url = f"{base_url}portfolio/search.php?fmScope=2&page={i}&fmKeyword=4{year}{department}"
             res = s.get(url, timeout=5)
             res.encoding = "utf-8"
 

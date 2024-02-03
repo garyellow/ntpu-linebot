@@ -26,7 +26,7 @@ for url in SPY_FAMILY_URLS:
     temp = soup.select("ul.icondlLists > li > a > img")
 
     for i in temp:
-        stickers.append("https://spy-family.net/" + i["src"][3:])
+        stickers.append(f"https://spy-family.net/{i['src'][3:]}")
 
     time.sleep(0.05)
 
@@ -35,4 +35,4 @@ soup = Bs4(response.text, "html.parser")
 temp = soup.select("ul.tp5 > li > div.ph > a")
 
 for i in temp:
-    stickers.append("https://ichigoproduction.com/" + i["href"][3:])
+    stickers.append(f"https://ichigoproduction.com/{i['href'][3:]}")

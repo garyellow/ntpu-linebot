@@ -47,13 +47,11 @@ class IDBot(Bot):
 
         return PostbackAction(
             label=FULL_DEPARTMENT_NAME[department_code],
-            display_text="正在搜尋"
-            + year
-            + "學年度"
+            display_text=f"正在搜尋{year}學年度"
             + ("法律系" if department_code[0:2] == DEPARTMENT_CODE["法律"] else "")
             + DEPARTMENT_NAME[department_code]
             + ("組" if department_code[0:2] == DEPARTMENT_CODE["法律"] else "系"),
-            data=year + " " + department_code,
+            data=f"{year} {department_code}",
             input_option="closeRichMenu",
         )
 
@@ -61,7 +59,7 @@ class IDBot(Bot):
         """處理文字訊息"""
 
         unused = str.maketrans("", "", string.whitespace + string.punctuation)
-        data = event.message.text.translate(unused)
+        data: str = event.message.text.translate(unused)
 
         if data.isdecimal():
             if data in FULL_DEPARTMENT_NAME:
@@ -114,12 +112,12 @@ class IDBot(Bot):
                         TemplateMessage(
                             alt_text="確認學年度",
                             template=ConfirmTemplate(
-                                text="是否要搜尋 " + str(year) + " 學年度的學生",
+                                text=f"是否要搜尋 {year} 學年度的學生",
                                 actions=[
                                     PostbackAction(
                                         label="哪次不是",
                                         display_text="哪次不是",
-                                        data="搜尋全系" + str(year),
+                                        data=f"搜尋全系{year}",
                                         input_option="openRichMenu",
                                     ),
                                     PostbackAction(
@@ -146,7 +144,7 @@ class IDBot(Bot):
                 if not students:
                     messages = [
                         TextMessage(
-                            text="學號 " + data + " 不存在OAO",
+                            text=f"學號 {data} 不存在OAO",
                             sender=get_sender(self.SENDER_NAME),
                         ),
                     ]
@@ -174,28 +172,18 @@ class IDBot(Bot):
 
                     if department[0:2] == DEPARTMENT_CODE["法律"]:
                         show_text = (
-                            "搜尋"
-                            + year
-                            + "學年度法律系"
-                            + DEPARTMENT_NAME[department]
-                            + "組"
+                            f"搜尋{year}學年度法律系{DEPARTMENT_NAME[department]}組"
                         )
                     else:
-                        show_text = (
-                            "搜尋"
-                            + year
-                            + "學年度"
-                            + DEPARTMENT_NAME[department]
-                            + "系"
-                        )
+                        show_text = f"搜尋{year}學年度{DEPARTMENT_NAME[department]}系"
 
                     messages[0].quick_reply = QuickReply(
                         items=[
                             QuickReplyItem(
                                 action=PostbackAction(
                                     label=show_text,
-                                    display_text="正在" + show_text,
-                                    data=year + " " + department,
+                                    display_text=f"正在{show_text}",
+                                    data=f"{year} {department}",
                                     input_option="closeRichMenu",
                                 ),
                             ),
@@ -210,7 +198,7 @@ class IDBot(Bot):
 
             elif data == self.ALL_DEPARTMENT_CODE:
                 students = "\n".join(
-                    [x + "系 -> " + y for x, y in DEPARTMENT_CODE.items()]
+                    [f"{x}系 -> {y}" for x, y in DEPARTMENT_CODE.items()]
                 )
                 messages = [
                     TextMessage(
@@ -518,15 +506,11 @@ class IDBot(Bot):
             )
 
             students_info += (
-                "\n\n"
-                + year
-                + "學年度"
+                f"\n\n{year}學年度"
                 + ("法律系" if department[0:2] == DEPARTMENT_CODE["法律"] else "")
                 + DEPARTMENT_NAME[department]
                 + ("組" if department[0:2] == DEPARTMENT_CODE["法律"] else "系")
-                + "共有"
-                + str(len(students))
-                + "位學生"
+                + f"共有{len(students)}位學生"
             )
 
             messages = [
