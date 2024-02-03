@@ -3,7 +3,6 @@ import os
 import random
 import sys
 import time
-from abc import abstractmethod
 from typing import List
 
 from linebot.v3 import WebhookParser
@@ -17,7 +16,7 @@ from linebot.v3.messaging.models import (
     TextMessage,
 )
 
-from .stickerUtil import stickers
+from src.sticker_util import stickers
 
 # get channel_secret and channel_access_token from your environment variable
 channel_secret = os.getenv("LINE_CHANNEL_SECRET", None)
@@ -36,16 +35,22 @@ async_api_client = AsyncApiClient(configuration)
 line_bot_api = AsyncMessagingApi(async_api_client)
 
 
-# 回覆者資訊
 def get_sender(name: str | None = None) -> Sender:
+    """
+    取得回覆者資訊
+
+    icon 使用隨機貼圖
+    """
+
     return Sender(
         name=name,
         iconUrl=random.choice(stickers),
     )
 
 
-# 回覆訊息
 async def reply_message(reply_token: str, message: List[Message]) -> None:
+    """製作回覆訊息並發送"""
+
     await line_bot_api.reply_message(
         ReplyMessageRequest(
             reply_token=reply_token,
@@ -54,8 +59,9 @@ async def reply_message(reply_token: str, message: List[Message]) -> None:
     )
 
 
-# 使用說明
 async def instruction(reply_token: str) -> None:
+    """使用說明"""
+
     mes_sender = get_sender()
     messages = [
         TextMessage(

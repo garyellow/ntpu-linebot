@@ -15,9 +15,10 @@ from linebot.v3.messaging.models import (
 )
 from linebot.v3.webhooks import MessageEvent, PostbackEvent
 
-from .lineBotUtil import get_sender, instruction, reply_message
-from .requestUtil import get_students_by_year_and_department, student_list
-from .studentUtil import (
+from src.abs_bot import Bot
+from src.line_bot_util import get_sender, instruction, reply_message
+from src.request_util import get_students_by_year_and_department, student_list
+from src.student_util import (
     DEPARTMENT_CODE,
     DEPARTMENT_NAME,
     FULL_DEPARTMENT_CODE,
@@ -27,12 +28,13 @@ from .studentUtil import (
 )
 
 
-class IDBot:
+class IDBot(Bot):
     SENDER_NAME = "學號魔法師"
     ALL_DEPARTMENT_CODE = "所有系代碼"
 
-    # 學院 postback
-    def college_postback(college_name: str, year: str) -> PostbackAction:
+    def college_postback(self, college_name: str, year: str) -> PostbackAction:
+        """製作學院 postback action"""
+
         return PostbackAction(
             label=college_name,
             display_text=college_name,
@@ -40,8 +42,9 @@ class IDBot:
             input_option="closeRichMenu",
         )
 
-    # 科系 postback
-    def department_postback(department_code: str, year: str) -> PostbackAction:
+    def department_postback(self, department_code: str, year: str) -> PostbackAction:
+        """製作科系 postback action"""
+
         return PostbackAction(
             label=FULL_DEPARTMENT_NAME[department_code],
             display_text="正在搜尋"
@@ -54,7 +57,9 @@ class IDBot:
             input_option="closeRichMenu",
         )
 
-    async def handle_text_message(event: MessageEvent) -> None:
+    async def handle_text_message(self, event: MessageEvent) -> None:
+        """處理文字訊息"""
+
         unused = str.maketrans("", "", string.whitespace + string.punctuation)
         data = event.message.text.translate(unused)
 
@@ -67,13 +72,13 @@ class IDBot:
                             items=[
                                 QuickReplyItem(
                                     action=MessageAction(
-                                        label=IDBot.ALL_DEPARTMENT_CODE,
-                                        text=IDBot.ALL_DEPARTMENT_CODE,
+                                        label=self.ALL_DEPARTMENT_CODE,
+                                        text=self.ALL_DEPARTMENT_CODE,
                                     )
                                 ),
                             ]
                         ),
-                        sender=get_sender(IDBot.SENDER_NAME),
+                        sender=get_sender(self.SENDER_NAME),
                     ),
                 ]
 
@@ -87,21 +92,21 @@ class IDBot:
                     messages.append(
                         TextMessage(
                             text="你未來人？(⊙ˍ⊙)",
-                            sender=get_sender(IDBot.SENDER_NAME),
+                            sender=get_sender(self.SENDER_NAME),
                         )
                     )
                 elif year < 90:
                     messages.append(
                         TextMessage(
                             text="學校都還沒蓋好(￣▽￣)",
-                            sender=get_sender(IDBot.SENDER_NAME),
+                            sender=get_sender(self.SENDER_NAME),
                         )
                     )
                 elif year < 95:
                     messages.append(
                         TextMessage(
                             text="數位學苑還沒出生喔~~",
-                            sender=get_sender(IDBot.SENDER_NAME),
+                            sender=get_sender(self.SENDER_NAME),
                         )
                     )
                 else:
@@ -125,7 +130,7 @@ class IDBot:
                                     ),
                                 ],
                             ),
-                            sender=get_sender(IDBot.SENDER_NAME),
+                            sender=get_sender(self.SENDER_NAME),
                         )
                     )
 
@@ -142,7 +147,7 @@ class IDBot:
                     messages = [
                         TextMessage(
                             text="學號 " + data + " 不存在OAO",
-                            sender=get_sender(IDBot.SENDER_NAME),
+                            sender=get_sender(self.SENDER_NAME),
                         ),
                     ]
 
@@ -152,7 +157,7 @@ class IDBot:
                 messages = [
                     TextMessage(
                         text=students,
-                        sender=get_sender(IDBot.SENDER_NAME),
+                        sender=get_sender(self.SENDER_NAME),
                     ),
                 ]
 
@@ -203,14 +208,14 @@ class IDBot:
             if data in ["使用說明", "help"]:
                 await instruction(event.reply_token)
 
-            elif data == IDBot.ALL_DEPARTMENT_CODE:
+            elif data == self.ALL_DEPARTMENT_CODE:
                 students = "\n".join(
                     [x + "系 -> " + y for x, y in DEPARTMENT_CODE.items()]
                 )
                 messages = [
                     TextMessage(
                         text=students,
-                        sender=get_sender(IDBot.SENDER_NAME),
+                        sender=get_sender(self.SENDER_NAME),
                     ),
                 ]
 
@@ -224,13 +229,13 @@ class IDBot:
                             items=[
                                 QuickReplyItem(
                                     action=MessageAction(
-                                        label=IDBot.ALL_DEPARTMENT_CODE,
-                                        text=IDBot.ALL_DEPARTMENT_CODE,
+                                        label=self.ALL_DEPARTMENT_CODE,
+                                        text=self.ALL_DEPARTMENT_CODE,
                                     )
                                 ),
                             ]
                         ),
-                        sender=get_sender(IDBot.SENDER_NAME),
+                        sender=get_sender(self.SENDER_NAME),
                     ),
                 ]
 
@@ -244,13 +249,13 @@ class IDBot:
                             items=[
                                 QuickReplyItem(
                                     action=MessageAction(
-                                        label=IDBot.ALL_DEPARTMENT_CODE,
-                                        text=IDBot.ALL_DEPARTMENT_CODE,
+                                        label=self.ALL_DEPARTMENT_CODE,
+                                        text=self.ALL_DEPARTMENT_CODE,
                                     )
                                 ),
                             ]
                         ),
-                        sender=get_sender(IDBot.SENDER_NAME),
+                        sender=get_sender(self.SENDER_NAME),
                     ),
                 ]
 
@@ -264,9 +269,7 @@ class IDBot:
 
                 messages = []
                 if students:
-                    students = sorted(
-                        students, key=lambda x: (not len(x[0]), int(x[0]))
-                    )
+                    students = sorted(students, key=lambda x: (not x[0], int(x[0])))
 
                     for i in range(min(math.ceil(len(students) / 100), 5), 0, -1):
                         students_info = "\n".join(
@@ -281,13 +284,15 @@ class IDBot:
                         messages.append(
                             TextMessage(
                                 text=students_info,
-                                sender=get_sender(IDBot.SENDER_NAME),
+                                sender=get_sender(self.SENDER_NAME),
                             )
                         )
 
                     await reply_message(event.reply_token, messages)
 
-    async def handle_postback_event(event: PostbackEvent) -> None:
+    async def handle_postback_event(self, event: PostbackEvent) -> None:
+        """處理回傳事件"""
+
         data = event.postback.data
 
         if data == "使用說明":
@@ -297,7 +302,7 @@ class IDBot:
             messages = [
                 TextMessage(
                     text="泥好兇喔~~இ௰இ",
-                    sender=get_sender(IDBot.SENDER_NAME),
+                    sender=get_sender(self.SENDER_NAME),
                 ),
             ]
 
@@ -314,11 +319,11 @@ class IDBot:
                         title="選擇學院群",
                         text="請選擇科系所屬學院群",
                         actions=[
-                            IDBot.college_postback("文法商", year),
-                            IDBot.college_postback("公社電資", year),
+                            self.college_postback("文法商", year),
+                            self.college_postback("公社電資", year),
                         ],
                     ),
-                    sender=get_sender(IDBot.SENDER_NAME),
+                    sender=get_sender(self.SENDER_NAME),
                 ),
             ]
 
@@ -334,12 +339,12 @@ class IDBot:
                         title="選擇學院",
                         text="請選擇科系所屬學院",
                         actions=[
-                            IDBot.college_postback("人文學院", year),
-                            IDBot.college_postback("法律學院", year),
-                            IDBot.college_postback("商學院", year),
+                            self.college_postback("人文學院", year),
+                            self.college_postback("法律學院", year),
+                            self.college_postback("商學院", year),
                         ],
                     ),
-                    sender=get_sender(IDBot.SENDER_NAME),
+                    sender=get_sender(self.SENDER_NAME),
                 ),
             ]
 
@@ -355,12 +360,12 @@ class IDBot:
                         title="選擇學院",
                         text="請選擇科系所屬學院",
                         actions=[
-                            IDBot.college_postback("公共事務學院", year),
-                            IDBot.college_postback("社會科學學院", year),
-                            IDBot.college_postback("電機資訊學院", year),
+                            self.college_postback("公共事務學院", year),
+                            self.college_postback("社會科學學院", year),
+                            self.college_postback("電機資訊學院", year),
                         ],
                     ),
-                    sender=get_sender(IDBot.SENDER_NAME),
+                    sender=get_sender(self.SENDER_NAME),
                 ),
             ]
 
@@ -377,12 +382,12 @@ class IDBot:
                         title="選擇科系",
                         text="請選擇要查詢的科系",
                         actions=[
-                            IDBot.department_postback(DEPARTMENT_CODE["中文"], year),
-                            IDBot.department_postback(DEPARTMENT_CODE["應外"], year),
-                            IDBot.department_postback(DEPARTMENT_CODE["歷史"], year),
+                            self.department_postback(DEPARTMENT_CODE["中文"], year),
+                            self.department_postback(DEPARTMENT_CODE["應外"], year),
+                            self.department_postback(DEPARTMENT_CODE["歷史"], year),
                         ],
                     ),
-                    sender=get_sender(IDBot.SENDER_NAME),
+                    sender=get_sender(self.SENDER_NAME),
                 ),
             ]
 
@@ -399,12 +404,12 @@ class IDBot:
                         title="選擇組別",
                         text="請選擇要查詢的組別",
                         actions=[
-                            IDBot.department_postback(DEPARTMENT_CODE["法學"], year),
-                            IDBot.department_postback(DEPARTMENT_CODE["司法"], year),
-                            IDBot.department_postback(DEPARTMENT_CODE["財法"], year),
+                            self.department_postback(DEPARTMENT_CODE["法學"], year),
+                            self.department_postback(DEPARTMENT_CODE["司法"], year),
+                            self.department_postback(DEPARTMENT_CODE["財法"], year),
                         ],
                     ),
-                    sender=get_sender(IDBot.SENDER_NAME),
+                    sender=get_sender(self.SENDER_NAME),
                 ),
             ]
 
@@ -420,17 +425,17 @@ class IDBot:
                         thumbnail_image_url="https://walkinto.in/upload/ZJum7EYwPUZkedmXNtvPL.JPG",
                         title="選擇科系",
                         text="請選擇科系 (休運系請直接點圖片)",
-                        default_action=IDBot.department_postback(
+                        default_action=self.department_postback(
                             DEPARTMENT_CODE["休運"], year
                         ),
                         actions=[
-                            IDBot.department_postback(DEPARTMENT_CODE["企管"], year),
-                            IDBot.department_postback(DEPARTMENT_CODE["金融"], year),
-                            IDBot.department_postback(DEPARTMENT_CODE["會計"], year),
-                            IDBot.department_postback(DEPARTMENT_CODE["統計"], year),
+                            self.department_postback(DEPARTMENT_CODE["企管"], year),
+                            self.department_postback(DEPARTMENT_CODE["金融"], year),
+                            self.department_postback(DEPARTMENT_CODE["會計"], year),
+                            self.department_postback(DEPARTMENT_CODE["統計"], year),
                         ],
                     ),
-                    sender=get_sender(IDBot.SENDER_NAME),
+                    sender=get_sender(self.SENDER_NAME),
                 ),
             ]
 
@@ -447,12 +452,12 @@ class IDBot:
                         title="選擇科系",
                         text="請選擇要查詢的科系",
                         actions=[
-                            IDBot.department_postback(DEPARTMENT_CODE["公行"], year),
-                            IDBot.department_postback(DEPARTMENT_CODE["不動"], year),
-                            IDBot.department_postback(DEPARTMENT_CODE["財政"], year),
+                            self.department_postback(DEPARTMENT_CODE["公行"], year),
+                            self.department_postback(DEPARTMENT_CODE["不動"], year),
+                            self.department_postback(DEPARTMENT_CODE["財政"], year),
                         ],
                     ),
-                    sender=get_sender(IDBot.SENDER_NAME),
+                    sender=get_sender(self.SENDER_NAME),
                 ),
             ]
 
@@ -469,12 +474,12 @@ class IDBot:
                         title="選擇科系",
                         text="請選擇科系",
                         actions=[
-                            IDBot.department_postback(DEPARTMENT_CODE["經濟"], year),
-                            IDBot.department_postback(DEPARTMENT_CODE["社學"], year),
-                            IDBot.department_postback(DEPARTMENT_CODE["社工"], year),
+                            self.department_postback(DEPARTMENT_CODE["經濟"], year),
+                            self.department_postback(DEPARTMENT_CODE["社學"], year),
+                            self.department_postback(DEPARTMENT_CODE["社工"], year),
                         ],
                     ),
-                    sender=get_sender(IDBot.SENDER_NAME),
+                    sender=get_sender(self.SENDER_NAME),
                 ),
             ]
 
@@ -491,12 +496,12 @@ class IDBot:
                         title="選擇科系",
                         text="請選擇科系",
                         actions=[
-                            IDBot.department_postback(DEPARTMENT_CODE["電機"], year),
-                            IDBot.department_postback(DEPARTMENT_CODE["資工"], year),
-                            IDBot.department_postback(DEPARTMENT_CODE["通訊"], year),
+                            self.department_postback(DEPARTMENT_CODE["電機"], year),
+                            self.department_postback(DEPARTMENT_CODE["資工"], year),
+                            self.department_postback(DEPARTMENT_CODE["通訊"], year),
                         ],
                     ),
-                    sender=get_sender(IDBot.SENDER_NAME),
+                    sender=get_sender(self.SENDER_NAME),
                 ),
             ]
 
@@ -527,8 +532,11 @@ class IDBot:
             messages = [
                 TextMessage(
                     text=students_info,
-                    sender=get_sender(IDBot.SENDER_NAME),
+                    sender=get_sender(self.SENDER_NAME),
                 ),
             ]
 
             await reply_message(event.reply_token, messages)
+
+
+id_bot = IDBot()

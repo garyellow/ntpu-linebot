@@ -12,12 +12,17 @@ base_url = ""
 student_list = defaultdict(str)
 
 
-# 檢查網址是否還可用
 def check_url() -> bool:
+    """
+    檢查網址是否還可用
+
+    若網址無法連線，則嘗試使用其他網址
+    """
+
     global base_url
 
     try:
-        requests.head(base_url, timeout=1)
+        requests.head(base_url, timeout=3)
 
     except requests.exceptions.RequestException:
         ip_url = "http://120.126.197.52/"
@@ -26,7 +31,7 @@ def check_url() -> bool:
 
         for url in [ip_url, ip2_url, real_url]:
             try:
-                requests.head(url, timeout=1)
+                requests.head(url, timeout=3)
                 base_url = url
                 return True
             except requests.exceptions.RequestException:
@@ -34,16 +39,17 @@ def check_url() -> bool:
 
         return False
 
-    else:
-        return True
+    return True
 
 
-# 取得單一學生的資料
 @cached(TTLCache(maxsize=9999, ttl=60 * 60 * 24 * 7))
 def get_student_by_id(number: str) -> str:
+    """取得單一學生的資料(快取一週)"""
+
     if student_list[number] == "":
         res = requests.get(
-            base_url + "portfolio/search.php?fmScope=2&page=1&fmKeyword=" + number
+            base_url + "portfolio/search.php?fmScope=2&page=1&fmKeyword=" + number,
+            timeout=5,
         )
         res.encoding = "utf-8"
         soup = Bs4(res.text, "html.parser")
@@ -59,6 +65,8 @@ def get_student_by_id(number: str) -> str:
 
 @cached(TTLCache(maxsize=99, ttl=60 * 60 * 24 * 7))
 def get_students_by_year_and_department(year: str, department: str) -> Dict[str, str]:
+    """取得某年某系學生名單(快取一週)"""
+
     students: Dict[str, str] = {}
     url = (
         base_url
@@ -68,7 +76,7 @@ def get_students_by_year_and_department(year: str, department: str) -> Dict[str,
     )
 
     with requests.Session() as s:
-        res = s.get(url)
+        res = s.get(url, timeout=5)
         res.encoding = "utf-8"
         data = Bs4(res.text, "html.parser")
         pages = len(data.find_all("span", {"class": "item"}))
@@ -82,7 +90,7 @@ def get_students_by_year_and_department(year: str, department: str) -> Dict[str,
                 + year
                 + department
             )
-            res = s.get(url)
+            res = s.get(url, timeout=5)
             res.encoding = "utf-8"
 
             data = Bs4(res.text, "html.parser")

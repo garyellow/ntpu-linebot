@@ -15,15 +15,15 @@ from linebot.v3.webhooks import (
     TextMessageContent,
 )
 
-from src.botRoute import (
+from src.bot_route import (
     handle_follow_join_event,
     handle_postback_event,
     handle_sticker_message,
     handle_text_message,
 )
-from src.lineBotUtil import parser
-from src.requestUtil import check_url
-from src.studentUtil import renew_student_list
+from src.line_bot_util import parser
+from src.request_util import check_url
+from src.student_util import renew_student_list
 
 app = FastAPI()
 
@@ -34,6 +34,8 @@ renew_thread: threading.Thread
 @app.head("/")
 @app.get("/")
 def index() -> RedirectResponse:
+    """導向至專案 GitHub 頁面"""
+
     return RedirectResponse(
         status_code=302, url="https://github.com/garyellow/ntpu-linebot"
     )
@@ -42,6 +44,8 @@ def index() -> RedirectResponse:
 @app.head("/healthz")
 @app.get("/healthz")
 def healthz() -> PlainTextResponse:
+    """健康檢查"""
+
     global url_state, renew_thread
 
     if not url_state:
@@ -58,6 +62,8 @@ def healthz() -> PlainTextResponse:
 
 @app.post("/callback")
 async def callback(request: Request) -> PlainTextResponse:
+    """處理 LINE Bot 的 Webhook"""
+
     global url_state
 
     # get X-Line-Signature header value
@@ -71,12 +77,12 @@ async def callback(request: Request) -> PlainTextResponse:
     try:
         events = parser.parse(body, signature)
 
-    except InvalidSignatureError:
-        raise HTTPException(status_code=500, detail="Invalid signature")
+    except InvalidSignatureError as exc:
+        raise HTTPException(status_code=500, detail="Invalid signature") from exc
 
-    except requests.exceptions.Timeout:
+    except requests.exceptions.Timeout as exc:
         url_state = False
-        raise HTTPException(status_code=408, detail="Request Timeout")
+        raise HTTPException(status_code=408, detail="Request Timeout") from exc
 
     for event in events:
         if isinstance(event, MessageEvent):
