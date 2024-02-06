@@ -6,6 +6,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import PlainTextResponse, RedirectResponse
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.webhooks import (
+    Event,
     FollowEvent,
     JoinEvent,
     MemberJoinedEvent,
@@ -15,14 +16,9 @@ from linebot.v3.webhooks import (
     TextMessageContent,
 )
 
-from src.bot_route import (
-    handle_follow_join_event,
-    handle_postback_event,
-    handle_sticker_message,
-    handle_text_message,
-)
+import src.bot_routes as routes
 from src.id_request import check_url
-from src.line_bot_util import parser
+from src.line_bot_util import handler
 from src.student_util import renew_student_list
 
 app = FastAPI()
@@ -75,26 +71,43 @@ async def callback(request: Request) -> PlainTextResponse:
 
     # handle webhook body
     try:
-        events = parser.parse(body, signature)
+        handler.handle(body, signature)
 
     except InvalidSignatureError as exc:
-        raise HTTPException(status_code=500, detail="Invalid signature") from exc
+        raise HTTPException(status_code=400, detail="Invalid signature") from exc
 
     except requests.exceptions.Timeout as exc:
         url_state = False
         raise HTTPException(status_code=408, detail="Request Timeout") from exc
 
-    for event in events:
-        if isinstance(event, MessageEvent):
-            if isinstance(event.message, TextMessageContent):
-                await handle_text_message(event)
-            if isinstance(event.message, StickerMessageContent):
-                await handle_sticker_message(event)
-
-        elif isinstance(event, PostbackEvent):
-            await handle_postback_event(event)
-
-        elif isinstance(event, (FollowEvent, JoinEvent, MemberJoinedEvent)):
-            await handle_follow_join_event(event)
-
     return PlainTextResponse(status_code=200, content="OK")
+
+
+@handler.add(MessageEvent, TextMessageContent)
+async def handle_text_message(event: MessageEvent) -> None:
+    """處理文字訊息"""
+
+    await routes.handle_text_message(event)
+
+
+@handler.add(PostbackEvent)
+async def handle_postback_event(event: PostbackEvent) -> None:
+    """處理回傳事件"""
+
+    await routes.handle_postback_event(event)
+
+
+@handler.add(MessageEvent, StickerMessageContent)
+async def handle_sticker_message(event: MessageEvent) -> None:
+    """處理貼圖訊息"""
+
+    await routes.handle_sticker_message(event)
+
+
+@handler.add(FollowEvent)
+@handler.add(JoinEvent)
+@handler.add(MemberJoinedEvent)
+async def handle_follow_join_event(event: Event) -> None:
+    """處理加入好友與加入群組事件"""
+
+    await routes.handle_follow_join_event(event)

@@ -1,8 +1,9 @@
 # -*- coding:utf-8 -*-
 import random
+import string
 
 from linebot.v3.messaging.models import ImageMessage, Sender, TextMessage
-from linebot.v3.webhooks import MessageEvent, PostbackEvent
+from linebot.v3.webhooks import MessageEvent, PostbackEvent, Event
 
 from src.id_bot import id_bot
 from src.line_bot_util import get_sender, reply_message
@@ -12,13 +13,16 @@ from src.sticker_util import stickers
 async def handle_text_message(event: MessageEvent) -> None:
     """處理文字訊息"""
 
-    await id_bot.handle_text_message(event)
+    unused = str.maketrans("", "", string.whitespace + string.punctuation)
+    payload: str = event.message.text.translate(unused)
+
+    await id_bot.handle_text_message(payload, event.reply_token)
 
 
 async def handle_postback_event(event: PostbackEvent) -> None:
     """處理回傳事件"""
 
-    await id_bot.handle_postback_event(event)
+    await id_bot.handle_postback_event(event.postback.data, event.reply_token)
 
 
 async def handle_sticker_message(event: MessageEvent) -> None:
@@ -37,7 +41,7 @@ async def handle_sticker_message(event: MessageEvent) -> None:
     await reply_message(event.reply_token, messages)
 
 
-async def handle_follow_join_event(event) -> None:
+async def handle_follow_join_event(event: Event) -> None:
     """處理加入好友與加入群組事件"""
 
     mes_sender = get_sender()

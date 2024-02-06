@@ -5,7 +5,7 @@ import sys
 import time
 from typing import List
 
-from linebot.v3 import WebhookParser
+from linebot.v3 import WebhookHandler
 from linebot.v3.messaging.api.async_messaging_api import AsyncMessagingApi
 from linebot.v3.messaging.async_api_client import AsyncApiClient
 from linebot.v3.messaging.configuration import Configuration
@@ -29,7 +29,7 @@ if channel_access_token is None:
     print("Specify LINE_CHANNEL_ACCESS_TOKEN as environment variable.")
     sys.exit(1)
 
-parser = WebhookParser(channel_secret)
+handler = WebhookHandler(channel_secret)
 configuration = Configuration(access_token=channel_access_token)
 async_api_client = AsyncApiClient(configuration)
 line_bot_api = AsyncMessagingApi(async_api_client)
