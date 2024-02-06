@@ -16,8 +16,8 @@ from linebot.v3.messaging.models import (
 from linebot.v3.webhooks import MessageEvent, PostbackEvent
 
 from src.abs_bot import Bot
+from src.id_request import get_students_by_year_and_department, student_list
 from src.line_bot_util import get_sender, instruction, reply_message
-from src.request_util import get_students_by_year_and_department, student_list
 from src.student_util import (
     DEPARTMENT_CODE,
     DEPARTMENT_NAME,

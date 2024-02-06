@@ -21,8 +21,8 @@ from src.bot_route import (
     handle_sticker_message,
     handle_text_message,
 )
+from src.id_request import check_url
 from src.line_bot_util import parser
-from src.request_util import check_url
 from src.student_util import renew_student_list
 
 app = FastAPI()
@@ -94,11 +94,7 @@ async def callback(request: Request) -> PlainTextResponse:
         elif isinstance(event, PostbackEvent):
             await handle_postback_event(event)
 
-        elif (
-            isinstance(event, FollowEvent)
-            or isinstance(event, JoinEvent)
-            or isinstance(event, MemberJoinedEvent)
-        ):
+        elif isinstance(event, (FollowEvent, JoinEvent, MemberJoinedEvent)):
             await handle_follow_join_event(event)
 
     return PlainTextResponse(status_code=200, content="OK")

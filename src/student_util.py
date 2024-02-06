@@ -4,7 +4,7 @@ import time
 from enum import Enum, auto, unique
 from typing import List
 
-from src.request_util import get_student_by_id, get_students_by_year_and_department
+from src.id_request import get_student_by_id, get_students_by_year_and_department
 
 # 科系名稱 -> 科系代碼
 DEPARTMENT_CODE = {
