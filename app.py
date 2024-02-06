@@ -15,15 +15,15 @@ from linebot.v3.webhooks import (
     TextMessageContent,
 )
 
-from src.bot_route import (
+from src.id_request import check_url
+from src.id_util import renew_student_list
+from src.line_bot_util import parser
+from src.route_util import (
     handle_follow_join_event,
     handle_postback_event,
     handle_sticker_message,
     handle_text_message,
 )
-from src.id_request import check_url
-from src.line_bot_util import parser
-from src.student_util import renew_student_list
 
 app = FastAPI()
 

@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 import math
-import string
 import time
+from typing import List
 
 from linebot.v3.messaging.models import (
     ButtonsTemplate,
@@ -13,12 +13,10 @@ from linebot.v3.messaging.models import (
     TemplateMessage,
     TextMessage,
 )
-from linebot.v3.webhooks import MessageEvent, PostbackEvent
 
 from src.abs_bot import Bot
 from src.id_request import get_students_by_year_and_department, student_list
-from src.line_bot_util import get_sender, instruction, reply_message
-from src.student_util import (
+from src.id_util import (
     DEPARTMENT_CODE,
     DEPARTMENT_NAME,
     FULL_DEPARTMENT_CODE,
@@ -26,9 +24,11 @@ from src.student_util import (
     Order,
     student_info_format,
 )
+from src.line_bot_util import get_sender, instruction, reply_message
 
 
 class IDBot(Bot):
+    SPILT_CODE = "@"
     SENDER_NAME = "學號魔法師"
     ALL_DEPARTMENT_CODE = "所有系代碼"
 
@@ -38,7 +38,7 @@ class IDBot(Bot):
         return PostbackAction(
             label=college_name,
             display_text=college_name,
-            data=college_name + year,
+            data=year + self.SPILT_CODE + college_name,
             input_option="closeRichMenu",
         )
 
@@ -51,21 +51,18 @@ class IDBot(Bot):
             + ("法律系" if department_code[0:2] == DEPARTMENT_CODE["法律"] else "")
             + DEPARTMENT_NAME[department_code]
             + ("組" if department_code[0:2] == DEPARTMENT_CODE["法律"] else "系"),
-            data=f"{year} {department_code}",
+            data=year + self.SPILT_CODE + department_code,
             input_option="closeRichMenu",
         )
 
-    async def handle_text_message(self, event: MessageEvent) -> None:
+    async def handle_text_message(self, payload: str, reply_token: str) -> bool:
         """處理文字訊息"""
 
-        unused = str.maketrans("", "", string.whitespace + string.punctuation)
-        data: str = event.message.text.translate(unused)
-
-        if data.isdecimal():
-            if data in FULL_DEPARTMENT_NAME:
+        if payload.isdecimal():
+            if payload in FULL_DEPARTMENT_NAME:
                 messages = [
                     TextMessage(
-                        text=FULL_DEPARTMENT_NAME[data],
+                        text=FULL_DEPARTMENT_NAME[payload],
                         quick_reply=QuickReply(
                             items=[
                                 QuickReplyItem(
@@ -80,35 +77,35 @@ class IDBot(Bot):
                     ),
                 ]
 
-                await reply_message(event.reply_token, messages)
+                await reply_message(reply_token, messages)
 
-            elif 2 <= len(data) <= 4:
-                year = int(data) if int(data) < 1911 else int(data) - 1911
+            elif 2 <= len(payload) <= 4:
+                year = int(payload) if int(payload) < 1911 else int(payload) - 1911
 
-                messages = []
+                messages: List
                 if year > time.localtime(time.time()).tm_year - 1911:
-                    messages.append(
+                    messages = [
                         TextMessage(
                             text="你未來人？(⊙ˍ⊙)",
                             sender=get_sender(self.SENDER_NAME),
                         )
-                    )
+                    ]
                 elif year < 90:
-                    messages.append(
+                    messages = [
                         TextMessage(
                             text="學校都還沒蓋好(￣▽￣)",
                             sender=get_sender(self.SENDER_NAME),
                         )
-                    )
+                    ]
                 elif year < 95:
-                    messages.append(
+                    messages = [
                         TextMessage(
                             text="數位學苑還沒出生喔~~",
                             sender=get_sender(self.SENDER_NAME),
                         )
-                    )
+                    ]
                 else:
-                    messages.append(
+                    messages = [
                         TemplateMessage(
                             alt_text="確認學年度",
                             template=ConfirmTemplate(
@@ -117,7 +114,7 @@ class IDBot(Bot):
                                     PostbackAction(
                                         label="哪次不是",
                                         display_text="哪次不是",
-                                        data=f"搜尋全系{year}",
+                                        data=f"{year}{self.SPILT_CODE}搜尋全系",
                                         input_option="openRichMenu",
                                     ),
                                     PostbackAction(
@@ -130,13 +127,13 @@ class IDBot(Bot):
                             ),
                             sender=get_sender(self.SENDER_NAME),
                         )
-                    )
+                    ]
 
-                await reply_message(event.reply_token, messages)
+                await reply_message(reply_token, messages)
 
-            elif 8 <= len(data) <= 9:
+            elif 8 <= len(payload) <= 9:
                 students = student_info_format(
-                    data,
+                    payload,
                     order=[Order.YEAR, Order.FULL_DEPARTMENT, Order.NAME],
                     space=2,
                 )
@@ -144,12 +141,12 @@ class IDBot(Bot):
                 if not students:
                     messages = [
                         TextMessage(
-                            text=f"學號 {data} 不存在OAO",
+                            text=f"學號 {payload} 不存在OAO",
                             sender=get_sender(self.SENDER_NAME),
                         ),
                     ]
 
-                    await reply_message(event.reply_token, messages)
+                    await reply_message(reply_token, messages)
                     return
 
                 messages = [
@@ -159,16 +156,16 @@ class IDBot(Bot):
                     ),
                 ]
 
-                if data[0] == "4":
-                    over_99 = len(data) == 9
-                    year = data[1 : over_99 + 3]
+                if payload[0] == "4":
+                    over_99 = len(payload) == 9
+                    year = payload[1 : over_99 + 3]
 
-                    department = data[over_99 + 3 : over_99 + 5]
+                    department = payload[over_99 + 3 : over_99 + 5]
                     if department in [
                         DEPARTMENT_CODE["法律"],
                         DEPARTMENT_CODE["社學"][0:2],
                     ]:
-                        department += data[over_99 + 5]
+                        department += payload[over_99 + 5]
 
                     if department[0:2] == DEPARTMENT_CODE["法律"]:
                         show_text = (
@@ -183,20 +180,23 @@ class IDBot(Bot):
                                 action=PostbackAction(
                                     label=show_text,
                                     display_text=f"正在{show_text}",
-                                    data=f"{year} {department}",
+                                    data=year + self.SPILT_CODE + department,
                                     input_option="closeRichMenu",
                                 ),
                             ),
                         ],
                     )
 
-                await reply_message(event.reply_token, messages)
+                await reply_message(reply_token, messages)
+
+            else:
+                return False
 
         else:
-            if data in ["使用說明", "help"]:
-                await instruction(event.reply_token)
+            if payload in ["使用說明", "help"]:
+                await instruction(reply_token)
 
-            elif data == self.ALL_DEPARTMENT_CODE:
+            elif payload == self.ALL_DEPARTMENT_CODE:
                 students = "\n".join(
                     [f"{x}系 -> {y}" for x, y in DEPARTMENT_CODE.items()]
                 )
@@ -207,12 +207,12 @@ class IDBot(Bot):
                     ),
                 ]
 
-                await reply_message(event.reply_token, messages)
+                await reply_message(reply_token, messages)
 
-            elif data.strip("系") in DEPARTMENT_CODE:
+            elif payload.strip("系") in DEPARTMENT_CODE:
                 messages = [
                     TextMessage(
-                        text=DEPARTMENT_CODE[data.strip("系")],
+                        text=DEPARTMENT_CODE[payload.strip("系")],
                         quick_reply=QuickReply(
                             items=[
                                 QuickReplyItem(
@@ -227,12 +227,12 @@ class IDBot(Bot):
                     ),
                 ]
 
-                await reply_message(event.reply_token, messages)
+                await reply_message(reply_token, messages)
 
-            elif data in FULL_DEPARTMENT_CODE:
+            elif payload in FULL_DEPARTMENT_CODE:
                 messages = [
                     TextMessage(
-                        text=FULL_DEPARTMENT_CODE[data],
+                        text=FULL_DEPARTMENT_CODE[payload],
                         quick_reply=QuickReply(
                             items=[
                                 QuickReplyItem(
@@ -247,18 +247,18 @@ class IDBot(Bot):
                     ),
                 ]
 
-                await reply_message(event.reply_token, messages)
+                await reply_message(reply_token, messages)
 
             else:
                 students = []
                 for key, value in student_list.items():
-                    if data in value:
+                    if payload in value:
                         students.append((key, value))
 
-                messages = []
                 if students:
                     students = sorted(students, key=lambda x: (not x[0], int(x[0])))
 
+                    messages = []
                     for i in range(min(math.ceil(len(students) / 100), 5), 0, -1):
                         students_info = "\n".join(
                             [
@@ -276,17 +276,20 @@ class IDBot(Bot):
                             )
                         )
 
-                    await reply_message(event.reply_token, messages)
+                    await reply_message(reply_token, messages)
 
-    async def handle_postback_event(self, event: PostbackEvent) -> None:
+                else:
+                    return False
+
+        return True
+
+    async def handle_postback_event(self, payload: str, reply_token: str) -> None:
         """處理回傳事件"""
 
-        data = event.postback.data
+        if payload == "使用說明":
+            await instruction(reply_token)
 
-        if data == "使用說明":
-            await instruction(event.reply_token)
-
-        elif data == "兇":
+        elif payload == "兇":
             messages = [
                 TextMessage(
                     text="泥好兇喔~~இ௰இ",
@@ -294,233 +297,191 @@ class IDBot(Bot):
                 ),
             ]
 
-            await reply_message(event.reply_token, messages)
-
-        elif data.startswith("搜尋全系"):
-            year = data.split("搜尋全系")[1]
-
-            messages = [
-                TemplateMessage(
-                    alt_text="選擇學院群",
-                    template=ButtonsTemplate(
-                        thumbnail_image_url="https://new.ntpu.edu.tw/assets/logo/ntpu_logo.png",
-                        title="選擇學院群",
-                        text="請選擇科系所屬學院群",
-                        actions=[
-                            self.college_postback("文法商", year),
-                            self.college_postback("公社電資", year),
-                        ],
-                    ),
-                    sender=get_sender(self.SENDER_NAME),
-                ),
-            ]
-
-            await reply_message(event.reply_token, messages)
-
-        elif data.startswith("文法商"):
-            year = data.split("文法商")[1]
-
-            messages = [
-                TemplateMessage(
-                    alt_text="選擇學院",
-                    template=ButtonsTemplate(
-                        title="選擇學院",
-                        text="請選擇科系所屬學院",
-                        actions=[
-                            self.college_postback("人文學院", year),
-                            self.college_postback("法律學院", year),
-                            self.college_postback("商學院", year),
-                        ],
-                    ),
-                    sender=get_sender(self.SENDER_NAME),
-                ),
-            ]
-
-            await reply_message(event.reply_token, messages)
-
-        elif data.startswith("公社電資"):
-            year = data.split("公社電資")[1]
-
-            messages = [
-                TemplateMessage(
-                    alt_text="選擇學院",
-                    template=ButtonsTemplate(
-                        title="選擇學院",
-                        text="請選擇科系所屬學院",
-                        actions=[
-                            self.college_postback("公共事務學院", year),
-                            self.college_postback("社會科學學院", year),
-                            self.college_postback("電機資訊學院", year),
-                        ],
-                    ),
-                    sender=get_sender(self.SENDER_NAME),
-                ),
-            ]
-
-            await reply_message(event.reply_token, messages)
-
-        elif data.startswith("人文學院"):
-            year = data.split("人文學院")[1]
-
-            messages = [
-                TemplateMessage(
-                    alt_text="選擇科系",
-                    template=ButtonsTemplate(
-                        thumbnail_image_url="https://walkinto.in/upload/-192z7YDP8-JlchfXtDvI.JPG",
-                        title="選擇科系",
-                        text="請選擇要查詢的科系",
-                        actions=[
-                            self.department_postback(DEPARTMENT_CODE["中文"], year),
-                            self.department_postback(DEPARTMENT_CODE["應外"], year),
-                            self.department_postback(DEPARTMENT_CODE["歷史"], year),
-                        ],
-                    ),
-                    sender=get_sender(self.SENDER_NAME),
-                ),
-            ]
-
-            await reply_message(event.reply_token, messages)
-
-        elif data.startswith("法律學院"):
-            year = data.split("法律學院")[1]
-
-            messages = [
-                TemplateMessage(
-                    alt_text="選擇組別",
-                    template=ButtonsTemplate(
-                        thumbnail_image_url="https://walkinto.in/upload/byupdk9PvIZyxupOy9Dw8.JPG",
-                        title="選擇組別",
-                        text="請選擇要查詢的組別",
-                        actions=[
-                            self.department_postback(DEPARTMENT_CODE["法學"], year),
-                            self.department_postback(DEPARTMENT_CODE["司法"], year),
-                            self.department_postback(DEPARTMENT_CODE["財法"], year),
-                        ],
-                    ),
-                    sender=get_sender(self.SENDER_NAME),
-                ),
-            ]
-
-            await reply_message(event.reply_token, messages)
-
-        elif data.startswith("商學院"):
-            year = data.split("商學院")[1]
-
-            messages = [
-                TemplateMessage(
-                    alt_text="選擇科系",
-                    template=ButtonsTemplate(
-                        thumbnail_image_url="https://walkinto.in/upload/ZJum7EYwPUZkedmXNtvPL.JPG",
-                        title="選擇科系",
-                        text="請選擇科系 (休運系請直接點圖片)",
-                        default_action=self.department_postback(
-                            DEPARTMENT_CODE["休運"], year
-                        ),
-                        actions=[
-                            self.department_postback(DEPARTMENT_CODE["企管"], year),
-                            self.department_postback(DEPARTMENT_CODE["金融"], year),
-                            self.department_postback(DEPARTMENT_CODE["會計"], year),
-                            self.department_postback(DEPARTMENT_CODE["統計"], year),
-                        ],
-                    ),
-                    sender=get_sender(self.SENDER_NAME),
-                ),
-            ]
-
-            await reply_message(event.reply_token, messages)
-
-        elif data.startswith("公共事務學院"):
-            year = data.split("公共事務學院")[1]
-
-            messages = [
-                TemplateMessage(
-                    alt_text="選擇科系",
-                    template=ButtonsTemplate(
-                        thumbnail_image_url="https://walkinto.in/upload/ZJhs4wEaDIWklhiVwV6DI.jpg",
-                        title="選擇科系",
-                        text="請選擇要查詢的科系",
-                        actions=[
-                            self.department_postback(DEPARTMENT_CODE["公行"], year),
-                            self.department_postback(DEPARTMENT_CODE["不動"], year),
-                            self.department_postback(DEPARTMENT_CODE["財政"], year),
-                        ],
-                    ),
-                    sender=get_sender(self.SENDER_NAME),
-                ),
-            ]
-
-            await reply_message(event.reply_token, messages)
-
-        elif data.startswith("社會科學學院"):
-            year = data.split("社會科學學院")[1]
-
-            messages = [
-                TemplateMessage(
-                    alt_text="選擇科系",
-                    template=ButtonsTemplate(
-                        thumbnail_image_url="https://walkinto.in/upload/WyPbshN6DIZ1gvZo2NTvU.JPG",
-                        title="選擇科系",
-                        text="請選擇科系",
-                        actions=[
-                            self.department_postback(DEPARTMENT_CODE["經濟"], year),
-                            self.department_postback(DEPARTMENT_CODE["社學"], year),
-                            self.department_postback(DEPARTMENT_CODE["社工"], year),
-                        ],
-                    ),
-                    sender=get_sender(self.SENDER_NAME),
-                ),
-            ]
-
-            await reply_message(event.reply_token, messages)
-
-        elif data.startswith("電機資訊學院"):
-            year = data.split("電機資訊學院")[1]
-
-            messages = [
-                TemplateMessage(
-                    alt_text="選擇科系",
-                    template=ButtonsTemplate(
-                        thumbnail_image_url="https://walkinto.in/upload/bJ9zWWHaPLWJg9fW-STD8.png",
-                        title="選擇科系",
-                        text="請選擇科系",
-                        actions=[
-                            self.department_postback(DEPARTMENT_CODE["電機"], year),
-                            self.department_postback(DEPARTMENT_CODE["資工"], year),
-                            self.department_postback(DEPARTMENT_CODE["通訊"], year),
-                        ],
-                    ),
-                    sender=get_sender(self.SENDER_NAME),
-                ),
-            ]
-
-            await reply_message(event.reply_token, messages)
+            await reply_message(reply_token, messages)
 
         else:
-            year, department = data.split(" ")
-            students = get_students_by_year_and_department(year, department)
-            students_info = "\n".join(
-                [
-                    student_info_format(x, y, [Order.ID, Order.NAME], 3)
-                    for x, y in students.items()
+            year, data = payload.split(self.SPILT_CODE)
+
+            messages: List
+            if data == "搜尋全系":
+                messages = [
+                    TemplateMessage(
+                        alt_text="選擇學院群",
+                        template=ButtonsTemplate(
+                            thumbnail_image_url="https://new.ntpu.edu.tw/assets/logo/ntpu_logo.png",
+                            title="選擇學院群",
+                            text="請選擇科系所屬學院群",
+                            actions=[
+                                self.college_postback("文法商", year),
+                                self.college_postback("公社電資", year),
+                            ],
+                        ),
+                        sender=get_sender(self.SENDER_NAME),
+                    ),
                 ]
-            )
 
-            students_info += (
-                f"\n\n{year}學年度"
-                + ("法律系" if department[0:2] == DEPARTMENT_CODE["法律"] else "")
-                + DEPARTMENT_NAME[department]
-                + ("組" if department[0:2] == DEPARTMENT_CODE["法律"] else "系")
-                + f"共有{len(students)}位學生"
-            )
+            elif data in ["文法商", "公社電資"]:
+                messages = [
+                    TemplateMessage(
+                        alt_text="選擇學院",
+                        template=ButtonsTemplate(
+                            title="選擇學院",
+                            text="請選擇科系所屬學院",
+                            actions=(
+                                [
+                                    self.college_postback("人文學院", year),
+                                    self.college_postback("法律學院", year),
+                                    self.college_postback("商學院", year),
+                                ]
+                                if data == "文法商"
+                                else [
+                                    self.college_postback("公共事務學院", year),
+                                    self.college_postback("社會科學學院", year),
+                                    self.college_postback("電機資訊學院", year),
+                                ]
+                            ),
+                        ),
+                        sender=get_sender(self.SENDER_NAME),
+                    ),
+                ]
 
-            messages = [
-                TextMessage(
-                    text=students_info,
-                    sender=get_sender(self.SENDER_NAME),
-                ),
-            ]
+            elif data == "人文學院":
+                messages = [
+                    TemplateMessage(
+                        alt_text="選擇科系",
+                        template=ButtonsTemplate(
+                            thumbnail_image_url="https://walkinto.in/upload/-192z7YDP8-JlchfXtDvI.JPG",
+                            title="選擇科系",
+                            text="請選擇要查詢的科系",
+                            actions=[
+                                self.department_postback(DEPARTMENT_CODE["中文"], year),
+                                self.department_postback(DEPARTMENT_CODE["應外"], year),
+                                self.department_postback(DEPARTMENT_CODE["歷史"], year),
+                            ],
+                        ),
+                        sender=get_sender(self.SENDER_NAME),
+                    ),
+                ]
 
-            await reply_message(event.reply_token, messages)
+            elif data == "法律學院":
+                messages = [
+                    TemplateMessage(
+                        alt_text="選擇組別",
+                        template=ButtonsTemplate(
+                            thumbnail_image_url="https://walkinto.in/upload/byupdk9PvIZyxupOy9Dw8.JPG",
+                            title="選擇組別",
+                            text="請選擇要查詢的組別",
+                            actions=[
+                                self.department_postback(DEPARTMENT_CODE["法學"], year),
+                                self.department_postback(DEPARTMENT_CODE["司法"], year),
+                                self.department_postback(DEPARTMENT_CODE["財法"], year),
+                            ],
+                        ),
+                        sender=get_sender(self.SENDER_NAME),
+                    ),
+                ]
+
+            elif data == "商學院":
+                messages = [
+                    TemplateMessage(
+                        alt_text="選擇科系",
+                        template=ButtonsTemplate(
+                            thumbnail_image_url="https://walkinto.in/upload/ZJum7EYwPUZkedmXNtvPL.JPG",
+                            title="選擇科系",
+                            text="請選擇科系 (休運系請直接點圖片)",
+                            default_action=self.department_postback(
+                                DEPARTMENT_CODE["休運"], year
+                            ),
+                            actions=[
+                                self.department_postback(DEPARTMENT_CODE["企管"], year),
+                                self.department_postback(DEPARTMENT_CODE["金融"], year),
+                                self.department_postback(DEPARTMENT_CODE["會計"], year),
+                                self.department_postback(DEPARTMENT_CODE["統計"], year),
+                            ],
+                        ),
+                        sender=get_sender(self.SENDER_NAME),
+                    ),
+                ]
+
+            elif data == "公共事務學院":
+                messages = [
+                    TemplateMessage(
+                        alt_text="選擇科系",
+                        template=ButtonsTemplate(
+                            thumbnail_image_url="https://walkinto.in/upload/ZJhs4wEaDIWklhiVwV6DI.jpg",
+                            title="選擇科系",
+                            text="請選擇要查詢的科系",
+                            actions=[
+                                self.department_postback(DEPARTMENT_CODE["公行"], year),
+                                self.department_postback(DEPARTMENT_CODE["不動"], year),
+                                self.department_postback(DEPARTMENT_CODE["財政"], year),
+                            ],
+                        ),
+                        sender=get_sender(self.SENDER_NAME),
+                    ),
+                ]
+
+            elif data == "社會科學學院":
+                messages = [
+                    TemplateMessage(
+                        alt_text="選擇科系",
+                        template=ButtonsTemplate(
+                            thumbnail_image_url="https://walkinto.in/upload/WyPbshN6DIZ1gvZo2NTvU.JPG",
+                            title="選擇科系",
+                            text="請選擇科系",
+                            actions=[
+                                self.department_postback(DEPARTMENT_CODE["經濟"], year),
+                                self.department_postback(DEPARTMENT_CODE["社學"], year),
+                                self.department_postback(DEPARTMENT_CODE["社工"], year),
+                            ],
+                        ),
+                        sender=get_sender(self.SENDER_NAME),
+                    ),
+                ]
+
+            elif data == "電機資訊學院":
+                messages = [
+                    TemplateMessage(
+                        alt_text="選擇科系",
+                        template=ButtonsTemplate(
+                            thumbnail_image_url="https://walkinto.in/upload/bJ9zWWHaPLWJg9fW-STD8.png",
+                            title="選擇科系",
+                            text="請選擇科系",
+                            actions=[
+                                self.department_postback(DEPARTMENT_CODE["電機"], year),
+                                self.department_postback(DEPARTMENT_CODE["資工"], year),
+                                self.department_postback(DEPARTMENT_CODE["通訊"], year),
+                            ],
+                        ),
+                        sender=get_sender(self.SENDER_NAME),
+                    ),
+                ]
+
+            else:
+                students = get_students_by_year_and_department(year, data)
+                students_info = "\n".join(
+                    [
+                        student_info_format(x, y, [Order.ID, Order.NAME], 3)
+                        for x, y in students.items()
+                    ]
+                )
+
+                students_info += (
+                    f"\n\n{year}學年度"
+                    + ("法律系" if data[0:2] == DEPARTMENT_CODE["法律"] else "")
+                    + DEPARTMENT_NAME[data]
+                    + ("組" if data[0:2] == DEPARTMENT_CODE["法律"] else "系")
+                    + f"共有{len(students)}位學生"
+                )
+
+                messages = [
+                    TextMessage(
+                        text=students_info,
+                        sender=get_sender(self.SENDER_NAME),
+                    ),
+                ]
+
+            await reply_message(reply_token, messages)
 
 
 id_bot = IDBot()
