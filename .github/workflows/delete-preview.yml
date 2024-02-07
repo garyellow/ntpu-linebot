@@ -9,9 +9,22 @@ on:
     types: [closed]
 
 jobs:
+  prepare:
+    name: PREPARE HEAD REF
+    runs-on: ubuntu-latest
+
+    outputs:
+      head_ref: ${{ steps.head_ref.outputs.head_ref }}
+
+    steps:
+      - name: Generate github.head_ref with underline style
+        id: head_ref
+        run: echo "head_ref=$(echo ${{ github.head_ref }} | tr / _)" >> $GITHUB_OUTPUT
+
   registry:
     name: DELETE PREVIEW IMAGE
     runs-on: ubuntu-latest
+    needs: prepare
 
     permissions:
       packages: write
@@ -22,18 +35,19 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           container: ${{ github.event.repository.name }}
-          prune-tags-regexes: ^${{ github.head_ref }}$
+          prune-tags-regexes: ^${{ needs.prepare.outputs.head_ref }}$
           prune-untagged: true
 
 
   render:
     name: DELETE PREVIEW SERVICE
     runs-on: ubuntu-latest
+    needs: prepare
 
     steps:
-      - name: Generaten Tags substring
+      - name: Generate Tags substring
         id: tag
-        run: echo "service-name=$(echo ${{ github.head_ref }} | cut -c 1-8)" >> $GITHUB_OUTPUT
+        run: echo "service-name=$(echo ${{ needs.prepare.outputs.head_ref }} | cut -c 1-8)" >> $GITHUB_OUTPUT
 
       - name: Get Render Preview services
         uses: fjogeleit/http-request-action@v1

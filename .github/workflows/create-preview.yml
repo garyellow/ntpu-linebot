@@ -14,9 +14,25 @@ on:
     types: [opened, reopened]
 
 jobs:
+  prepare:
+    name: PREPARE HEAD REF
+    runs-on: ubuntu-latest
+
+    outputs:
+      head_ref: ${{ steps.head_ref.outputs.head_ref }}
+
+    steps:
+      - name: Generate github.head_ref with underline style
+        id: head_ref
+        run: echo "head_ref=$(echo ${{ github.head_ref }} | tr / _)" >> $GITHUB_OUTPUT
+
   registry:
     name: PUSH PREVIEW IMAGE TO REGISTRY
     runs-on: ubuntu-latest
+    needs: prepare
+
+    outputs:
+      head_ref: ${{ needs.prepare.outputs.head_ref }}
 
     permissions:
       contents: read
@@ -40,7 +56,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: ${{ vars.REGISTRY }}/${{ github.repository }}:${{ github.head_ref }}
+          tags: ${{ vars.REGISTRY }}/${{ github.repository }}:${{ needs.prepare.outputs.head_ref }}
 
   render:
     name: CREATE PREVIEW SERVICE
@@ -57,7 +73,7 @@ jobs:
         with:
           url: "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/preview"
           bearerToken: ${{ secrets.RENDER_API_KEY }}
-          data: '{"imagePath": "${{ vars.REGISTRY }}/${{ github.repository }}:${{ github.head_ref }}"}'
+          data: '{"imagePath": "${{ vars.REGISTRY }}/${{ github.repository }}:${{ needs.registry.outputs.head_ref }}"}'
 
       - name: Comment Pull Request
         uses: thollander/actions-comment-pull-request@v2
@@ -65,7 +81,7 @@ jobs:
           message: |
             ## Preview is created!
 
-            Your Preview Image URL is https://${{ vars.REGISTRY }}/${{ github.repository }}:${{ github.head_ref }}.
+            Your Preview Image URL is https://${{ vars.REGISTRY }}/${{ github.repository }}:${{ needs.registry.outputs.head_ref }}.
 
             Your [Render](https://render.com) Preview Server URL is ${{ fromJson(steps.render.outputs.response).service.serviceDetails.url }}.
 
