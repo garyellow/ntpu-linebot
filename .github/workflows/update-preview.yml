@@ -14,7 +14,7 @@ on:
     types: [synchronize]
     paths:
       - app.py
-      - src/*
+      - ntpu_linebot/*
       - pyproject.toml
       - poetry.lock
       - Dockerfile

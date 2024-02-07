@@ -21,7 +21,7 @@ FROM python:3.11-slim AS runner
 
 # 設定 LABEL
 LABEL org.opencontainers.image.source=https://github.com/garyellow/ntpu-linebot
-LABEL org.opencontainers.image.description="NTPU ID Linebot"
+LABEL org.opencontainers.image.description="NTPU Linebot"
 LABEL org.opencontainers.image.licenses=MIT
 
 WORKDIR /app
@@ -35,7 +35,7 @@ RUN pip install --no-cache-dir --no-index --find-links=/wheels -r requirements.t
 
 # 複製應用程式
 COPY app.py .
-COPY src/* src/
+COPY ntpu_linebot ntpu_linebot/
 
 # 使用 uvicorn 執行
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "10000"]
