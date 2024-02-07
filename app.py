@@ -1,7 +1,4 @@
 # -*- coding:utf-8 -*-
-import imp
-import threading
-
 import requests
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import PlainTextResponse, RedirectResponse
@@ -16,14 +13,13 @@ from linebot.v3.webhooks import (
     TextMessageContent,
 )
 
-from src import id_request
-from src.id_util import renew_student_list
-from src.line_bot_util import parser
-from src.route_util import (
+from ntpu_linebot import (
     handle_follow_join_event,
     handle_postback_event,
     handle_sticker_message,
     handle_text_message,
+    ntpu_id,
+    parser,
 )
 
 app = FastAPI()
@@ -42,12 +38,8 @@ def index() -> RedirectResponse:
 def healthz() -> PlainTextResponse:
     """健康檢查"""
 
-    if not id_request.base_url:
-        if not id_request.check_url():
-            raise HTTPException(503, "Service Unavailable")
-
-        id_request.renew_thread = threading.Thread(target=renew_student_list)
-        id_request.renew_thread.start()
+    if not ntpu_id.healthz():
+        raise HTTPException(503, "Service Unavailable")
 
     return PlainTextResponse("OK", 200)
 

@@ -14,9 +14,9 @@ from linebot.v3.messaging.models import (
     TextMessage,
 )
 
-from src.abs_bot import Bot
-from src.id_request import get_students_by_year_and_department, student_list
-from src.id_util import (
+from ntpu_linebot.abs_bot import Bot
+from ntpu_linebot.id.request import get_students_by_year_and_department, student_list
+from ntpu_linebot.id.util import (
     DEPARTMENT_CODE,
     DEPARTMENT_NAME,
     FULL_DEPARTMENT_CODE,
@@ -24,7 +24,7 @@ from src.id_util import (
     Order,
     student_info_format,
 )
-from src.line_bot_util import get_sender, instruction, reply_message
+from ntpu_linebot.line_bot_util import get_sender, instruction, reply_message
 
 
 class IDBot(Bot):
@@ -484,4 +484,4 @@ class IDBot(Bot):
             await reply_message(reply_token, messages)
 
 
-id_bot = IDBot()
+ID_BOT = IDBot()

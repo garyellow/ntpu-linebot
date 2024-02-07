@@ -1,10 +1,11 @@
 # -*- coding:utf-8 -*-
 import random
+import threading
 import time
 from enum import Enum, auto, unique
 from typing import List
 
-from src.id_request import get_student_by_id, get_students_by_year_and_department
+import ntpu_linebot.id.request as id_request
 
 # 科系名稱 -> 科系代碼
 DEPARTMENT_CODE = {
@@ -84,7 +85,7 @@ def student_info_format(
     """學生資訊格式化"""
 
     if name is None:
-        name = get_student_by_id(student_id)
+        name = id_request.get_student_by_id(student_id)
 
     if not name:
         return ""
@@ -128,6 +129,19 @@ def student_info_format(
     return (" " * space).join(message)
 
 
+def healthz() -> bool:
+    """網址健康檢查"""
+
+    if not id_request.base_url:
+        if not id_request.check_url():
+            return False
+
+        id_request.renew_thread = threading.Thread(target=renew_student_list)
+        id_request.renew_thread.start()
+
+    return True
+
+
 def renew_student_list() -> None:
     """更新學生名單"""
 
@@ -135,5 +149,5 @@ def renew_student_list() -> None:
 
     for year in range(cur_year - 5, cur_year + 1):
         for dep in DEPARTMENT_CODE.values():
-            get_students_by_year_and_department(str(year), str(dep))
+            id_request.get_students_by_year_and_department(str(year), str(dep))
             time.sleep(random.uniform(5, 15))

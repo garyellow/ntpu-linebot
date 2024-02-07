@@ -6,17 +6,17 @@ import time
 from typing import List
 
 from linebot.v3 import WebhookParser
-from linebot.v3.messaging.api.async_messaging_api import AsyncMessagingApi
-from linebot.v3.messaging.async_api_client import AsyncApiClient
-from linebot.v3.messaging.configuration import Configuration
-from linebot.v3.messaging.models import (
+from linebot.v3.messaging import (
+    AsyncApiClient,
+    AsyncMessagingApi,
+    Configuration,
     Message,
     ReplyMessageRequest,
     Sender,
     TextMessage,
 )
 
-from src.sticker_util import stickers
+from ntpu_linebot.sticker_util import stickers
 
 # get channel_secret and channel_access_token from your environment variable
 channel_secret = os.getenv("LINE_CHANNEL_SECRET", None)
