@@ -1,6 +1,4 @@
 # -*- coding:utf-8 -*-
-import threading
-
 import requests
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import PlainTextResponse, RedirectResponse
@@ -15,20 +13,16 @@ from linebot.v3.webhooks import (
     TextMessageContent,
 )
 
-from src.bot_route import (
+from ntpu_linebot import (
     handle_follow_join_event,
     handle_postback_event,
     handle_sticker_message,
     handle_text_message,
+    ntpu_id,
+    parser,
 )
-from src.line_bot_util import parser
-from src.request_util import check_url
-from src.student_util import renew_student_list
 
 app = FastAPI()
-
-url_state = False
-renew_thread: threading.Thread
 
 
 @app.head("/")
@@ -36,9 +30,7 @@ renew_thread: threading.Thread
 def index() -> RedirectResponse:
     """導向至專案 GitHub 頁面"""
 
-    return RedirectResponse(
-        status_code=302, url="https://github.com/garyellow/ntpu-linebot"
-    )
+    return RedirectResponse("https://github.com/garyellow/ntpu-linebot", 302)
 
 
 @app.head("/healthz")
@@ -46,25 +38,15 @@ def index() -> RedirectResponse:
 def healthz() -> PlainTextResponse:
     """健康檢查"""
 
-    global url_state, renew_thread
+    if not ntpu_id.healthz():
+        raise HTTPException(503, "Service Unavailable")
 
-    if not url_state:
-        if not check_url():
-            raise HTTPException(status_code=503, detail="Service Unavailable")
-
-        renew_thread = threading.Thread(target=renew_student_list)
-        renew_thread.start()
-
-        url_state = True
-
-    return PlainTextResponse(status_code=200, content="OK")
+    return PlainTextResponse("OK", 200)
 
 
 @app.post("/callback")
 async def callback(request: Request) -> PlainTextResponse:
     """處理 LINE Bot 的 Webhook"""
-
-    global url_state
 
     # get X-Line-Signature header value
     signature = request.headers["X-Line-Signature"]
@@ -78,11 +60,10 @@ async def callback(request: Request) -> PlainTextResponse:
         events = parser.parse(body, signature)
 
     except InvalidSignatureError as exc:
-        raise HTTPException(status_code=500, detail="Invalid signature") from exc
+        raise HTTPException(401, "Invalid signature") from exc
 
     except requests.exceptions.Timeout as exc:
-        url_state = False
-        raise HTTPException(status_code=408, detail="Request Timeout") from exc
+        raise HTTPException(408, "Request Timeout") from exc
 
     for event in events:
         if isinstance(event, MessageEvent):
@@ -94,11 +75,7 @@ async def callback(request: Request) -> PlainTextResponse:
         elif isinstance(event, PostbackEvent):
             await handle_postback_event(event)
 
-        elif (
-            isinstance(event, FollowEvent)
-            or isinstance(event, JoinEvent)
-            or isinstance(event, MemberJoinedEvent)
-        ):
+        elif isinstance(event, (FollowEvent, JoinEvent, MemberJoinedEvent)):
             await handle_follow_join_event(event)
 
-    return PlainTextResponse(status_code=200, content="OK")
+    return PlainTextResponse("OK", 200)

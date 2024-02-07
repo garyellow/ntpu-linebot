@@ -28,7 +28,7 @@ for url in SPY_FAMILY_URLS:
     for i in temp:
         stickers.append(f"https://spy-family.net/{i['src'][3:]}")
 
-    time.sleep(0.05)
+    time.sleep(0.1)
 
 response = requests.get(ICHIGO_PRODUCTION_URL, timeout=5)
 soup = Bs4(response.text, "html.parser")
