@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "ntpu-student-id-linebot"
-version = "1.0.0"
-description = "可以查詢北大學生學號及姓名的Line機器人"
+name = "ntpu-linebot"
+version = "0.1.0"
+description = "國立臺北大學的查詢小工具"
 authors = ["garyellow <gary20011110@gmail.com>"]
 license = "MIT"
 readme = "README.md"
