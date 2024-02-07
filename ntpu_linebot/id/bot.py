@@ -459,20 +459,32 @@ class IDBot(Bot):
 
             else:
                 students = get_students_by_year_and_department(year, data)
-                students_info = "\n".join(
-                    [
-                        student_info_format(x, y, [Order.ID, Order.NAME], 3)
-                        for x, y in students.items()
-                    ]
-                )
 
-                students_info += (
-                    f"\n\n{year}學年度"
-                    + ("法律系" if data[0:2] == DEPARTMENT_CODE["法律"] else "")
-                    + DEPARTMENT_NAME[data]
-                    + ("組" if data[0:2] == DEPARTMENT_CODE["法律"] else "系")
-                    + f"共有{len(students)}位學生"
-                )
+                students_info: str
+                if students:
+                    students_info = "\n".join(
+                        [
+                            student_info_format(x, y, [Order.ID, Order.NAME], 3)
+                            for x, y in students.items()
+                        ]
+                    )
+
+                    students_info += (
+                        f"\n\n{year}學年度"
+                        + ("法律系" if data[0:2] == DEPARTMENT_CODE["法律"] else "")
+                        + DEPARTMENT_NAME[data]
+                        + ("組" if data[0:2] == DEPARTMENT_CODE["法律"] else "系")
+                        + f"共有{len(students)}位學生"
+                    )
+
+                else:
+                    students_info = (
+                        f"{year}學年度"
+                        + ("法律系" if data[0:2] == DEPARTMENT_CODE["法律"] else "")
+                        + DEPARTMENT_NAME[data]
+                        + ("組" if data[0:2] == DEPARTMENT_CODE["法律"] else "系")
+                        + "好像沒有人耶OAO"
+                    )
 
                 messages = [
                     TextMessage(
