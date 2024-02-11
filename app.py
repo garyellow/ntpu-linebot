@@ -1,7 +1,5 @@
 # -*- coding:utf-8 -*-
 import requests
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import PlainTextResponse, RedirectResponse
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.webhooks import (
     FollowEvent,
@@ -12,6 +10,7 @@ from linebot.v3.webhooks import (
     StickerMessageContent,
     TextMessageContent,
 )
+from sanic import HTTPResponse, Request, Sanic, SanicException, redirect, text
 
 from ntpu_linebot import (
     handle_follow_join_event,
@@ -22,48 +21,46 @@ from ntpu_linebot import (
     parser,
 )
 
-app = FastAPI()
+
+app = Sanic("app")
 
 
-@app.head("/")
-@app.get("/")
-def index() -> RedirectResponse:
+@app.route("/", methods=["HEAD", "GET"])
+def index() -> HTTPResponse:
     """導向至專案 GitHub 頁面"""
 
-    return RedirectResponse("https://github.com/garyellow/ntpu-linebot", 302)
+    return redirect("https://github.com/garyellow/ntpu-linebot")
 
 
-@app.head("/healthz")
-@app.get("/healthz")
-def healthz() -> PlainTextResponse:
+@app.route("/healthz", methods=["HEAD", "GET"])
+def healthz() -> HTTPResponse:
     """健康檢查"""
 
     if not ntpu_id.healthz():
-        raise HTTPException(503, "Service Unavailable")
+        raise SanicException("Service Unavailable", 503)
 
-    return PlainTextResponse("OK", 200)
+    return text("OK")
 
 
 @app.post("/callback")
-async def callback(request: Request) -> PlainTextResponse:
+async def callback(request: Request) -> HTTPResponse:
     """處理 LINE Bot 的 Webhook"""
 
     # get X-Line-Signature header value
     signature = request.headers["X-Line-Signature"]
 
     # get request body as text
-    body = await request.body()
-    body = body.decode()
+    body = request.body.decode()
 
     # handle webhook body
     try:
         events = parser.parse(body, signature)
 
     except InvalidSignatureError as exc:
-        raise HTTPException(401, "Invalid signature") from exc
+        raise SanicException("Invalid signature", 401) from exc
 
     except requests.exceptions.Timeout as exc:
-        raise HTTPException(408, "Request Timeout") from exc
+        raise SanicException("Request Timeout", 408) from exc
 
     for event in events:
         if isinstance(event, MessageEvent):
@@ -78,4 +75,4 @@ async def callback(request: Request) -> PlainTextResponse:
         elif isinstance(event, (FollowEvent, JoinEvent, MemberJoinedEvent)):
             await handle_follow_join_event(event)
 
-    return PlainTextResponse("OK", 200)
+    return text("OK")
