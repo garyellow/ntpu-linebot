@@ -26,17 +26,17 @@ app = Sanic("app")
 
 
 @app.route("/", methods=["HEAD", "GET"])
-def index() -> HTTPResponse:
+async def index(request: Request) -> HTTPResponse:
     """導向至專案 GitHub 頁面"""
 
     return redirect("https://github.com/garyellow/ntpu-linebot")
 
 
 @app.route("/healthz", methods=["HEAD", "GET"])
-def healthz() -> HTTPResponse:
+async def healthz(request: Request) -> HTTPResponse:
     """健康檢查"""
 
-    if not ntpu_id.healthz():
+    if not ntpu_id.healthz(request.app):
         raise SanicException("Service Unavailable", 503)
 
     return text("OK")

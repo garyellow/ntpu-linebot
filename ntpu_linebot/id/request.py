@@ -1,6 +1,5 @@
 # -*- coding:utf-8 -*-
 import random
-import threading
 import time
 from collections import defaultdict
 from typing import Dict
@@ -11,7 +10,6 @@ from cachetools import TTLCache, cached
 
 base_url = ""
 student_list = defaultdict(str)
-renew_thread: threading.Thread
 
 
 def check_url() -> bool:

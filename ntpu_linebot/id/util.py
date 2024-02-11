@@ -1,9 +1,11 @@
 # -*- coding:utf-8 -*-
+import asyncio
 import random
-import threading
 import time
 from enum import Enum, auto, unique
 from typing import List
+
+from sanic import Sanic
 
 import ntpu_linebot.id.request as id_request
 
@@ -78,8 +80,8 @@ class Order(Enum):
 
 def student_info_format(
     student_id: str,
-    name: str = None,
-    order: List[Order] = None,
+    name: str | None = None,
+    order: List[Order] | None = None,
     space: int = 1,
 ) -> str:
     """學生資訊格式化"""
@@ -129,20 +131,19 @@ def student_info_format(
     return (" " * space).join(message)
 
 
-def healthz() -> bool:
+def healthz(app: Sanic) -> bool:
     """網址健康檢查"""
 
     if not id_request.base_url:
         if not id_request.check_url():
             return False
 
-        id_request.renew_thread = threading.Thread(target=renew_student_list)
-        id_request.renew_thread.start()
+        app.add_task(renew_student_list())
 
     return True
 
 
-def renew_student_list() -> None:
+async def renew_student_list() -> None:
     """更新學生名單"""
 
     cur_year = time.localtime(time.time()).tm_year - 1911
@@ -150,4 +151,4 @@ def renew_student_list() -> None:
     for year in range(cur_year - 5, cur_year + 1):
         for dep in DEPARTMENT_CODE.values():
             id_request.get_students_by_year_and_department(str(year), str(dep))
-            time.sleep(random.uniform(5, 15))
+            await asyncio.sleep(random.uniform(5, 15))

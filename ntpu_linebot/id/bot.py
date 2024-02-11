@@ -37,9 +37,9 @@ class IDBot(Bot):
 
         return PostbackAction(
             label=college_name,
-            display_text=college_name,
+            displayText=college_name,
             data=year + self.SPILT_CODE + college_name,
-            input_option="closeRichMenu",
+            inputOption="closeRichMenu",
         )
 
     def department_postback(self, department_code: str, year: str) -> PostbackAction:
@@ -47,15 +47,20 @@ class IDBot(Bot):
 
         return PostbackAction(
             label=FULL_DEPARTMENT_NAME[department_code],
-            display_text=f"正在搜尋{year}學年度"
+            displayText=f"正在搜尋{year}學年度"
             + ("法律系" if department_code[0:2] == DEPARTMENT_CODE["法律"] else "")
             + DEPARTMENT_NAME[department_code]
             + ("組" if department_code[0:2] == DEPARTMENT_CODE["法律"] else "系"),
             data=year + self.SPILT_CODE + department_code,
-            input_option="closeRichMenu",
+            inputOption="closeRichMenu",
         )
 
-    async def handle_text_message(self, payload: str, reply_token: str) -> bool:
+    async def handle_text_message(
+        self,
+        payload: str,
+        reply_token: str,
+        quote_token: str | None = None,
+    ) -> bool:
         """處理文字訊息"""
 
         if payload.isdecimal():
@@ -63,17 +68,18 @@ class IDBot(Bot):
                 messages = [
                     TextMessage(
                         text=FULL_DEPARTMENT_NAME[payload],
-                        quick_reply=QuickReply(
+                        quickReply=QuickReply(
                             items=[
                                 QuickReplyItem(
                                     action=MessageAction(
                                         label=self.ALL_DEPARTMENT_CODE,
                                         text=self.ALL_DEPARTMENT_CODE,
-                                    )
+                                    ),
                                 ),
                             ]
                         ),
                         sender=get_sender(self.SENDER_NAME),
+                        quoteToken=quote_token,
                     ),
                 ]
 
@@ -113,15 +119,15 @@ class IDBot(Bot):
                                 actions=[
                                     PostbackAction(
                                         label="哪次不是",
-                                        display_text="哪次不是",
+                                        displayText="哪次不是",
                                         data=f"{year}{self.SPILT_CODE}搜尋全系",
-                                        input_option="openRichMenu",
+                                        inputOption="openRichMenu",
                                     ),
                                     PostbackAction(
                                         label="我在想想",
-                                        display_text="再啦乾ಠ_ಠ",
+                                        displayText="再啦乾ಠ_ಠ",
                                         data="兇",
-                                        input_option="openKeyboard",
+                                        inputOption="openKeyboard",
                                     ),
                                 ],
                             ),
@@ -143,16 +149,18 @@ class IDBot(Bot):
                         TextMessage(
                             text=f"學號 {payload} 不存在OAO",
                             sender=get_sender(self.SENDER_NAME),
+                            quoteToken=quote_token,
                         ),
                     ]
 
                     await reply_message(reply_token, messages)
-                    return
+                    return True
 
                 messages = [
                     TextMessage(
                         text=students,
                         sender=get_sender(self.SENDER_NAME),
+                        quoteToken=quote_token,
                     ),
                 ]
 
@@ -179,9 +187,9 @@ class IDBot(Bot):
                             QuickReplyItem(
                                 action=PostbackAction(
                                     label=show_text,
-                                    display_text=f"正在{show_text}",
+                                    displayText=f"正在{show_text}",
                                     data=year + self.SPILT_CODE + department,
-                                    input_option="closeRichMenu",
+                                    inputOption="closeRichMenu",
                                 ),
                             ),
                         ],
@@ -204,6 +212,7 @@ class IDBot(Bot):
                     TextMessage(
                         text=students,
                         sender=get_sender(self.SENDER_NAME),
+                        quoteToken=quote_token,
                     ),
                 ]
 
@@ -213,7 +222,7 @@ class IDBot(Bot):
                 messages = [
                     TextMessage(
                         text=DEPARTMENT_CODE[payload.strip("系")],
-                        quick_reply=QuickReply(
+                        quickReply=QuickReply(
                             items=[
                                 QuickReplyItem(
                                     action=MessageAction(
@@ -233,7 +242,7 @@ class IDBot(Bot):
                 messages = [
                     TextMessage(
                         text=FULL_DEPARTMENT_CODE[payload],
-                        quick_reply=QuickReply(
+                        quickReply=QuickReply(
                             items=[
                                 QuickReplyItem(
                                     action=MessageAction(
@@ -273,6 +282,7 @@ class IDBot(Bot):
                             TextMessage(
                                 text=students_info,
                                 sender=get_sender(self.SENDER_NAME),
+                                quoteToken=quote_token,
                             )
                         )
 
@@ -308,7 +318,7 @@ class IDBot(Bot):
                     TemplateMessage(
                         alt_text="選擇學院群",
                         template=ButtonsTemplate(
-                            thumbnail_image_url="https://new.ntpu.edu.tw/assets/logo/ntpu_logo.png",
+                            thumbnailImageUrl="https://new.ntpu.edu.tw/assets/logo/ntpu_logo.png",
                             title="選擇學院群",
                             text="請選擇科系所屬學院群",
                             actions=[
@@ -350,7 +360,7 @@ class IDBot(Bot):
                     TemplateMessage(
                         alt_text="選擇科系",
                         template=ButtonsTemplate(
-                            thumbnail_image_url="https://walkinto.in/upload/-192z7YDP8-JlchfXtDvI.JPG",
+                            thumbnailImageUrl="https://walkinto.in/upload/-192z7YDP8-JlchfXtDvI.JPG",
                             title="選擇科系",
                             text="請選擇要查詢的科系",
                             actions=[
@@ -368,7 +378,7 @@ class IDBot(Bot):
                     TemplateMessage(
                         alt_text="選擇組別",
                         template=ButtonsTemplate(
-                            thumbnail_image_url="https://walkinto.in/upload/byupdk9PvIZyxupOy9Dw8.JPG",
+                            thumbnailImageUrl="https://walkinto.in/upload/byupdk9PvIZyxupOy9Dw8.JPG",
                             title="選擇組別",
                             text="請選擇要查詢的組別",
                             actions=[
@@ -386,10 +396,10 @@ class IDBot(Bot):
                     TemplateMessage(
                         alt_text="選擇科系",
                         template=ButtonsTemplate(
-                            thumbnail_image_url="https://walkinto.in/upload/ZJum7EYwPUZkedmXNtvPL.JPG",
+                            thumbnailImageUrl="https://walkinto.in/upload/ZJum7EYwPUZkedmXNtvPL.JPG",
                             title="選擇科系",
                             text="請選擇科系 (休運系請直接點圖片)",
-                            default_action=self.department_postback(
+                            defaultAction=self.department_postback(
                                 DEPARTMENT_CODE["休運"], year
                             ),
                             actions=[
@@ -408,7 +418,7 @@ class IDBot(Bot):
                     TemplateMessage(
                         alt_text="選擇科系",
                         template=ButtonsTemplate(
-                            thumbnail_image_url="https://walkinto.in/upload/ZJhs4wEaDIWklhiVwV6DI.jpg",
+                            thumbnailImageUrl="https://walkinto.in/upload/ZJhs4wEaDIWklhiVwV6DI.jpg",
                             title="選擇科系",
                             text="請選擇要查詢的科系",
                             actions=[
@@ -426,7 +436,7 @@ class IDBot(Bot):
                     TemplateMessage(
                         alt_text="選擇科系",
                         template=ButtonsTemplate(
-                            thumbnail_image_url="https://walkinto.in/upload/WyPbshN6DIZ1gvZo2NTvU.JPG",
+                            thumbnailImageUrl="https://walkinto.in/upload/WyPbshN6DIZ1gvZo2NTvU.JPG",
                             title="選擇科系",
                             text="請選擇科系",
                             actions=[
@@ -444,7 +454,7 @@ class IDBot(Bot):
                     TemplateMessage(
                         alt_text="選擇科系",
                         template=ButtonsTemplate(
-                            thumbnail_image_url="https://walkinto.in/upload/bJ9zWWHaPLWJg9fW-STD8.png",
+                            thumbnailImageUrl="https://walkinto.in/upload/bJ9zWWHaPLWJg9fW-STD8.png",
                             title="選擇科系",
                             text="請選擇科系",
                             actions=[

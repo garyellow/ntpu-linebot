@@ -53,7 +53,7 @@ async def reply_message(reply_token: str, message: List[Message]) -> None:
 
     await line_bot_api.reply_message(
         ReplyMessageRequest(
-            reply_token=reply_token,
+            replyToken=reply_token,
             messages=message,
         ),
     )

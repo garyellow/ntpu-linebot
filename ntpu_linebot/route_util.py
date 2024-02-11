@@ -20,7 +20,9 @@ async def handle_text_message(event: MessageEvent) -> None:
     unused = str.maketrans("", "", string.whitespace + string.punctuation)
     payload = event.message.text.translate(unused)
 
-    await ID_BOT.handle_text_message(payload, event.reply_token)
+    await ID_BOT.handle_text_message(
+        payload, event.reply_token, event.message.quote_token
+    )
 
 
 async def handle_postback_event(event: PostbackEvent) -> None:
@@ -36,8 +38,8 @@ async def handle_sticker_message(event: MessageEvent) -> None:
 
     messages = [
         ImageMessage(
-            original_content_url=msg_sender.icon_url,
-            preview_image_url=msg_sender.icon_url,
+            originalContentUrl=msg_sender.icon_url,
+            previewImageUrl=msg_sender.icon_url,
             sender=msg_sender,
         ),
     ]
