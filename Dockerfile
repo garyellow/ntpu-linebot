@@ -1,5 +1,5 @@
 # 第一階段：安裝 poetry 並建立依賴清單
-FROM python:3.11 AS builder
+FROM python:3.12 AS builder
 
 WORKDIR /app
 
@@ -17,7 +17,7 @@ RUN poetry export -f requirements.txt --output requirements.txt --without-hashes
 RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt
 
 # 第二階段：建立執行環境
-FROM python:3.11-slim AS runner
+FROM python:3.12-slim AS runner
 
 # 設定 LABEL
 LABEL org.opencontainers.image.source=https://github.com/garyellow/ntpu-linebot
