@@ -48,13 +48,13 @@ def get_sender(name: str | None = None) -> Sender:
     )
 
 
-async def reply_message(reply_token: str, message: List[Message]) -> None:
+async def reply_message(reply_token: str, messages: List[Message]) -> None:
     """製作回覆訊息並發送"""
 
     await line_bot_api.reply_message(
         ReplyMessageRequest(
             replyToken=reply_token,
-            messages=message,
+            messages=messages,
         ),
     )
 

@@ -21,7 +21,9 @@ async def handle_text_message(event: MessageEvent) -> None:
     payload = event.message.text.translate(unused)
 
     await ID_BOT.handle_text_message(
-        payload, event.reply_token, event.message.quote_token
+        payload,
+        event.reply_token,
+        event.message.quote_token,
     )
 
 

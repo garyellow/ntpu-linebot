@@ -1,5 +1,4 @@
 # -*- coding:utf-8 -*-
-import requests
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.webhooks import (
     FollowEvent,
@@ -19,15 +18,15 @@ from ntpu_linebot import (
     handle_text_message,
     ntpu_id,
     parser,
+    sticker_is_healthy,
 )
-
 
 app = Sanic("app")
 
 
 @app.route("/", methods=["HEAD", "GET"])
 async def index(request: Request) -> HTTPResponse:
-    """導向至專案 GitHub 頁面"""
+    """重導至專案 GitHub 頁面"""
 
     return redirect("https://github.com/garyellow/ntpu-linebot")
 
@@ -36,7 +35,10 @@ async def index(request: Request) -> HTTPResponse:
 async def healthz(request: Request) -> HTTPResponse:
     """健康檢查"""
 
-    if not ntpu_id.healthz(request.app):
+    if not await sticker_is_healthy(request.app):
+        raise SanicException("Service Unavailable", 503)
+
+    if not await ntpu_id.healthz(request.app):
         raise SanicException("Service Unavailable", 503)
 
     return text("OK")
@@ -58,9 +60,6 @@ async def callback(request: Request) -> HTTPResponse:
 
     except InvalidSignatureError as exc:
         raise SanicException("Invalid signature", 401) from exc
-
-    except requests.exceptions.Timeout as exc:
-        raise SanicException("Request Timeout", 408) from exc
 
     for event in events:
         if isinstance(event, MessageEvent):

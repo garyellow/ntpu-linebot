@@ -78,7 +78,7 @@ class Order(Enum):
     FULL_DEPARTMENT = auto()
 
 
-def student_info_format(
+async def student_info_format(
     student_id: str,
     name: str | None = None,
     order: List[Order] | None = None,
@@ -87,7 +87,7 @@ def student_info_format(
     """學生資訊格式化"""
 
     if name is None:
-        name = id_request.get_student_by_id(student_id)
+        name = await id_request.get_student_by_id(student_id)
 
     if not name:
         return ""
@@ -131,14 +131,14 @@ def student_info_format(
     return (" " * space).join(message)
 
 
-def healthz(app: Sanic) -> bool:
+async def healthz(app: Sanic) -> bool:
     """網址健康檢查"""
 
     if not id_request.base_url:
-        if not id_request.check_url():
+        if not await id_request.is_healthy():
             return False
 
-        app.add_task(renew_student_list())
+        app.add_task(renew_student_list)
 
     return True
 
@@ -150,5 +150,5 @@ async def renew_student_list() -> None:
 
     for year in range(cur_year - 5, cur_year + 1):
         for dep in DEPARTMENT_CODE.values():
-            id_request.get_students_by_year_and_department(str(year), str(dep))
+            await id_request.get_students_by_year_and_department(str(year), str(dep))
             await asyncio.sleep(random.uniform(5, 15))

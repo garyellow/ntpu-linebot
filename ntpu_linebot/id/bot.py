@@ -55,6 +55,28 @@ class IDBot(Bot):
             inputOption="closeRichMenu",
         )
 
+    def choose_department_message(
+        self,
+        year: str,
+        image_url: str,
+        department_names: List[str],
+    ) -> TemplateMessage:
+        """製作選擇科系的 template message"""
+
+        return TemplateMessage(
+            alt_text="選擇科系",
+            template=ButtonsTemplate(
+                thumbnailImageUrl=image_url,
+                title="選擇科系",
+                text="請選擇要查詢的科系",
+                actions=[
+                    self.department_postback(DEPARTMENT_CODE[name], year)
+                    for name in department_names
+                ],
+            ),
+            sender=get_sender(self.SENDER_NAME),
+        )
+
     async def handle_text_message(
         self,
         payload: str,
@@ -138,7 +160,7 @@ class IDBot(Bot):
                 await reply_message(reply_token, messages)
 
             elif 8 <= len(payload) <= 9:
-                students = student_info_format(
+                students = await student_info_format(
                     payload,
                     order=[Order.YEAR, Order.FULL_DEPARTMENT, Order.NAME],
                     space=2,
@@ -271,7 +293,7 @@ class IDBot(Bot):
                     for i in range(min(math.ceil(len(students) / 100), 5), 0, -1):
                         students_info = "\n".join(
                             [
-                                student_info_format(x[0], x[1])
+                                await student_info_format(x[0], x[1])
                                 for x in students[
                                     -i * 100 : -(i - 1) * 100 if i - 1 else None
                                 ]
@@ -357,19 +379,10 @@ class IDBot(Bot):
 
             elif data == "人文學院":
                 messages = [
-                    TemplateMessage(
-                        alt_text="選擇科系",
-                        template=ButtonsTemplate(
-                            thumbnailImageUrl="https://walkinto.in/upload/-192z7YDP8-JlchfXtDvI.JPG",
-                            title="選擇科系",
-                            text="請選擇要查詢的科系",
-                            actions=[
-                                self.department_postback(DEPARTMENT_CODE["中文"], year),
-                                self.department_postback(DEPARTMENT_CODE["應外"], year),
-                                self.department_postback(DEPARTMENT_CODE["歷史"], year),
-                            ],
-                        ),
-                        sender=get_sender(self.SENDER_NAME),
+                    self.choose_department_message(
+                        year,
+                        "https://walkinto.in/upload/-192z7YDP8-JlchfXtDvI.JPG",
+                        ["中文", "應外", "歷史"],
                     ),
                 ]
 
@@ -415,66 +428,39 @@ class IDBot(Bot):
 
             elif data == "公共事務學院":
                 messages = [
-                    TemplateMessage(
-                        alt_text="選擇科系",
-                        template=ButtonsTemplate(
-                            thumbnailImageUrl="https://walkinto.in/upload/ZJhs4wEaDIWklhiVwV6DI.jpg",
-                            title="選擇科系",
-                            text="請選擇要查詢的科系",
-                            actions=[
-                                self.department_postback(DEPARTMENT_CODE["公行"], year),
-                                self.department_postback(DEPARTMENT_CODE["不動"], year),
-                                self.department_postback(DEPARTMENT_CODE["財政"], year),
-                            ],
-                        ),
-                        sender=get_sender(self.SENDER_NAME),
+                    self.choose_department_message(
+                        year,
+                        "https://walkinto.in/upload/ZJhs4wEaDIWklhiVwV6DI.jpg",
+                        ["公行", "不動", "財政"],
                     ),
                 ]
 
             elif data == "社會科學學院":
                 messages = [
-                    TemplateMessage(
-                        alt_text="選擇科系",
-                        template=ButtonsTemplate(
-                            thumbnailImageUrl="https://walkinto.in/upload/WyPbshN6DIZ1gvZo2NTvU.JPG",
-                            title="選擇科系",
-                            text="請選擇科系",
-                            actions=[
-                                self.department_postback(DEPARTMENT_CODE["經濟"], year),
-                                self.department_postback(DEPARTMENT_CODE["社學"], year),
-                                self.department_postback(DEPARTMENT_CODE["社工"], year),
-                            ],
-                        ),
-                        sender=get_sender(self.SENDER_NAME),
+                    self.choose_department_message(
+                        year,
+                        "https://walkinto.in/upload/WyPbshN6DIZ1gvZo2NTvU.JPG",
+                        ["經濟", "社學", "社工"],
                     ),
                 ]
 
             elif data == "電機資訊學院":
                 messages = [
-                    TemplateMessage(
-                        alt_text="選擇科系",
-                        template=ButtonsTemplate(
-                            thumbnailImageUrl="https://walkinto.in/upload/bJ9zWWHaPLWJg9fW-STD8.png",
-                            title="選擇科系",
-                            text="請選擇科系",
-                            actions=[
-                                self.department_postback(DEPARTMENT_CODE["電機"], year),
-                                self.department_postback(DEPARTMENT_CODE["資工"], year),
-                                self.department_postback(DEPARTMENT_CODE["通訊"], year),
-                            ],
-                        ),
-                        sender=get_sender(self.SENDER_NAME),
+                    self.choose_department_message(
+                        year,
+                        "https://walkinto.in/upload/bJ9zWWHaPLWJg9fW-STD8.png",
+                        ["電機", "資工", "通訊"],
                     ),
                 ]
 
             else:
-                students = get_students_by_year_and_department(year, data)
+                students = await get_students_by_year_and_department(year, data)
 
                 students_info: str
                 if students:
                     students_info = "\n".join(
                         [
-                            student_info_format(x, y, [Order.ID, Order.NAME], 3)
+                            await student_info_format(x, y, [Order.ID, Order.NAME], 3)
                             for x, y in students.items()
                         ]
                     )

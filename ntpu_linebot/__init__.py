@@ -7,3 +7,4 @@ from ntpu_linebot.route_util import (
     handle_sticker_message,
     handle_text_message,
 )
+from ntpu_linebot.sticker_util import is_healthy as sticker_is_healthy
