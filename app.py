@@ -26,14 +26,31 @@ app = Sanic("app")
 
 @app.route("/", methods=["HEAD", "GET"])
 async def index(request: Request) -> HTTPResponse:
-    """重導至專案 GitHub 頁面"""
+    """
+    Redirects to the project GitHub page
+
+    Args:
+        request (Request): The request object representing the HTTP request made by the client.
+
+    Returns:
+        HTTPResponse: The redirect response that redirects the user to the GitHub page.
+    """
 
     return redirect("https://github.com/garyellow/ntpu-linebot")
 
 
 @app.route("/healthz", methods=["HEAD", "GET"])
 async def healthz(request: Request) -> HTTPResponse:
-    """健康檢查"""
+    """
+    Checks the health status.
+
+    Args:
+        request (Request): The Sanic request object representing the HTTP request.
+
+    Returns:
+        HTTPResponse: An HTTP response with  status code 200 if all services are healthy.
+        If any service is not healthy, a SanicException with status code 503 will be raised.
+    """
 
     if not await sticker_is_healthy(request.app):
         raise SanicException("Service Unavailable", 503)
@@ -46,26 +63,36 @@ async def healthz(request: Request) -> HTTPResponse:
 
 @app.post("/callback")
 async def callback(request: Request) -> HTTPResponse:
-    """處理 LINE Bot 的 Webhook"""
+    """
+    Handle LINE Bot webhook events.
 
-    # get X-Line-Signature header value
-    signature = request.headers["X-Line-Signature"]
+    Args:
+        request (Request): The request object representing the incoming webhook request.
 
-    # get request body as text
+    Returns:
+        HTTPResponse: The response object indicating the success of the callback function.
+    """
+
+    # Get the X-Line-Signature header value
+    signature = request.headers.get("X-Line-Signature")
+
+    # Get the request body as text
     body = request.body.decode()
 
-    # handle webhook body
+    # Handle the webhook body
     try:
         events = parser.parse(body, signature)
 
     except InvalidSignatureError as exc:
         raise SanicException("Invalid signature", 401) from exc
 
+    # Process each event
     for event in events:
         if isinstance(event, MessageEvent):
             if isinstance(event.message, TextMessageContent):
                 await handle_text_message(event)
-            if isinstance(event.message, StickerMessageContent):
+
+            elif isinstance(event.message, StickerMessageContent):
                 await handle_sticker_message(event)
 
         elif isinstance(event, PostbackEvent):

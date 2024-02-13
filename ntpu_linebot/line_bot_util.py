@@ -1,9 +1,9 @@
 # -*- coding:utf-8 -*-
-import os
 import random
 import sys
-import time
-from typing import List
+from datetime import datetime
+from os import getenv
+from typing import List, Optional
 
 from linebot.v3 import WebhookParser
 from linebot.v3.messaging import (
@@ -19,8 +19,8 @@ from linebot.v3.messaging import (
 from ntpu_linebot.sticker_util import stickers
 
 # get channel_secret and channel_access_token from your environment variable
-channel_secret = os.getenv("LINE_CHANNEL_SECRET", None)
-channel_access_token = os.getenv("LINE_CHANNEL_ACCESS_TOKEN", None)
+channel_secret = getenv("LINE_CHANNEL_SECRET", None)
+channel_access_token = getenv("LINE_CHANNEL_ACCESS_TOKEN", None)
 
 if channel_secret is None:
     print("Specify LINE_CHANNEL_SECRET as environment variable.")
@@ -35,21 +35,31 @@ async_api_client = AsyncApiClient(configuration)
 line_bot_api = AsyncMessagingApi(async_api_client)
 
 
-def get_sender(name: str | None = None) -> Sender:
+def get_sender(name: Optional[str] = None) -> Sender:
     """
-    取得回覆者資訊
+    Get sender information with a random sticker as the icon.
 
-    icon 使用隨機貼圖
+    Args:
+        name (str, optional): The name of the sender.
+
+    Returns:
+        A Sender object with the name and iconUrl.
     """
 
-    return Sender(
-        name=name,
-        iconUrl=random.choice(stickers),
-    )
+    return Sender(name=name, iconUrl=random.choice(stickers))
 
 
 async def reply_message(reply_token: str, messages: List[Message]) -> None:
-    """製作回覆訊息並發送"""
+    """
+    Create and send reply messages in the Line messaging platform.
+
+    Args:
+        reply_token (str): The token for replying to a specific message.
+        messages (List[Message]): The list of messages to be sent as a reply.
+
+    Returns:
+        None
+    """
 
     await line_bot_api.reply_message(
         ReplyMessageRequest(
@@ -60,10 +70,10 @@ async def reply_message(reply_token: str, messages: List[Message]) -> None:
 
 
 async def instruction(reply_token: str) -> None:
-    """使用說明"""
+    """Provides instructions on how to use a Line messaging platform bot."""
 
     mes_sender = get_sender()
-    cur_year = time.localtime(time.time()).tm_year
+    cur_year = datetime.now().year
     messages = [
         TextMessage(
             text="輸入學號可查詢姓名\n輸入姓名可查詢學號\n"
