@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
-import math
-import time
-from typing import List
+from datetime import datetime
+from math import ceil
+from typing import List, Optional
 
 from linebot.v3.messaging.models import (
     ButtonsTemplate,
@@ -15,13 +15,14 @@ from linebot.v3.messaging.models import (
 )
 
 from ntpu_linebot.abs_bot import Bot
-from ntpu_linebot.id.request import get_students_by_year_and_department, student_list
 from ntpu_linebot.id.util import (
     DEPARTMENT_CODE,
     DEPARTMENT_NAME,
     FULL_DEPARTMENT_CODE,
     FULL_DEPARTMENT_NAME,
     Order,
+    search_students_by_name,
+    search_students_by_year_and_department,
     student_info_format,
 )
 from ntpu_linebot.line_bot_util import get_sender, instruction, reply_message
@@ -31,27 +32,68 @@ class IDBot(Bot):
     SPILT_CODE = "@"
     SENDER_NAME = "學號魔法師"
     ALL_DEPARTMENT_CODE = "所有系代碼"
+    HELP_COMMANDS = ["使用說明", "help"]
+    COLLAGES = [
+        "人文學院",
+        "法律學院",
+        "商學院",
+        "公共事務學院",
+        "社會科學學院",
+        "電機資訊學院",
+    ]
 
     def college_postback(self, college_name: str, year: str) -> PostbackAction:
-        """製作學院 postback action"""
+        """
+        Creates a postback action for a college in the Line messaging platform.
 
+        Args:
+            college_name (str): The name of the college.
+            year (str): The year for which the action is being created.
+
+        Returns:
+            PostbackAction: A postback action object that represents the college in the Line messaging platform.
+        """
+
+        data = year + self.SPILT_CODE + college_name
         return PostbackAction(
             label=college_name,
             displayText=college_name,
-            data=year + self.SPILT_CODE + college_name,
+            data=data,
             inputOption="closeRichMenu",
         )
 
     def department_postback(self, department_code: str, year: str) -> PostbackAction:
-        """製作科系 postback action"""
+        """
+        Creates a postback action object for a specific department and year in the Line messaging platform.
+
+        Args:
+            department_code (str): The code of the department.
+            year (str): The year for which the action is being created.
+
+        Returns:
+            PostbackAction: A postback action object that represents the department in the Line messaging platform.
+        """
+
+        full_name = FULL_DEPARTMENT_NAME[department_code]
+
+        display_text = f"正在搜尋{year}學年度"
+
+        if department_code[0:2] == DEPARTMENT_CODE["法律"]:
+            display_text += "法律系"
+
+        display_text += DEPARTMENT_NAME[department_code]
+
+        if department_code[0:2] == DEPARTMENT_CODE["法律"]:
+            display_text += "組"
+        else:
+            display_text += "系"
+
+        data = year + self.SPILT_CODE + department_code
 
         return PostbackAction(
-            label=FULL_DEPARTMENT_NAME[department_code],
-            displayText=f"正在搜尋{year}學年度"
-            + ("法律系" if department_code[0:2] == DEPARTMENT_CODE["法律"] else "")
-            + DEPARTMENT_NAME[department_code]
-            + ("組" if department_code[0:2] == DEPARTMENT_CODE["法律"] else "系"),
-            data=year + self.SPILT_CODE + department_code,
+            label=full_name,
+            displayText=display_text,
+            data=data,
             inputOption="closeRichMenu",
         )
 
@@ -60,20 +102,45 @@ class IDBot(Bot):
         year: str,
         image_url: str,
         department_names: List[str],
+        extra_department: Optional[str] = None,
+        is_law: bool = False,
     ) -> TemplateMessage:
-        """製作選擇科系的 template message"""
+        """
+        Creates a template message with a button template for selecting a department.
+
+        Args:
+            year (str): The year for which the department is being selected.
+            image_url (str): The URL of the image to be displayed in the template message.
+            department_names (List[str]): A list of department names to be displayed as buttons in the template message.
+
+        Returns:
+            TemplateMessage: A template message with a button template for selecting a department.
+        """
+
+        department_class = "組別" if is_law else "科系"
+
+        actions = [
+            self.department_postback(DEPARTMENT_CODE[name], year)
+            for name in department_names
+        ]
+
+        default_action = (
+            self.department_postback(DEPARTMENT_CODE[extra_department], year)
+            if extra_department
+            else None
+        )
+
+        template = ButtonsTemplate(
+            thumbnailImageUrl=image_url,
+            title=f"選擇{department_class}",
+            text=f"請選擇要查詢的{department_class}",
+            defaultAction=default_action,
+            actions=actions,
+        )
 
         return TemplateMessage(
-            alt_text="選擇科系",
-            template=ButtonsTemplate(
-                thumbnailImageUrl=image_url,
-                title="選擇科系",
-                text="請選擇要查詢的科系",
-                actions=[
-                    self.department_postback(DEPARTMENT_CODE[name], year)
-                    for name in department_names
-                ],
-            ),
+            alt_text=f"選擇{department_class}",
+            template=template,
             sender=get_sender(self.SENDER_NAME),
         )
 
@@ -81,7 +148,7 @@ class IDBot(Bot):
         self,
         payload: str,
         reply_token: str,
-        quote_token: str | None = None,
+        quote_token: Optional[str] = None,
     ) -> bool:
         """處理文字訊息"""
 
@@ -111,7 +178,7 @@ class IDBot(Bot):
                 year = int(payload) if int(payload) < 1911 else int(payload) - 1911
 
                 messages: List
-                if year > time.localtime(time.time()).tm_year - 1911:
+                if year > datetime.now().year - 1911:
                     messages = [
                         TextMessage(
                             text="你未來人？(⊙ˍ⊙)",
@@ -187,15 +254,15 @@ class IDBot(Bot):
                 ]
 
                 if payload[0] == "4":
-                    over_99 = len(payload) == 9
-                    year = payload[1 : over_99 + 3]
+                    is_over_99 = len(payload) == 9
+                    year = payload[1 : is_over_99 + 3]
 
-                    department = payload[over_99 + 3 : over_99 + 5]
+                    department = payload[is_over_99 + 3 : is_over_99 + 5]
                     if department in [
                         DEPARTMENT_CODE["法律"],
                         DEPARTMENT_CODE["社學"][0:2],
                     ]:
-                        department += payload[over_99 + 5]
+                        department += payload[is_over_99 + 5]
 
                     if department[0:2] == DEPARTMENT_CODE["法律"]:
                         show_text = (
@@ -223,13 +290,14 @@ class IDBot(Bot):
                 return False
 
         else:
-            if payload in ["使用說明", "help"]:
+            if payload in self.HELP_COMMANDS:
                 await instruction(reply_token)
 
             elif payload == self.ALL_DEPARTMENT_CODE:
                 students = "\n".join(
                     [f"{x}系 -> {y}" for x, y in DEPARTMENT_CODE.items()]
                 )
+
                 messages = [
                     TextMessage(
                         text=students,
@@ -281,16 +349,13 @@ class IDBot(Bot):
                 await reply_message(reply_token, messages)
 
             else:
-                students = []
-                for key, value in student_list.items():
-                    if payload in value:
-                        students.append((key, value))
+                students = search_students_by_name(payload)
 
                 if students:
                     students = sorted(students, key=lambda x: (not x[0], int(x[0])))
 
                     messages = []
-                    for i in range(min(math.ceil(len(students) / 100), 5), 0, -1):
+                    for i in range(min(ceil(len(students) / 100), 5), 0, -1):
                         students_info = "\n".join(
                             [
                                 await student_info_format(x[0], x[1])
@@ -318,7 +383,7 @@ class IDBot(Bot):
     async def handle_postback_event(self, payload: str, reply_token: str) -> None:
         """處理回傳事件"""
 
-        if payload == "使用說明":
+        if payload in self.HELP_COMMANDS:
             await instruction(reply_token)
 
         elif payload == "兇":
@@ -377,114 +442,48 @@ class IDBot(Bot):
                     ),
                 ]
 
-            elif data == "人文學院":
-                messages = [
-                    self.choose_department_message(
+            elif data in self.COLLAGES:
+                department_message = {
+                    "人文學院": self.choose_department_message(
                         year,
                         "https://walkinto.in/upload/-192z7YDP8-JlchfXtDvI.JPG",
                         ["中文", "應外", "歷史"],
                     ),
-                ]
-
-            elif data == "法律學院":
-                messages = [
-                    TemplateMessage(
-                        alt_text="選擇組別",
-                        template=ButtonsTemplate(
-                            thumbnailImageUrl="https://walkinto.in/upload/byupdk9PvIZyxupOy9Dw8.JPG",
-                            title="選擇組別",
-                            text="請選擇要查詢的組別",
-                            actions=[
-                                self.department_postback(DEPARTMENT_CODE["法學"], year),
-                                self.department_postback(DEPARTMENT_CODE["司法"], year),
-                                self.department_postback(DEPARTMENT_CODE["財法"], year),
-                            ],
-                        ),
-                        sender=get_sender(self.SENDER_NAME),
+                    "法律學院": self.choose_department_message(
+                        year,
+                        "https://walkinto.in/upload/byupdk9PvIZyxupOy9Dw8.JPG",
+                        ["法學", "司法", "財法"],
+                        is_law=True,
                     ),
-                ]
-
-            elif data == "商學院":
-                messages = [
-                    TemplateMessage(
-                        alt_text="選擇科系",
-                        template=ButtonsTemplate(
-                            thumbnailImageUrl="https://walkinto.in/upload/ZJum7EYwPUZkedmXNtvPL.JPG",
-                            title="選擇科系",
-                            text="請選擇科系 (休運系請直接點圖片)",
-                            defaultAction=self.department_postback(
-                                DEPARTMENT_CODE["休運"], year
-                            ),
-                            actions=[
-                                self.department_postback(DEPARTMENT_CODE["企管"], year),
-                                self.department_postback(DEPARTMENT_CODE["金融"], year),
-                                self.department_postback(DEPARTMENT_CODE["會計"], year),
-                                self.department_postback(DEPARTMENT_CODE["統計"], year),
-                            ],
-                        ),
-                        sender=get_sender(self.SENDER_NAME),
+                    "商學院": self.choose_department_message(
+                        year,
+                        "https://walkinto.in/upload/ZJum7EYwPUZkedmXNtvPL.JPG",
+                        ["企管", "金融", "會計", "統計"],
+                        "休運",
                     ),
-                ]
-
-            elif data == "公共事務學院":
-                messages = [
-                    self.choose_department_message(
+                    "公共事務學院": self.choose_department_message(
                         year,
                         "https://walkinto.in/upload/ZJhs4wEaDIWklhiVwV6DI.jpg",
                         ["公行", "不動", "財政"],
                     ),
-                ]
-
-            elif data == "社會科學學院":
-                messages = [
-                    self.choose_department_message(
+                    "社會科學學院": self.choose_department_message(
                         year,
                         "https://walkinto.in/upload/WyPbshN6DIZ1gvZo2NTvU.JPG",
                         ["經濟", "社學", "社工"],
                     ),
-                ]
-
-            elif data == "電機資訊學院":
-                messages = [
-                    self.choose_department_message(
+                    "電機資訊學院": self.choose_department_message(
                         year,
                         "https://walkinto.in/upload/bJ9zWWHaPLWJg9fW-STD8.png",
                         ["電機", "資工", "通訊"],
                     ),
-                ]
+                }
+
+                messages = [department_message[data]]
 
             else:
-                students = await get_students_by_year_and_department(year, data)
-
-                students_info: str
-                if students:
-                    students_info = "\n".join(
-                        [
-                            await student_info_format(x, y, [Order.ID, Order.NAME], 3)
-                            for x, y in students.items()
-                        ]
-                    )
-
-                    students_info += (
-                        f"\n\n{year}學年度"
-                        + ("法律系" if data[0:2] == DEPARTMENT_CODE["法律"] else "")
-                        + DEPARTMENT_NAME[data]
-                        + ("組" if data[0:2] == DEPARTMENT_CODE["法律"] else "系")
-                        + f"共有{len(students)}位學生"
-                    )
-
-                else:
-                    students_info = (
-                        f"{year}學年度"
-                        + ("法律系" if data[0:2] == DEPARTMENT_CODE["法律"] else "")
-                        + DEPARTMENT_NAME[data]
-                        + ("組" if data[0:2] == DEPARTMENT_CODE["法律"] else "系")
-                        + "好像沒有人耶OAO"
-                    )
-
                 messages = [
                     TextMessage(
-                        text=students_info,
+                        text=await search_students_by_year_and_department(year, data),
                         sender=get_sender(self.SENDER_NAME),
                     ),
                 ]

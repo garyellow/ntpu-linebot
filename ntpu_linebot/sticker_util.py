@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-import asyncio
+from asyncio import sleep
 from typing import List
 
 from aiohttp import ClientSession
@@ -22,18 +22,25 @@ ICHIGO_PRODUCTION_URL = "https://ichigoproduction.com/special/present_icon.html"
 
 
 async def is_healthy(app: Sanic) -> bool:
-    """檢查貼圖是否可用"""
+    """
+    Checks if the `stickers` list is empty.
 
-    if len(stickers) == 0:
+    If it is empty, adds the `load_stickers` task to the Sanic app and returns False.
+    Otherwise, returns True.
+    """
+
+    if not stickers:
         app.add_task(load_stickers)
-
         return False
 
     return True
 
 
-async def load_stickers():
-    """載入貼圖(爬蟲)"""
+async def load_stickers() -> None:
+    """
+    Loads stickers by scraping the specified URLs using aiohttp and BeautifulSoup.
+    Appends the URLs of the stickers to the stickers list.
+    """
 
     async with ClientSession() as session:
         for url in SPY_FAMILY_URLS:
@@ -45,7 +52,7 @@ async def load_stickers():
                 for i in temp:
                     stickers.append(f"https://spy-family.net/{i['src'][3:]}")
 
-            await asyncio.sleep(0.05)
+            await sleep(0.05)
 
         async with session.get(ICHIGO_PRODUCTION_URL) as response:
             text = await response.text()
