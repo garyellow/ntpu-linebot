@@ -30,7 +30,8 @@ async def is_healthy(app: Sanic) -> bool:
     """
 
     if not stickers:
-        app.add_task(load_stickers)
+        await app.cancel_task("load_stickers", raise_exception=False)
+        app.add_task(load_stickers, name="load_stickers")
         return False
 
     return True

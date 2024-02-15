@@ -58,6 +58,8 @@ async def get_student_by_id(uid: str) -> str:
         str: The information of the student with the provided ID. If the student is not found or an error occurs, an empty string is returned.
     """
 
+    global base_url
+
     url = base_url + STUDENT_SEARCH_URL
     params = {
         "fmScope": "2",
@@ -78,6 +80,7 @@ async def get_student_by_id(uid: str) -> str:
                     return ""
 
     except ClientError:
+        base_url = ""
         return ""
 
     return student_dict[uid]
@@ -98,6 +101,8 @@ async def get_students_by_year_and_department(
     Returns:
         Dict[str, str]: A dictionary containing the student numbers as keys and their corresponding names as values.
     """
+
+    global base_url
 
     students: Dict[str, str] = {}
     url = base_url + STUDENT_SEARCH_URL
@@ -135,6 +140,7 @@ async def get_students_by_year_and_department(
                     await sleep(random.uniform(0.1, 0.3))
 
     except ClientError:
+        base_url = ""
         return {}
 
     return students
