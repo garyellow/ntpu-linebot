@@ -162,7 +162,8 @@ async def healthz(app: Sanic) -> bool:
         if not await is_healthy():
             return False
 
-        app.add_task(renew_student_list)
+        await app.cancel_task("renew_student_list", raise_exception=False)
+        app.add_task(renew_student_list, name="renew_student_list")
 
     return True
 
