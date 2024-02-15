@@ -12,13 +12,13 @@ from linebot.v3.webhooks import (
 from sanic import HTTPResponse, Request, Sanic, SanicException, redirect, text
 
 from ntpu_linebot import (
+    PARSER,
+    STICKER,
     handle_follow_join_event,
     handle_postback_event,
     handle_sticker_message,
     handle_text_message,
     ntpu_id,
-    parser,
-    sticker_is_healthy,
 )
 
 app = Sanic("app")
@@ -52,7 +52,7 @@ async def healthz(request: Request) -> HTTPResponse:
         If any service is not healthy, a SanicException with status code 503 will be raised.
     """
 
-    if not await sticker_is_healthy(request.app):
+    if not await STICKER.is_healthy(request.app):
         raise SanicException("Service Unavailable", 503)
 
     if not await ntpu_id.healthz(request.app):
@@ -81,7 +81,7 @@ async def callback(request: Request) -> HTTPResponse:
 
     # Handle the webhook body
     try:
-        events = parser.parse(body, signature)
+        events = PARSER.parse(body, signature)
 
     except InvalidSignatureError as exc:
         raise SanicException("Invalid signature", 401) from exc

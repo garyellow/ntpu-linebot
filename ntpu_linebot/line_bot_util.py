@@ -16,23 +16,23 @@ from linebot.v3.messaging import (
     TextMessage,
 )
 
-from ntpu_linebot.sticker_util import stickers
+from ntpu_linebot.sticker_util import STICKER
 
 # get channel_secret and channel_access_token from your environment variable
-channel_secret = getenv("LINE_CHANNEL_SECRET", None)
-channel_access_token = getenv("LINE_CHANNEL_ACCESS_TOKEN", None)
+CHANNEL_SECRET = getenv("LINE_CHANNEL_SECRET", None)
+CHANNEL_ACCESS_TOKEN = getenv("LINE_CHANNEL_ACCESS_TOKEN", None)
 
-if channel_secret is None:
+if CHANNEL_SECRET is None:
     print("Specify LINE_CHANNEL_SECRET as environment variable.")
     sys.exit(1)
-if channel_access_token is None:
+if CHANNEL_ACCESS_TOKEN is None:
     print("Specify LINE_CHANNEL_ACCESS_TOKEN as environment variable.")
     sys.exit(1)
 
-parser = WebhookParser(channel_secret)
-configuration = Configuration(access_token=channel_access_token)
-async_api_client = AsyncApiClient(configuration)
-line_bot_api = AsyncMessagingApi(async_api_client)
+PARSER = WebhookParser(CHANNEL_SECRET)
+CONFIGURATION = Configuration(access_token=CHANNEL_ACCESS_TOKEN)
+ASYNC_API_CLIENT = AsyncApiClient(CONFIGURATION)
+LINE_BOT_API = AsyncMessagingApi(ASYNC_API_CLIENT)
 
 
 def get_sender(name: Optional[str] = None) -> Sender:
@@ -46,7 +46,7 @@ def get_sender(name: Optional[str] = None) -> Sender:
         A Sender object with the name and iconUrl.
     """
 
-    return Sender(name=name, iconUrl=random.choice(stickers))
+    return Sender(name=name, iconUrl=random.choice(STICKER.STICKER_LIST))
 
 
 async def reply_message(reply_token: str, messages: List[Message]) -> None:
@@ -61,7 +61,7 @@ async def reply_message(reply_token: str, messages: List[Message]) -> None:
         None
     """
 
-    await line_bot_api.reply_message(
+    await LINE_BOT_API.reply_message(
         ReplyMessageRequest(
             replyToken=reply_token,
             messages=messages,
