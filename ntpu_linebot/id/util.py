@@ -5,15 +5,10 @@ from datetime import datetime
 from enum import Enum, auto, unique
 from typing import List, Optional
 
+from aiohttp import ClientError, ClientSession
 from sanic import Sanic
 
-from ntpu_linebot.id.request import (
-    base_url,
-    get_student_by_id,
-    get_students_by_year_and_department,
-    is_healthy,
-    student_dict,
-)
+from ntpu_linebot.id.request import ID_REQUEST
 
 # 科系名稱 -> 科系代碼
 DEPARTMENT_CODE = {
@@ -103,7 +98,7 @@ async def student_info_format(
     """
 
     if name is None:
-        name = await get_student_by_id(student_id)
+        name = await ID_REQUEST.get_student_by_id(student_id)
 
     if not name:
         return ""
@@ -158,8 +153,13 @@ async def healthz(app: Sanic) -> bool:
         bool: True if the health check is successful, False otherwise.
     """
 
-    if not base_url:
-        if not await is_healthy():
+    try:
+        async with ClientSession() as session:
+            async with session.head(ID_REQUEST.base_url):
+                return True
+
+    except ClientError:
+        if not await ID_REQUEST.is_healthy():
             return False
 
         await app.cancel_task("renew_student_list", raise_exception=False)
@@ -176,8 +176,8 @@ async def renew_student_list() -> None:
     cur_year = datetime.now().year - 1911
     for year in range(cur_year - 5, cur_year + 1):
         for dep in DEPARTMENT_CODE.values():
-            await get_students_by_year_and_department(str(year), str(dep))
-            await sleep(random.uniform(10, 20))
+            await ID_REQUEST.get_students_by_year_and_department(str(year), str(dep))
+            await sleep(random.uniform(5, 10))
 
 
 def search_students_by_name(name: str) -> List[tuple[str, str]]:
@@ -192,7 +192,7 @@ def search_students_by_name(name: str) -> List[tuple[str, str]]:
     """
 
     students = []
-    for key, value in student_dict.items():
+    for key, value in ID_REQUEST.STUDENT_DICT.items():
         if set(name).issubset(set(value)):
             students.append((key, value))
 
@@ -213,7 +213,7 @@ async def search_students_by_year_and_department(year: str, department: str) -> 
              If there are no students, it includes a message indicating that there are no students in the department.
     """
 
-    students = await get_students_by_year_and_department(year, department)
+    students = await ID_REQUEST.get_students_by_year_and_department(year, department)
 
     department_name = DEPARTMENT_NAME.get(department, "")
     department_type = "組" if department.startswith(DEPARTMENT_CODE["法律"]) else "系"
