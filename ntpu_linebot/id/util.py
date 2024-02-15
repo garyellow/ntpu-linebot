@@ -158,6 +158,8 @@ async def healthz(app: Sanic) -> bool:
         bool: True if the health check is successful, False otherwise.
     """
 
+    print(base_url)
+
     if not base_url:
         if not await is_healthy():
             return False
