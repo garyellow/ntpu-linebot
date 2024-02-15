@@ -100,7 +100,7 @@ async def get_students_by_year_and_department(
     """
 
     students: Dict[str, str] = {}
-    url = f"{base_url}{STUDENT_SEARCH_URL}&page=1&fmKeyword=4{year}{department}"
+    url = base_url + STUDENT_SEARCH_URL
     params = {
         "fmScope": "2",
         "page": "1",
@@ -118,7 +118,7 @@ async def get_students_by_year_and_department(
                 for i in range(1, pages):
                     params = {
                         "fmScope": "2",
-                        "page": i,
+                        "page": str(i),
                         "fmKeyword": f"4{year}{department}",
                     }
 
