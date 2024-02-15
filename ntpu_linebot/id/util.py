@@ -12,7 +12,7 @@ from ntpu_linebot.id.request import (
     get_student_by_id,
     get_students_by_year_and_department,
     is_healthy,
-    student_list,
+    student_dict,
 )
 
 # 科系名稱 -> 科系代碼
@@ -176,7 +176,7 @@ async def renew_student_list() -> None:
     for year in range(cur_year - 5, cur_year + 1):
         for dep in DEPARTMENT_CODE.values():
             await get_students_by_year_and_department(str(year), str(dep))
-            await sleep(random.uniform(5, 15))
+            await sleep(random.uniform(10, 20))
 
 
 def search_students_by_name(name: str) -> List[tuple[str, str]]:
@@ -191,7 +191,7 @@ def search_students_by_name(name: str) -> List[tuple[str, str]]:
     """
 
     students = []
-    for key, value in student_list.items():
+    for key, value in student_dict.items():
         if set(name).issubset(set(value)):
             students.append((key, value))
 

@@ -25,7 +25,7 @@ async def is_healthy(app: Sanic) -> bool:
     """
     Checks if the `stickers` list is empty.
 
-    If it is empty, adds the `load_stickers` task to the Sanic app and returns False.
+    If it is empty, adds the `load_stickers` task to the Sanic app and return False.
     Otherwise, returns True.
     """
 

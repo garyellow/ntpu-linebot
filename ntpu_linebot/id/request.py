@@ -1,7 +1,6 @@
 # -*- coding:utf-8 -*-
 import random
 from asyncio import sleep
-from collections import defaultdict
 from typing import Dict
 
 from aiohttp import ClientError, ClientSession
@@ -10,8 +9,8 @@ from bs4 import BeautifulSoup as Bs4
 from cachetools import TTLCache
 
 base_url = ""
-STUDENT_SEARCH_URL = "/portfolio/search.php?fmScope=2"
-student_list = defaultdict(str)
+STUDENT_SEARCH_URL = "/portfolio/search.php"
+student_dict: Dict[str, str] = {}
 
 
 async def is_healthy() -> bool:
@@ -48,36 +47,40 @@ async def is_healthy() -> bool:
 
 
 @cached(TTLCache(maxsize=9999, ttl=60 * 60 * 24 * 7))
-async def get_student_by_id(number: str) -> str:
+async def get_student_by_id(uid: str) -> str:
     """
     Retrieves information about a student by their ID.
 
     Args:
-        number (str): The ID of the student.
+        uid (str): The ID of the student.
 
     Returns:
         str: The information of the student with the provided ID. If the student is not found or an error occurs, an empty string is returned.
     """
 
-    if not student_list[number]:
-        url = f"{base_url}{STUDENT_SEARCH_URL}&page=1&fmKeyword={number}"
+    url = base_url + STUDENT_SEARCH_URL
+    params = {
+        "fmScope": "2",
+        "page": "1",
+        "fmKeyword": uid,
+    }
 
-        try:
-            async with ClientSession() as session:
-                async with session.get(url) as res:
-                    text = await res.text("utf-8")
-                    soup = Bs4(text, "lxml")
-                    student = soup.find("div", {"class": "bloglistTitle"})
+    try:
+        async with ClientSession() as session:
+            async with session.get(url, params=params) as res:
+                text = await res.text("utf-8")
+                soup = Bs4(text, "lxml")
+                student = soup.find("div", {"class": "bloglistTitle"})
 
-                    if student is not None:
-                        student_list[number] = student.find("a").text
-                    else:
-                        return ""
+                if student is not None:
+                    student_dict[uid] = student.find("a").text
+                else:
+                    return ""
 
-        except ClientError:
-            return ""
+    except ClientError:
+        return ""
 
-    return student_list[number]
+    return student_dict[uid]
 
 
 @cached(TTLCache(maxsize=99, ttl=60 * 60 * 24 * 7))
@@ -98,19 +101,28 @@ async def get_students_by_year_and_department(
 
     students: Dict[str, str] = {}
     url = f"{base_url}{STUDENT_SEARCH_URL}&page=1&fmKeyword=4{year}{department}"
+    params = {
+        "fmScope": "2",
+        "page": "1",
+        "fmKeyword": f"4{year}{department}",
+    }
 
     try:
         async with ClientSession() as session:
-            async with session.get(url) as res:
+            async with session.get(url, params=params) as res:
                 text = await res.text("utf-8")
                 data = Bs4(text, "lxml")
                 pages = len(data.find_all("span", {"class": "item"}))
                 await sleep(random.uniform(0.1, 0.2))
 
                 for i in range(1, pages):
-                    url = f"{base_url}{STUDENT_SEARCH_URL}&page={i}&fmKeyword=4{year}{department}"
+                    params = {
+                        "fmScope": "2",
+                        "page": i,
+                        "fmKeyword": f"4{year}{department}",
+                    }
 
-                    async with session.get(url) as res:
+                    async with session.get(url, params=params) as res:
                         text = await res.text("utf-8")
                         data = Bs4(text, "lxml")
 
@@ -118,9 +130,9 @@ async def get_students_by_year_and_department(
                             name = item.find("a").text
                             number = item.find("a").get("href").split("/")[-1]
                             students[number] = name
-                            student_list[number] = name
+                            student_dict[number] = name
 
-                    await sleep(random.uniform(0.1, 0.2))
+                    await sleep(random.uniform(0.1, 0.3))
 
     except ClientError:
         return {}
