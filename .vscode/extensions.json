@@ -3,8 +3,10 @@
         "ms-azuretools.vscode-docker",
         "ms-python.black-formatter",
         "ms-python.isort",
-        "ms-python.python",
         "ms-python.pylint",
-        "ms-python.vscode-pylance"
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-vscode.remote-explorer",
+        "njpwerner.autodocstring",
     ]
 }
