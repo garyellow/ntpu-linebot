@@ -1,7 +1,6 @@
 # -*- coding:utf-8 -*-
 import random
 from asyncio import sleep
-from typing import Dict
 
 from aiohttp import ClientError, ClientSession
 from asyncache import cached
@@ -12,7 +11,7 @@ from cachetools import TTLCache
 class IDRequest:
     base_url = ""
     STUDENT_SEARCH_URL = "/portfolio/search.php"
-    STUDENT_DICT: Dict[str, str] = {}
+    STUDENT_DICT = dict[str, str]()
 
     async def is_healthy(self) -> bool:
         """
@@ -85,9 +84,9 @@ class IDRequest:
         self,
         year: str,
         department: str,
-    ) -> Dict[str, str]:
+    ) -> dict[str, str]:
         """
-        Retrieves a list of students by year and department from a website.
+        Retrieves a dict of students by year and department from a website.
         Uses caching to store the results for a week and makes asynchronous HTTP requests to fetch the data.
 
         Args:
@@ -98,7 +97,7 @@ class IDRequest:
             Dict[str, str]: A dictionary containing the student numbers as keys and their corresponding names as values.
         """
 
-        students: Dict[str, str] = {}
+        students = dict[str, str]()
         url = self.base_url + self.STUDENT_SEARCH_URL
         params = {
             "fmScope": "2",

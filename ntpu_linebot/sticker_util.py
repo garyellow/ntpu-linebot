@@ -1,6 +1,5 @@
 # -*- coding:utf-8 -*-
 from asyncio import sleep
-from typing import List
 
 from aiohttp import ClientSession
 from bs4 import BeautifulSoup as Bs4
@@ -20,7 +19,7 @@ ICHIGO_PRODUCTION_URL = "https://ichigoproduction.com/special/present_icon.html"
 
 
 class StickerUtil:
-    STICKER_LIST: List[str] = []
+    STICKER_LIST = list[str]()
 
     async def is_healthy(self, app: Sanic) -> bool:
         """
