@@ -6,7 +6,7 @@ from enum import Enum, auto, unique
 from typing import Optional
 
 from aiohttp import ClientError, ClientSession
-from sanic import Sanic
+from fastapi import BackgroundTasks
 
 from ntpu_linebot.id.request import ID_REQUEST
 
@@ -142,12 +142,12 @@ async def student_info_format(
     return (" " * space).join(message)
 
 
-async def healthz(app: Sanic) -> bool:
+async def healthz(background_tasks: BackgroundTasks) -> bool:
     """
     Perform a health check on a URL.
 
     Args:
-        app (Sanic): An instance of the Sanic class representing the Sanic application.
+        background_tasks (BackgroundTasks): An instance of the BackgroundTasks class representing the background tasks of the FastAPI application.
 
     Returns:
         bool: True if the health check is successful, False otherwise.
@@ -162,8 +162,7 @@ async def healthz(app: Sanic) -> bool:
         if not await ID_REQUEST.is_healthy():
             return False
 
-        await app.cancel_task("renew_student_list", raise_exception=False)
-        app.add_task(renew_student_list, name="renew_student_list")
+        background_tasks.add_task(renew_student_list)
 
     return True
 

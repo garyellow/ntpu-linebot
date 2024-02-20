@@ -1,4 +1,14 @@
 # -*- coding:utf-8 -*-
+from fastapi import (
+    BackgroundTasks,
+    Body,
+    FastAPI,
+    Header,
+    HTTPException,
+    Request,
+    status,
+)
+from fastapi.responses import PlainTextResponse, RedirectResponse
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.webhooks import (
     FollowEvent,
@@ -9,7 +19,7 @@ from linebot.v3.webhooks import (
     StickerMessageContent,
     TextMessageContent,
 )
-from sanic import HTTPResponse, Request, Sanic, SanicException, redirect, text
+from pydantic import BaseModel
 
 from ntpu_linebot import (
     PARSER,
@@ -21,84 +31,87 @@ from ntpu_linebot import (
     ntpu_id,
 )
 
-app = Sanic("app")
+app = FastAPI()
 
 
-@app.route("/", methods=["HEAD", "GET"])
-async def index(request: Request) -> HTTPResponse:
+@app.head("/")
+@app.get("/")
+async def index() -> RedirectResponse:
     """
     Redirects to the project GitHub page
 
-    Args:
-        request (Request): The request object representing the HTTP request made by the client.
-
     Returns:
-        HTTPResponse: The redirect response that redirects the user to the GitHub page.
+        RedirectResponse: The redirect response that redirects the user to the GitHub page.
     """
 
-    return redirect("https://github.com/garyellow/ntpu-linebot")
+    github_url = "https://github.com/garyellow/ntpu-linebot"
+    return RedirectResponse(url=github_url, status_code=status.HTTP_302_FOUND)
 
 
-@app.route("/healthz", methods=["HEAD", "GET"])
-async def healthz(request: Request) -> HTTPResponse:
+@app.head("/healthz")
+@app.get("/healthz")
+async def healthz(background_tasks: BackgroundTasks) -> PlainTextResponse:
     """
     Checks the health status.
 
     Args:
-        request (Request): The Sanic request object representing the HTTP request.
+        background_tasks (BackgroundTasks): The FastAPI BackgroundTasks object.
 
     Returns:
-        HTTPResponse: An HTTP response with  status code 200 if all services are healthy.
-        If any service is not healthy, a SanicException with status code 503 will be raised.
+        PlainTextResponse: An HTTP response with status code 200 if all services are healthy.
+        If any service is not healthy, an HTTP response with status code 503 will be returned.
     """
 
-    if not await STICKER.is_healthy(request.app):
-        raise SanicException("Service Unavailable", 503)
+    if not await STICKER.is_healthy(background_tasks):
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Service Unavailable")
 
-    if not await ntpu_id.healthz(request.app):
-        raise SanicException("Service Unavailable", 503)
+    if not await ntpu_id.healthz(background_tasks):
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Service Unavailable")
 
-    return text("OK")
+    return PlainTextResponse("OK")
+
+
+class LineWebhookPayload(BaseModel):
+    """
+    The payload of the LINE Bot webhook.
+    """
+
+    destination: str
+    events: list
 
 
 @app.post("/callback")
-async def callback(request: Request) -> HTTPResponse:
+async def callback(
+    request: Request,
+    _: LineWebhookPayload = Body(...),
+    x_line_signature: str = Header(...),
+) -> PlainTextResponse:
     """
     Handle LINE Bot webhook events.
 
     Args:
-        request (Request): The request object representing the incoming webhook request.
+        body (LineWebhookPayload): The body of the LINE Bot webhook, containing the destination and events.
+        x_line_signature (str): The signature of the webhook request.
 
     Returns:
-        HTTPResponse: The response object indicating the success of the callback function.
+        PlainTextResponse: The response object indicating the success of the callback function.
     """
 
-    # Get the X-Line-Signature header value
-    signature = request.headers.get("X-Line-Signature")
-
-    # Get the request body as text
-    body = request.body.decode()
-
-    # Handle the webhook body
     try:
-        events = PARSER.parse(body, signature)
+        events = PARSER.parse((await request.body()).decode(), x_line_signature)
+
+        for event in events:
+            if isinstance(event, MessageEvent):
+                if isinstance(event.message, TextMessageContent):
+                    await handle_text_message(event)
+                elif isinstance(event.message, StickerMessageContent):
+                    await handle_sticker_message(event)
+            elif isinstance(event, PostbackEvent):
+                await handle_postback_event(event)
+            elif isinstance(event, (FollowEvent, JoinEvent, MemberJoinedEvent)):
+                await handle_follow_join_event(event)
+
+        return PlainTextResponse("OK")
 
     except InvalidSignatureError as exc:
-        raise SanicException("Invalid signature", 401) from exc
-
-    # Process each event
-    for event in events:
-        if isinstance(event, MessageEvent):
-            if isinstance(event.message, TextMessageContent):
-                await handle_text_message(event)
-
-            elif isinstance(event.message, StickerMessageContent):
-                await handle_sticker_message(event)
-
-        elif isinstance(event, PostbackEvent):
-            await handle_postback_event(event)
-
-        elif isinstance(event, (FollowEvent, JoinEvent, MemberJoinedEvent)):
-            await handle_follow_join_event(event)
-
-    return text("OK")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid signature") from exc

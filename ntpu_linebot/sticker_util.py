@@ -3,7 +3,7 @@ from asyncio import sleep
 
 from aiohttp import ClientSession
 from bs4 import BeautifulSoup as Bs4
-from sanic import Sanic
+from fastapi import BackgroundTasks
 
 SPY_FAMILY_URLS = [
     "https://spy-family.net/tvseries/special/special1_season1.php",
@@ -21,19 +21,16 @@ ICHIGO_PRODUCTION_URL = "https://ichigoproduction.com/special/present_icon.html"
 class StickerUtil:
     STICKER_LIST = list[str]()
 
-    async def is_healthy(self, app: Sanic) -> bool:
+    async def is_healthy(self, background_tasks: BackgroundTasks) -> bool:
         """
-        Checks if the `stickers` list is empty.
+        Checks if the `STICKER_LIST` is empty.
 
-        If it is empty, adds the `load_stickers` task to the Sanic app and return False.
+        If it is empty, adds the `load_stickers` task to the `background_tasks` object and returns False.
         Otherwise, returns True.
         """
-
         if not self.STICKER_LIST:
-            await app.cancel_task("load_stickers", raise_exception=False)
-            app.add_task(self.load_stickers, name="load_stickers")
+            background_tasks.add_task(self.load_stickers)
             return False
-
         return True
 
     async def load_stickers(self) -> None:
