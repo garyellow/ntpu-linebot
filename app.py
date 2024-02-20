@@ -90,16 +90,16 @@ async def callback(request: Request) -> HTTPResponse:
         for event in events:
             if isinstance(event, MessageEvent):
                 if isinstance(event.message, TextMessageContent):
-                    await handle_text_message(event)
+                    await handle_text_message(event, request.app)
 
                 elif isinstance(event.message, StickerMessageContent):
-                    await handle_sticker_message(event)
+                    await handle_sticker_message(event, request.app)
 
             elif isinstance(event, PostbackEvent):
-                await handle_postback_event(event)
+                await handle_postback_event(event, request.app)
 
             elif isinstance(event, (FollowEvent, JoinEvent, MemberJoinedEvent)):
-                await handle_follow_join_event(event)
+                await handle_follow_join_event(event, request.app)
 
         return text("OK")
 
