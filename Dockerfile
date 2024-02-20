@@ -1,5 +1,5 @@
 # 第一階段：安裝 poetry 並建立依賴清單
-FROM python:3.12 AS builder
+FROM python:3.12-slim AS builder
 
 WORKDIR /app
 
