@@ -156,10 +156,10 @@ async def healthz(background_tasks: BackgroundTasks) -> bool:
     try:
         async with ClientSession() as session:
             async with session.head(ID_REQUEST.base_url):
-                return True
+                pass
 
     except ClientError:
-        if not await ID_REQUEST.is_healthy():
+        if not await ID_REQUEST.change_base_url():
             return False
 
         background_tasks.add_task(renew_student_list)

@@ -63,10 +63,18 @@ async def healthz(background_tasks: BackgroundTasks) -> PlainTextResponse:
     """
 
     if not await STICKER.is_healthy(background_tasks):
-        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Service Unavailable")
+        return PlainTextResponse(
+            "Sticker Unavailable",
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            background=background_tasks,
+        )
 
     if not await ntpu_id.healthz(background_tasks):
-        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Service Unavailable")
+        return PlainTextResponse(
+            "ID Unavailable",
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            background=background_tasks,
+        )
 
     return PlainTextResponse("OK")
 

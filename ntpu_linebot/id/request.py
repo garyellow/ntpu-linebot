@@ -13,7 +13,7 @@ class IDRequest:
     STUDENT_SEARCH_URL = "/portfolio/search.php"
     STUDENT_DICT = dict[str, str]()
 
-    async def is_healthy(self) -> bool:
+    async def change_base_url(self) -> bool:
         """
         Check if a given URL is accessible. If not, try alternative URLs until a valid one is found.
         Returns True if a valid URL is found, False otherwise.
