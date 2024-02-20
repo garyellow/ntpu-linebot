@@ -100,8 +100,8 @@ async def student_info_format(
     if name is None:
         name = await ID_REQUEST.get_student_by_id(student_id)
 
-    if not name:
-        return ""
+        if not name:
+            return ""
 
     if order is None:
         order = [Order.YEAR, Order.DEPARTMENT, Order.ID, Order.NAME]

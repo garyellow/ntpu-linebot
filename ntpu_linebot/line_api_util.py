@@ -14,13 +14,12 @@ from linebot.v3.messaging import (
 
 
 class LineAPIUtil:
-    def __init__(self) -> None:
-        self.channel_secret: Optional[str] = None
-        self.channel_access_token: Optional[str] = None
-        self.parser: Optional[WebhookParser] = None
-        self.configuration: Optional[Configuration] = None
-        self.async_api_client: Optional[AsyncApiClient] = None
-        self.line_bot_api: Optional[AsyncMessagingApi] = None
+    channel_secret: Optional[str] = None
+    channel_access_token: Optional[str] = None
+    parser: Optional[WebhookParser] = None
+    configuration: Optional[Configuration] = None
+    async_api_client: Optional[AsyncApiClient] = None
+    line_bot_api: Optional[AsyncMessagingApi] = None
 
     def get_line_bot_api(self) -> AsyncMessagingApi:
         """

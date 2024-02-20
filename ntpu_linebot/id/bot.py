@@ -26,7 +26,7 @@ from ntpu_linebot.id.util import (
     search_students_by_year_and_department,
     student_info_format,
 )
-from ntpu_linebot.line_bot_util import get_sender
+from ntpu_linebot.line_bot_util import get_sender, instruction
 
 
 class IDBot(Bot):
@@ -42,32 +42,6 @@ class IDBot(Bot):
         "社會科學學院",
         "電機資訊學院",
     ]
-
-    async def instruction(self) -> list[TextMessage]:
-        """Provides instructions on how to use a Line messaging platform bot."""
-
-        mes_sender = get_sender()
-        cur_year = datetime.now().year
-        return [
-            TextMessage(
-                text="輸入學號可查詢姓名\n輸入姓名可查詢學號\n"
-                + "輸入系名可查詢系代碼\n輸入系代碼可查詢系名\n輸入入學學年再選科系獲取學生名單",
-                sender=mes_sender,
-            ),
-            TextMessage(
-                text="For example~~\n學號：412345678\n姓名：林某某 or 某某\n"
-                + f"系名：資工系 or 資訊工程學系\n系代碼：85\n入學學年：{cur_year - 1911} or {cur_year}",
-                sender=mes_sender,
-            ),
-            TextMessage(
-                text="部分資訊是由相關資料推斷\n不一定為正確資訊",
-                sender=mes_sender,
-            ),
-            TextMessage(
-                text="資料來源：\n國立臺北大學數位學苑 2.0\n國立臺北大學學生資訊系統\n國立臺北大學課程查詢系統",
-                sender=mes_sender,
-            ),
-        ]
 
     def college_postback(self, college_name: str, year: str) -> PostbackAction:
         """
@@ -306,7 +280,7 @@ class IDBot(Bot):
 
         else:
             if payload in self.HELP_COMMANDS:
-                return await self.instruction()
+                return instruction()
 
             if payload == self.ALL_DEPARTMENT_CODE:
                 students = "\n".join(
@@ -388,7 +362,7 @@ class IDBot(Bot):
         """處理回傳事件"""
 
         if payload in self.HELP_COMMANDS:
-            return await self.instruction()
+            return instruction()
 
         if payload == "兇":
             return [
