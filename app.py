@@ -9,10 +9,18 @@ from linebot.v3.webhooks import (
     StickerMessageContent,
     TextMessageContent,
 )
-from sanic import HTTPResponse, Request, Sanic, SanicException, redirect, text
+from sanic import (
+    HTTPResponse,
+    Request,
+    Sanic,
+    ServiceUnavailable,
+    Unauthorized,
+    redirect,
+    text,
+)
 
 from ntpu_linebot import (
-    PARSER,
+    LINE_API_UTIL,
     STICKER,
     handle_follow_join_event,
     handle_postback_event,
@@ -25,7 +33,7 @@ app = Sanic("app")
 
 
 @app.route("/", methods=["HEAD", "GET"])
-async def index(request: Request) -> HTTPResponse:
+async def index(_: Request) -> HTTPResponse:
     """
     Redirects to the project GitHub page
 
@@ -48,15 +56,15 @@ async def healthz(request: Request) -> HTTPResponse:
         request (Request): The Sanic request object representing the HTTP request.
 
     Returns:
-        HTTPResponse: An HTTP response with  status code 200 if all services are healthy.
-        If any service is not healthy, a SanicException with status code 503 will be raised.
+        HTTPResponse: An HTTP response with status code 200 if all services are healthy.
+        If any service is not healthy, an exception with status code 503 will be raised.
     """
 
     if not await STICKER.is_healthy(request.app):
-        raise SanicException("Service Unavailable", 503)
+        raise ServiceUnavailable("Sticker Unavailable")
 
     if not await ntpu_id.healthz(request.app):
-        raise SanicException("Service Unavailable", 503)
+        raise ServiceUnavailable("ID Unavailable")
 
     return text("OK")
 
@@ -73,32 +81,27 @@ async def callback(request: Request) -> HTTPResponse:
         HTTPResponse: The response object indicating the success of the callback function.
     """
 
-    # Get the X-Line-Signature header value
-    signature = request.headers.get("X-Line-Signature")
-
-    # Get the request body as text
-    body = request.body.decode()
-
-    # Handle the webhook body
     try:
-        events = PARSER.parse(body, signature)
+        events = LINE_API_UTIL.get_webhook_parser().parse(
+            request.body.decode(),
+            request.headers.get("X-Line-Signature"),
+        )
+
+        for event in events:
+            if isinstance(event, MessageEvent):
+                if isinstance(event.message, TextMessageContent):
+                    await handle_text_message(event, request.app)
+
+                elif isinstance(event.message, StickerMessageContent):
+                    await handle_sticker_message(event, request.app)
+
+            elif isinstance(event, PostbackEvent):
+                await handle_postback_event(event, request.app)
+
+            elif isinstance(event, (FollowEvent, JoinEvent, MemberJoinedEvent)):
+                await handle_follow_join_event(event, request.app)
+
+        return text("OK")
 
     except InvalidSignatureError as exc:
-        raise SanicException("Invalid signature", 401) from exc
-
-    # Process each event
-    for event in events:
-        if isinstance(event, MessageEvent):
-            if isinstance(event.message, TextMessageContent):
-                await handle_text_message(event)
-
-            elif isinstance(event.message, StickerMessageContent):
-                await handle_sticker_message(event)
-
-        elif isinstance(event, PostbackEvent):
-            await handle_postback_event(event)
-
-        elif isinstance(event, (FollowEvent, JoinEvent, MemberJoinedEvent)):
-            await handle_follow_join_event(event)
-
-    return text("OK")
+        raise Unauthorized("Invalid signature") from exc

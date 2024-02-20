@@ -9,12 +9,14 @@ from linebot.v3.webhooks import (
     MessageEvent,
     PostbackEvent,
 )
+from sanic import Sanic
 
 from ntpu_linebot.id import ID_BOT
-from ntpu_linebot.line_bot_util import get_sender, reply_message
+from ntpu_linebot.line_bot_util import get_sender
+from ntpu_linebot.line_api_util import LINE_API_UTIL
 
 
-async def handle_text_message(event: MessageEvent) -> None:
+async def handle_text_message(event: MessageEvent, app: Sanic) -> None:
     """
     Process the text message contained in the event.
 
@@ -28,14 +30,12 @@ async def handle_text_message(event: MessageEvent) -> None:
     # Remove all whitespace and punctuation characters from the text message
     payload = sub(r"\s|[][!\"#$%&'()*+,./:;<=>?@\\^_`{|}~-]", "", event.message.text)
 
-    await ID_BOT.handle_text_message(
-        payload,
-        event.reply_token,
-        event.message.quote_token,
-    )
+    messages = await ID_BOT.handle_text_message(payload, event.message.quote_token)
+
+    app.add_task(LINE_API_UTIL.reply_message(event.reply_token, messages))
 
 
-async def handle_postback_event(event: PostbackEvent) -> None:
+async def handle_postback_event(event: PostbackEvent, app: Sanic) -> None:
     """
     Process the postback event triggered by the user.
 
@@ -46,10 +46,12 @@ async def handle_postback_event(event: PostbackEvent) -> None:
         None
     """
 
-    await ID_BOT.handle_postback_event(event.postback.data, event.reply_token)
+    messages = await ID_BOT.handle_postback_event(event.postback.data)
+
+    app.add_task(LINE_API_UTIL.reply_message(event.reply_token, messages))
 
 
-async def handle_sticker_message(event: MessageEvent) -> None:
+async def handle_sticker_message(event: MessageEvent, app: Sanic) -> None:
     """
     Handle sticker messages in a Line bot.
 
@@ -68,11 +70,12 @@ async def handle_sticker_message(event: MessageEvent) -> None:
         sender=msg_sender,
     )
 
-    await reply_message(event.reply_token, [image_message])
+    app.add_task(LINE_API_UTIL.reply_message(event.reply_token, [image_message]))
 
 
 async def handle_follow_join_event(
     event: FollowEvent | JoinEvent | MemberJoinedEvent,
+    app: Sanic,
 ) -> None:
     """
     Handles the follow, join, and member joined events in a Line bot.
@@ -108,4 +111,4 @@ async def handle_follow_join_event(
         ),
     ]
 
-    await reply_message(event.reply_token, messages)
+    app.add_task(LINE_API_UTIL.reply_message(event.reply_token, messages))

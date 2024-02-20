@@ -37,5 +37,5 @@ RUN pip install --no-cache-dir --no-index --find-links=/wheels -r requirements.t
 COPY app.py .
 COPY ntpu_linebot ntpu_linebot/
 
-# 使用 uvicorn 執行
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "10000"]
+# 使用 gunicorn 在 uvicorn worker 上執行 app
+CMD ["gunicorn", "app:app", "-b", "0.0.0.0:10000", "-k", "uvicorn.workers.UvicornWorker"]

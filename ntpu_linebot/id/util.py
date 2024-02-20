@@ -3,7 +3,7 @@ import random
 from asyncio import sleep
 from datetime import datetime
 from enum import Enum, auto, unique
-from typing import List, Optional
+from typing import Optional
 
 from aiohttp import ClientError, ClientSession
 from sanic import Sanic
@@ -82,7 +82,7 @@ class Order(Enum):
 async def student_info_format(
     student_id: str,
     name: Optional[str] = None,
-    order: Optional[List[Order]] = None,
+    order: Optional[list[Order]] = None,
     space: int = 1,
 ) -> str:
     """Formats student information based on the provided inputs.
@@ -90,7 +90,7 @@ async def student_info_format(
     Args:
         student_id (str): The ID of the student.
         name (str, optional): The name of the student. Defaults to None.
-        order (List[Order], optional): The order in which the student's information should be displayed. Defaults to None.
+        order (list[Order], optional): The order in which the student's information should be displayed. Defaults to None.
         space (int, optional): The number of spaces to be used for indentation in the formatted string. Defaults to 1.
 
     Returns:
@@ -100,8 +100,8 @@ async def student_info_format(
     if name is None:
         name = await ID_REQUEST.get_student_by_id(student_id)
 
-    if not name:
-        return ""
+        if not name:
+            return ""
 
     if order is None:
         order = [Order.YEAR, Order.DEPARTMENT, Order.ID, Order.NAME]
@@ -156,10 +156,10 @@ async def healthz(app: Sanic) -> bool:
     try:
         async with ClientSession() as session:
             async with session.head(ID_REQUEST.base_url):
-                return True
+                pass
 
     except ClientError:
-        if not await ID_REQUEST.is_healthy():
+        if not await ID_REQUEST.change_base_url():
             return False
 
         await app.cancel_task("renew_student_list", raise_exception=False)
@@ -180,7 +180,7 @@ async def renew_student_list() -> None:
             await sleep(random.uniform(5, 10))
 
 
-def search_students_by_name(name: str) -> List[tuple[str, str]]:
+def search_students_by_name(name: str) -> list[tuple[str, str]]:
     """
     Searches for students by name.
 
@@ -188,7 +188,7 @@ def search_students_by_name(name: str) -> List[tuple[str, str]]:
         name (str): The name of the student to search for.
 
     Returns:
-        List: A list of tuples containing the names and IDs of the matching students.
+        list: A list of tuples containing the names and IDs of the matching students.
     """
 
     students = []
@@ -201,7 +201,7 @@ def search_students_by_name(name: str) -> List[tuple[str, str]]:
 
 async def search_students_by_year_and_department(year: str, department: str) -> str:
     """
-    Retrieves a list of students by year and department and formats their information.
+    Retrieves a string of students by year and department and formats their information.
 
     Args:
         year (str): The year of the students to retrieve.
