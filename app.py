@@ -20,7 +20,7 @@ from sanic import (
 )
 
 from ntpu_linebot import (
-    PARSER,
+    LINE_API_UTIL,
     STICKER,
     handle_follow_join_event,
     handle_postback_event,
@@ -82,7 +82,7 @@ async def callback(request: Request) -> HTTPResponse:
     """
 
     try:
-        events = PARSER.parse(
+        events = LINE_API_UTIL.get_webhook_parser().parse(
             request.body.decode(),
             request.headers.get("X-Line-Signature"),
         )

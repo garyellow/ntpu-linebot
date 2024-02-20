@@ -12,7 +12,8 @@ from linebot.v3.webhooks import (
 from sanic import Sanic
 
 from ntpu_linebot.id import ID_BOT
-from ntpu_linebot.line_bot_util import get_sender, reply_message
+from ntpu_linebot.line_bot_util import get_sender
+from ntpu_linebot.line_api_util import LINE_API_UTIL
 
 
 async def handle_text_message(event: MessageEvent, app: Sanic) -> None:
@@ -31,7 +32,7 @@ async def handle_text_message(event: MessageEvent, app: Sanic) -> None:
 
     messages = await ID_BOT.handle_text_message(payload, event.message.quote_token)
 
-    app.add_task(reply_message(event.reply_token, messages))
+    app.add_task(LINE_API_UTIL.reply_message(event.reply_token, messages))
 
 
 async def handle_postback_event(event: PostbackEvent, app: Sanic) -> None:
@@ -47,7 +48,7 @@ async def handle_postback_event(event: PostbackEvent, app: Sanic) -> None:
 
     messages = await ID_BOT.handle_postback_event(event.postback.data)
 
-    app.add_task(reply_message(event.reply_token, messages))
+    app.add_task(LINE_API_UTIL.reply_message(event.reply_token, messages))
 
 
 async def handle_sticker_message(event: MessageEvent, app: Sanic) -> None:
@@ -69,7 +70,7 @@ async def handle_sticker_message(event: MessageEvent, app: Sanic) -> None:
         sender=msg_sender,
     )
 
-    app.add_task(reply_message(event.reply_token, [image_message]))
+    app.add_task(LINE_API_UTIL.reply_message(event.reply_token, [image_message]))
 
 
 async def handle_follow_join_event(
@@ -110,4 +111,4 @@ async def handle_follow_join_event(
         ),
     ]
 
-    app.add_task(reply_message(event.reply_token, messages))
+    app.add_task(LINE_API_UTIL.reply_message(event.reply_token, messages))
