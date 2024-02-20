@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 from datetime import datetime
 from math import ceil
-from typing import List, Optional
+from typing import Optional
 
 from linebot.v3.messaging.models import (
     ButtonsTemplate,
@@ -101,7 +101,7 @@ class IDBot(Bot):
         self,
         year: str,
         image_url: str,
-        department_names: List[str],
+        department_names: list[str],
         extra_department: Optional[str] = None,
         is_law: bool = False,
     ) -> TemplateMessage:
@@ -111,7 +111,7 @@ class IDBot(Bot):
         Args:
             year (str): The year for which the department is being selected.
             image_url (str): The URL of the image to be displayed in the template message.
-            department_names (List[str]): A list of department names to be displayed as buttons in the template message.
+            department_names (list[str]): A list of department names to be displayed as buttons in the template message.
 
         Returns:
             TemplateMessage: A template message with a button template for selecting a department.
@@ -177,7 +177,7 @@ class IDBot(Bot):
             elif 2 <= len(payload) <= 4:
                 year = int(payload) if int(payload) < 1911 else int(payload) - 1911
 
-                messages: List
+                messages = []
                 if year > datetime.now().year - 1911:
                     messages = [
                         TextMessage(
@@ -399,7 +399,7 @@ class IDBot(Bot):
         else:
             year, data = payload.split(self.SPILT_CODE)
 
-            messages: List
+            messages = []
             if data == "搜尋全系":
                 messages = [
                     TemplateMessage(

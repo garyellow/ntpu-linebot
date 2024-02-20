@@ -3,7 +3,7 @@ import random
 import sys
 from datetime import datetime
 from os import getenv
-from typing import List, Optional
+from typing import Optional
 
 from linebot.v3 import WebhookParser
 from linebot.v3.messaging import (
@@ -49,13 +49,13 @@ def get_sender(name: Optional[str] = None) -> Sender:
     return Sender(name=name, iconUrl=random.choice(STICKER.STICKER_LIST))
 
 
-async def reply_message(reply_token: str, messages: List[Message]) -> None:
+async def reply_message(reply_token: str, messages: list[Message]) -> None:
     """
     Create and send reply messages in the Line messaging platform.
 
     Args:
         reply_token (str): The token for replying to a specific message.
-        messages (List[Message]): The list of messages to be sent as a reply.
+        messages (list[Message]): The list of messages to be sent as a reply.
 
     Returns:
         None
