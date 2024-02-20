@@ -156,10 +156,10 @@ async def healthz(app: Sanic) -> bool:
     try:
         async with ClientSession() as session:
             async with session.head(ID_REQUEST.base_url):
-                return True
+                pass
 
     except ClientError:
-        if not await ID_REQUEST.is_healthy():
+        if not await ID_REQUEST.change_base_url():
             return False
 
         await app.cancel_task("renew_student_list", raise_exception=False)

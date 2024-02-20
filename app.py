@@ -1,4 +1,6 @@
 # -*- coding:utf-8 -*-
+from http.client import SERVICE_UNAVAILABLE
+
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.webhooks import (
     FollowEvent,
@@ -9,7 +11,7 @@ from linebot.v3.webhooks import (
     StickerMessageContent,
     TextMessageContent,
 )
-from sanic import HTTPResponse, Request, Sanic, SanicException, redirect, text
+from sanic import HTTPResponse, Request, Sanic, Unauthorized, redirect, text
 
 from ntpu_linebot import (
     PARSER,
@@ -25,7 +27,7 @@ app = Sanic("app")
 
 
 @app.route("/", methods=["HEAD", "GET"])
-async def index(request: Request) -> HTTPResponse:
+async def index(_: Request) -> HTTPResponse:
     """
     Redirects to the project GitHub page
 
@@ -53,10 +55,10 @@ async def healthz(request: Request) -> HTTPResponse:
     """
 
     if not await STICKER.is_healthy(request.app):
-        raise SanicException("Service Unavailable", 503)
+        return text("Sticker Unavailable", SERVICE_UNAVAILABLE)
 
     if not await ntpu_id.healthz(request.app):
-        raise SanicException("Service Unavailable", 503)
+        return text("ID Unavailable", SERVICE_UNAVAILABLE)
 
     return text("OK")
 
@@ -84,7 +86,7 @@ async def callback(request: Request) -> HTTPResponse:
         events = PARSER.parse(body, signature)
 
     except InvalidSignatureError as exc:
-        raise SanicException("Invalid signature", 401) from exc
+        raise Unauthorized("Invalid signature") from exc
 
     # Process each event
     for event in events:
