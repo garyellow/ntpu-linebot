@@ -15,8 +15,9 @@ from linebot.v3.messaging.models import (
     TextMessage,
 )
 
-from ntpu_linebot.abs_bot import Bot
-from ntpu_linebot.id.util import (
+from ..abs_bot import Bot
+from ..line_bot_util import get_sender, instruction
+from .util import (
     DEPARTMENT_CODE,
     DEPARTMENT_NAME,
     FULL_DEPARTMENT_CODE,
@@ -26,7 +27,6 @@ from ntpu_linebot.id.util import (
     search_students_by_year_and_department,
     student_info_format,
 )
-from ntpu_linebot.line_bot_util import get_sender, instruction
 
 
 class IDBot(Bot):

@@ -8,7 +8,7 @@ from typing import Optional
 from aiohttp import ClientError, ClientSession
 from sanic import Sanic
 
-from ntpu_linebot.id.request import ID_REQUEST
+from .request import ID_REQUEST
 
 # 科系名稱 -> 科系代碼
 DEPARTMENT_CODE = {
@@ -85,30 +85,34 @@ async def student_info_format(
     order: Optional[list[Order]] = None,
     space: int = 1,
 ) -> str:
-    """Formats student information based on the provided inputs.
+    """
+    Format the student information based on the given parameters and return the formatted string.
 
     Args:
-        student_id (str): The ID of the student.
+        student_id (str): The ID of the student
         name (str, optional): The name of the student. Defaults to None.
-        order (list[Order], optional): The order in which the student's information should be displayed. Defaults to None.
-        space (int, optional): The number of spaces to be used for indentation in the formatted string. Defaults to 1.
+        order (list[Order], optional): The order in which the student information should be formatted. Defaults to None.
+        space (int, optional): The space between the formatted information. Defaults to 1.
 
     Returns:
-        str: A formatted string representing the student's information.
+        str: The formatted student information.
     """
 
+    # Get the student's name if not provided
     if name is None:
         name = await ID_REQUEST.get_student_by_id(student_id)
 
         if not name:
             return ""
 
+    # Set default order if not provided
     if order is None:
         order = [Order.YEAR, Order.DEPARTMENT, Order.ID, Order.NAME]
 
     message = []
     is_over_99 = len(student_id) == 9
 
+    # Format the student information based on the order
     for o in order:
         if o == Order.ID:
             message.append(student_id)
@@ -125,10 +129,7 @@ async def student_info_format(
             message.append(DEPARTMENT_NAME[department] + "系")
         elif o == Order.FULL_DEPARTMENT:
             department = student_id[is_over_99 + 3 : is_over_99 + 5]
-            if department in [
-                DEPARTMENT_CODE["法律"],
-                DEPARTMENT_CODE["社學"][0:2],
-            ]:
+            if department in [DEPARTMENT_CODE["法律"], DEPARTMENT_CODE["社學"][:2]]:
                 department += student_id[is_over_99 + 5]
 
             if department[0:2] == DEPARTMENT_CODE["法律"]:
@@ -139,15 +140,16 @@ async def student_info_format(
         else:
             raise ValueError("Invalid order")
 
+    # Join the formatted information with spaces and return
     return (" " * space).join(message)
 
 
 async def healthz(app: Sanic) -> bool:
     """
-    Perform a health check on a URL.
+    Asynchronous function to check the health of the application.
 
     Args:
-        app (Sanic): An instance of the Sanic class representing the Sanic application.
+        app (Sanic): The Sanic application.
 
     Returns:
         bool: True if the health check is successful, False otherwise.
@@ -170,8 +172,8 @@ async def healthz(app: Sanic) -> bool:
 
 async def renew_student_list() -> None:
     """
-    Updates the student list for each department and year.
-    """
+	Asynchronously renews the student list for the current and previous five years for each department.
+	"""
 
     cur_year = datetime.now().year - 1911
     for year in range(cur_year - 5, cur_year + 1):
@@ -201,18 +203,15 @@ def search_students_by_name(name: str) -> list[tuple[str, str]]:
 
 async def search_students_by_year_and_department(year: str, department: str) -> str:
     """
-    Retrieves a string of students by year and department and formats their information.
+    Asynchronously search for students by year and department.
 
     Args:
-        year (str): The year of the students to retrieve.
-        department (str): The department of the students to retrieve.
+        year (str): The year to search for.
+        department (str): The department to search within.
 
     Returns:
-        str: A formatted string representing the student information for the given year and department.
-             If there are students, it includes their IDs, names, and the total number of students.
-             If there are no students, it includes a message indicating that there are no students in the department.
+        str: Information about the students found, including their IDs, names, and total count.
     """
-
     students = await ID_REQUEST.get_students_by_year_and_department(year, department)
 
     department_name = DEPARTMENT_NAME.get(department, "")
