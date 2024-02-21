@@ -5,7 +5,8 @@
 		"dockerfile": "Dockerfile",
 		"args": {
 			"VARIANT": "3.12",
-			"DOCKER_IN_DOCKER": "1"
+			"DOCKER_IN_DOCKER": "1",
+			"OH_MY_POSH": "1"
 		},
 		"options": [
 			"--no-cache"
@@ -26,8 +27,7 @@
 				"njpwerner.autodocstring"
 			],
 			"settings": {
-				"editor.fontFamily": "'JetBrainsMono Nerd Font Mono', Consolas, 'Courier New', monospace",
-				"editor.fontLigatures": true,
+				"isort.check": true,
 				"python.defaultInterpreterPath": "/home/vscode/.cache/pypoetry/virtualenvs/ntpu-linebot-qOxGW-we-py3.12/bin/python"
 			}
 		}
@@ -39,5 +39,5 @@
 		"bash": "echo 'eval \"$(oh-my-posh init bash --config .devcontainer/shell_theme.omp.json)\"' >> ~/.bashrc",
 		"zsh": "echo 'eval \"$(oh-my-posh init zsh --config .devcontainer/shell_theme.omp.json)\"' >> ~/.zshrc"
 	},
-	"postStartCommand": "if [ -e pyproject.toml ]; then poetry install --sync --no-root; fi"
+	"postStartCommand": "if [ -e pyproject.toml ]; then rm -rf .venv && poetry install --sync --no-root; fi"
 }
