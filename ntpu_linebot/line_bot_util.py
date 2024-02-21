@@ -6,7 +6,7 @@ from typing import Optional
 from linebot.v3.messaging import Sender
 from linebot.v3.messaging.models import TextMessage
 
-from ntpu_linebot.sticker_util import STICKER
+from .sticker_util import STICKER
 
 
 def get_sender(name: Optional[str] = None) -> Sender:

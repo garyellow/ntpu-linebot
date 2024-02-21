@@ -11,9 +11,9 @@ from linebot.v3.webhooks import (
 )
 from sanic import Sanic
 
-from ntpu_linebot.id import ID_BOT
-from ntpu_linebot.line_bot_util import get_sender
-from ntpu_linebot.line_api_util import LINE_API_UTIL
+from .id import ID_BOT
+from .line_api_util import LINE_API_UTIL
+from .line_bot_util import get_sender
 
 
 async def handle_text_message(event: MessageEvent, app: Sanic) -> None:
