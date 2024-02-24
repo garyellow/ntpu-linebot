@@ -83,10 +83,10 @@ class IDRequest:
                     soup = Bs4(text, "lxml")
                     student = soup.find("div", {"class": "bloglistTitle"})
 
-                    if student is not None:
-                        self.STUDENT_DICT[uid] = student.find("a").text
-                    else:
+                    if student is None:
                         return ""
+
+                    self.STUDENT_DICT[uid] = student.find("a").text
 
         except ClientError:
             self.base_url = ""

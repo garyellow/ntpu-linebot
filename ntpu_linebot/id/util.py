@@ -205,6 +205,7 @@ async def search_students_by_year_and_department(year: str, department: str) -> 
     Returns:
         str: Information about the students found, including their IDs, names, and total count.
     """
+
     students = await ID_REQUEST.get_students_by_year_and_department(year, department)
 
     department_name = DEPARTMENT_NAME.get(department, "")
