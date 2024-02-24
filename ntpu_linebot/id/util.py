@@ -5,7 +5,6 @@ from datetime import datetime
 from enum import Enum, auto, unique
 from typing import Optional
 
-from aiohttp import ClientError, ClientSession
 from sanic import Sanic
 
 from .request import ID_REQUEST
@@ -67,7 +66,6 @@ DEPARTMENT_NAME = {v: k for k, v in DEPARTMENT_CODE.items()}
 FULL_DEPARTMENT_NAME = {v: k for k, v in FULL_DEPARTMENT_CODE.items()}
 
 
-# 學生資訊排序
 @unique
 class Order(Enum):
     """Enumeration representing the order in which different items should be displayed or sorted."""
@@ -155,12 +153,7 @@ async def healthz(app: Sanic) -> bool:
         bool: True if the health check is successful, False otherwise.
     """
 
-    try:
-        async with ClientSession() as session:
-            async with session.head(ID_REQUEST.base_url):
-                pass
-
-    except ClientError:
+    if not await ID_REQUEST.check_url():
         if not await ID_REQUEST.change_base_url():
             return False
 

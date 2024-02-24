@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 import random
 from asyncio import sleep
+from typing import Optional
 
 from aiohttp import ClientError, ClientSession
 from asyncache import cached
@@ -10,8 +11,37 @@ from cachetools import TTLCache
 
 class IDRequest:
     base_url = ""
+    URLS = [
+        "http://120.126.197.52",
+        "https://120.126.197.52",
+        "https://lms.ntpu.edu.tw",
+    ]
     STUDENT_SEARCH_URL = "/portfolio/search.php"
     STUDENT_DICT = dict[str, str]()
+
+    async def check_url(self, url: Optional[str] = None) -> bool:
+        """
+        Check if a given URL is accessible by sending a HEAD request to the URL.
+
+        Args:
+            url (str, optional): The URL to be checked. Defaults to base_url.
+
+        Returns:
+            bool: True if the URL is accessible, False otherwise.
+        """
+
+        if url is None:
+            url = self.base_url
+
+        try:
+            async with ClientSession() as session:
+                async with session.head(url):
+                    pass
+
+        except ClientError:
+            return False
+
+        return True
 
     async def change_base_url(self) -> bool:
         """
@@ -19,23 +49,8 @@ class IDRequest:
         Returns True if a valid URL is found, False otherwise.
         """
 
-        async def check_url(url: str) -> bool:
-            try:
-                async with ClientSession() as session:
-                    async with session.head(url):
-                        return True
-
-            except ClientError:
-                return False
-
-        URLS = [
-            "http://120.126.197.52",
-            "https://120.126.197.52",
-            "https://lms.ntpu.edu.tw",
-        ]
-
-        for url in URLS:
-            if await check_url(url):
+        for url in self.URLS:
+            if await self.check_url(url):
                 self.base_url = url
                 return True
 
