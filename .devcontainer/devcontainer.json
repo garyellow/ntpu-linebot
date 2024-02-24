@@ -7,10 +7,7 @@
 			"VARIANT": "3.12",
 			"DOCKER_IN_DOCKER": "1",
 			"OH_MY_POSH": "1"
-		},
-		"options": [
-			"--no-cache"
-		]
+		}
 	},
 	"features": {
 		"ghcr.io/devcontainers/features/docker-in-docker:2": {}
@@ -36,8 +33,8 @@
 		10000
 	],
 	"postCreateCommand": {
-		"bash": "echo 'eval \"$(oh-my-posh init bash --config .devcontainer/shell_theme.omp.json)\"' >> ~/.bashrc",
-		"zsh": "echo 'eval \"$(oh-my-posh init zsh --config .devcontainer/shell_theme.omp.json)\"' >> ~/.zshrc"
+		"bash": "if [ -e .devcontainer/theme.omp.json ]; then echo 'eval \"$(oh-my-posh init bash --config .devcontainer/theme.omp.json)\"' >> ~/.bashrc; fi",
+		"zsh": "if [ -e .devcontainer/theme.omp.json ]; then echo 'eval \"$(oh-my-posh init zsh --config .devcontainer/theme.omp.json)\"' >> ~/.zshrc; fi"
 	},
 	"postStartCommand": "if [ -e pyproject.toml ]; then rm -rf .venv && poetry install --sync --no-root; fi"
 }
