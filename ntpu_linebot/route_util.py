@@ -32,7 +32,8 @@ async def handle_text_message(event: MessageEvent, app: Sanic) -> None:
 
     messages = await ID_BOT.handle_text_message(payload, event.message.quote_token)
 
-    app.add_task(LINE_API_UTIL.reply_message(event.reply_token, messages))
+    if messages:
+        app.add_task(LINE_API_UTIL.reply_message(event.reply_token, messages))
 
 
 async def handle_postback_event(event: PostbackEvent, app: Sanic) -> None:
@@ -48,7 +49,8 @@ async def handle_postback_event(event: PostbackEvent, app: Sanic) -> None:
 
     messages = await ID_BOT.handle_postback_event(event.postback.data)
 
-    app.add_task(LINE_API_UTIL.reply_message(event.reply_token, messages))
+    if messages:
+        app.add_task(LINE_API_UTIL.reply_message(event.reply_token, messages))
 
 
 async def handle_sticker_message(event: MessageEvent, app: Sanic) -> None:

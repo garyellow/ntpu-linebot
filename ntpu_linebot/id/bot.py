@@ -128,7 +128,7 @@ class IDBot(Bot):
         ]
 
         while len(actions) > 4 and len(actions) % 3 != 0:
-            actions.append(PostbackAction(label="X", data="null"))
+            actions.append(PostbackAction(label=" ", data="null"))
 
         if len(actions) <= 4:
             template = ButtonsTemplate(
