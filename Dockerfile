@@ -39,4 +39,4 @@ COPY ntpu_linebot ntpu_linebot/
 
 # 使用 sanic 執行應用程式
 ENTRYPOINT ["sanic", "app:app"]
-CMD ["--host=0.0.0.0", "--port=10000", " --no-access-logs"]
+CMD ["--host=0.0.0.0", "--port=10000", "--no-access-logs"]
