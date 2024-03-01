@@ -1,4 +1,5 @@
 # -*- coding:utf-8 -*-
+from . import course as ntpu_course
 from . import id as ntpu_id
 from .line_api_util import LINE_API_UTIL
 from .route_util import (
@@ -10,11 +11,12 @@ from .route_util import (
 from .sticker_util import STICKER
 
 __all__ = [
+    "ntpu_course",
     "ntpu_id",
     "LINE_API_UTIL",
-    "STICKER",
     "handle_follow_join_event",
     "handle_postback_event",
     "handle_sticker_message",
     "handle_text_message",
+    "STICKER",
 ]

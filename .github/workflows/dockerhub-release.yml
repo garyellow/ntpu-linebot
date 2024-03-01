@@ -13,7 +13,7 @@ name: Release
 on:
   push:
     branches:
-      - "master"
+      - master
 
 jobs:
   registry:
@@ -76,5 +76,5 @@ jobs:
       - name: Deploy to Render
         uses: fjogeleit/http-request-action@v1
         with:
-          url: "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys"
+          url: https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys
           bearerToken: ${{ secrets.RENDER_API_KEY }}

@@ -77,9 +77,9 @@ class Order(Enum):
     FULL_DEPARTMENT = auto()
 
 
-async def student_info_format(
+def student_info_format(
     student_id: str,
-    name: Optional[str] = None,
+    name: str,
     order: Optional[list[Order]] = None,
     space: int = 1,
 ) -> str:
@@ -88,20 +88,13 @@ async def student_info_format(
 
     Args:
         student_id (str): The ID of the student
-        name (str, optional): The name of the student. Defaults to None.
+        name (str): The name of the student. Defaults to None.
         order (list[Order], optional): The order in which the student information should be formatted. Defaults to None.
         space (int, optional): The space between the formatted information. Defaults to 1.
 
     Returns:
         str: The formatted student information.
     """
-
-    # Get the student's name if not provided
-    if name is None:
-        name = await ID_REQUEST.get_student_by_id(student_id)
-
-        if not name:
-            return ""
 
     # Set default order if not provided
     if order is None:
@@ -112,33 +105,39 @@ async def student_info_format(
 
     # Format the student information based on the order
     for o in order:
-        if o == Order.ID:
-            message.append(student_id)
-        elif o == Order.NAME:
-            message.append(name)
-        elif o == Order.YEAR:
-            year = student_id[1 : is_over_99 + 3]
-            message.append(year)
-        elif o == Order.DEPARTMENT:
-            department = student_id[is_over_99 + 3 : is_over_99 + 5]
-            if department == DEPARTMENT_CODE["社學"][0:2]:
-                department += student_id[is_over_99 + 5]
+        match o:
+            case Order.ID:
+                message.append(student_id)
 
-            message.append(DEPARTMENT_NAME[department] + "系")
-        elif o == Order.FULL_DEPARTMENT:
-            department = student_id[is_over_99 + 3 : is_over_99 + 5]
-            if department in [DEPARTMENT_CODE["法律"], DEPARTMENT_CODE["社學"][:2]]:
-                department += student_id[is_over_99 + 5]
+            case Order.NAME:
+                message.append(name)
 
-            if department[0:2] == DEPARTMENT_CODE["法律"]:
-                message.append("法律系")
-                message.append(DEPARTMENT_NAME[department] + "組")
-            else:
+            case Order.YEAR:
+                year = student_id[1 : is_over_99 + 3]
+                message.append(year)
+
+            case Order.DEPARTMENT:
+                department = student_id[is_over_99 + 3 : is_over_99 + 5]
+                if department == DEPARTMENT_CODE["社學"][0:2]:
+                    department += student_id[is_over_99 + 5]
+
                 message.append(DEPARTMENT_NAME[department] + "系")
-        else:
-            raise ValueError("Invalid order")
 
-    # Join the formatted information with spaces and return
+            case Order.FULL_DEPARTMENT:
+                department = student_id[is_over_99 + 3 : is_over_99 + 5]
+                if department in [DEPARTMENT_CODE["法律"], DEPARTMENT_CODE["社學"][:2]]:
+                    department += student_id[is_over_99 + 5]
+
+                if department[0:2] == DEPARTMENT_CODE["法律"]:
+                    message.append("法律系")
+                    message.append(DEPARTMENT_NAME[department] + "組")
+
+                else:
+                    message.append(DEPARTMENT_NAME[department] + "系")
+
+            case _:
+                raise ValueError("Invalid Order")
+
     return (" " * space).join(message)
 
 
@@ -154,25 +153,37 @@ async def healthz(app: Sanic) -> bool:
     """
 
     if not await ID_REQUEST.check_url():
-        if not await ID_REQUEST.change_base_url():
-            return False
+        if await ID_REQUEST.change_base_url():
+            await app.cancel_task("renew_student_dict", raise_exception=False)
+            app.add_task(renew_student_dict, name="renew_student_dict")
 
-        await app.cancel_task("renew_student_list", raise_exception=False)
-        app.add_task(renew_student_list, name="renew_student_list")
+        return False
 
     return True
 
 
-async def renew_student_list() -> None:
-    """
-	Asynchronously renews the student list for the current and previous five years for each department.
-	"""
+async def renew_student_dict() -> None:
+    """Updates the student dict for each department and year."""
 
     cur_year = datetime.now().year - 1911
-    for year in range(cur_year - 5, cur_year + 1):
+    for year in range(cur_year, cur_year - 6, -1):
         for dep in DEPARTMENT_CODE.values():
-            await ID_REQUEST.get_students_by_year_and_department(str(year), str(dep))
-            await sleep(random.uniform(5, 10))
+            await ID_REQUEST.get_students_by_year_and_department(str(year), dep)
+            await sleep(random.uniform(5, 15))
+
+
+async def search_student_by_id(uid: str) -> Optional[str]:
+    """
+    Async function to search for a student by ID.
+
+    Args:
+        uid (str): The unique identifier of the student.
+
+    Returns:
+        Optional[str]: The information of the student if found, otherwise None.
+    """
+
+    return await ID_REQUEST.get_student_by_id(uid)
 
 
 def search_students_by_name(name: str) -> list[tuple[str, str]]:
@@ -186,12 +197,11 @@ def search_students_by_name(name: str) -> list[tuple[str, str]]:
         list: A list of tuples containing the names and IDs of the matching students.
     """
 
-    students = []
-    for key, value in ID_REQUEST.STUDENT_DICT.items():
-        if set(name).issubset(set(value)):
-            students.append((key, value))
-
-    return students
+    return [
+        (key, value)
+        for key, value in ID_REQUEST.STUDENT_DICT.items()
+        if set(name).issubset(set(value))
+    ]
 
 
 async def search_students_by_year_and_department(year: str, department: str) -> str:
@@ -206,22 +216,21 @@ async def search_students_by_year_and_department(year: str, department: str) -> 
         str: Information about the students found, including their IDs, names, and total count.
     """
 
-    students = await ID_REQUEST.get_students_by_year_and_department(year, department)
-
     department_name = DEPARTMENT_NAME.get(department, "")
     department_type = "組" if department.startswith(DEPARTMENT_CODE["法律"]) else "系"
 
-    if students:
+    if students := await ID_REQUEST.get_students_by_year_and_department(
+        year, department
+    ):
         students_info = "\n".join(
             [
-                await student_info_format(
-                    student_id, student_name, [Order.ID, Order.NAME], 3
-                )
+                student_info_format(student_id, student_name, [Order.ID, Order.NAME], 3)
                 for student_id, student_name in students.items()
             ]
         )
 
         students_info += f"\n\n{year}學年度{department_name}{department_type}共有{len(students)}位學生"
+
     else:
         students_info = f"{year}學年度{department_name}{department_type}好像沒有人耶OAO"
 

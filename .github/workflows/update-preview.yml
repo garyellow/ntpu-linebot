@@ -79,8 +79,8 @@ jobs:
         uses: fjogeleit/http-request-action@v1
         id: service
         with:
-          url: "https://api.render.com/v1/services?type=web_service&limit=1&name=NTPU-LINEBOT%20Preview%20${{ steps.tag.outputs.service-name }}"
-          method: "GET"
+          method: GET
+          url: https://api.render.com/v1/services?type=web_service&limit=1&name=NTPU-LINEBOT%20Preview%20${{ steps.tag.outputs.service-name }}
           bearerToken: ${{ secrets.RENDER_API_KEY }}
 
   create:
@@ -97,9 +97,29 @@ jobs:
         uses: fjogeleit/http-request-action@v1
         id: render
         with:
-          url: "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/preview"
+          url: https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/preview
           bearerToken: ${{ secrets.RENDER_API_KEY }}
-          data: '{"imagePath": "${{ vars.REGISTRY }}/${{ github.repository }}:${{ needs.fetch.outputs.head_ref }}"}'
+          data: |
+            {
+              "imagePath": "${{ vars.REGISTRY }}/${{ github.repository }}:${{ needs.fetch.outputs.head_ref }}"
+            }
+
+      - name: Set Docker Command
+        uses: fjogeleit/http-request-action@v1
+        with:
+          method: PATCH
+          url: https://api.render.com/v1/services/${{ fromJson(steps.render.outputs.response).service.id }}
+          bearerToken: ${{ secrets.RENDER_API_KEY }}
+          data: |
+            {
+              "serviceDetails":
+                {
+                  "envSpecificDetails":
+                    {
+                      "dockerCommand": "sanic app:app --host=0.0.0.0 --port=10000 --debug"
+                    }
+                }
+            }
 
       - name: Comment on Pull Request
         uses: thollander/actions-comment-pull-request@v2
@@ -126,7 +146,7 @@ jobs:
       - name: Redeploy Render Preview Service
         uses: fjogeleit/http-request-action@v1
         with:
-          url: "https://api.render.com/v1/services/${{ fromJson(needs.fetch.outputs.response)[0].service.id }}/deploys"
+          url: https://api.render.com/v1/services/${{ fromJson(needs.fetch.outputs.response)[0].service.id }}/deploys
           bearerToken: ${{ secrets.RENDER_API_KEY }}
 
       - name: Comment on Pull Request

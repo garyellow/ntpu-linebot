@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
-import random
 from asyncio import sleep
+from random import uniform
 from typing import Optional
 
 from aiohttp import ClientError, ClientSession
@@ -10,13 +10,13 @@ from cachetools import TTLCache
 
 
 class IDRequest:
-    base_url = ""
-    URLS = [
+    __base_url = ""
+    __URLS = [
         "http://120.126.197.52",
         "https://120.126.197.52",
         "https://lms.ntpu.edu.tw",
     ]
-    STUDENT_SEARCH_URL = "/portfolio/search.php"
+    __STUDENT_SEARCH_URL = "/portfolio/search.php"
     STUDENT_DICT = dict[str, str]()
 
     async def check_url(self, url: Optional[str] = None) -> bool:
@@ -31,7 +31,7 @@ class IDRequest:
         """
 
         if url is None:
-            url = self.base_url
+            url = self.__base_url
 
         try:
             async with ClientSession() as session:
@@ -49,27 +49,27 @@ class IDRequest:
         Returns True if a valid URL is found, False otherwise.
         """
 
-        for url in self.URLS:
+        for url in self.__URLS:
             if await self.check_url(url):
-                self.base_url = url
+                self.__base_url = url
                 return True
 
-        self.base_url = ""
+        self.__base_url = ""
         return False
 
-    @cached(TTLCache(maxsize=9999, ttl=60 * 60 * 24 * 7))
-    async def get_student_by_id(self, uid: str) -> str:
+    @cached(TTLCache(maxsize=99, ttl=60 * 60 * 24 * 7))
+    async def get_student_by_id(self, uid: str) -> Optional[str]:
         """
-        Retrieves information about a student by their ID.
+        Asynchronously gets a student by their ID.
 
         Args:
-            uid (str): The ID of the student.
+            uid (str): The unique ID of the student.
 
         Returns:
-            str: The information of the student with the provided ID. If the student is not found or an error occurs, an empty string is returned.
+            Optional[str]: The name of the student, if found. Otherwise, None.
         """
 
-        url = self.base_url + self.STUDENT_SEARCH_URL
+        url = self.__base_url + self.__STUDENT_SEARCH_URL
         params = {
             "fmScope": "2",
             "page": "1",
@@ -79,41 +79,37 @@ class IDRequest:
         try:
             async with ClientSession() as session:
                 async with session.get(url, params=params) as res:
-                    text = await res.text("utf-8")
-                    soup = Bs4(text, "lxml")
-                    student = soup.find("div", {"class": "bloglistTitle"})
+                    soup = Bs4(await res.text("utf-8"), "lxml")
 
-                    if student is None:
-                        return ""
-
-                    self.STUDENT_DICT[uid] = student.find("a").text
+            if student := soup.find("div", {"class": "bloglistTitle"}):
+                name = student.find("a").text
+                self.STUDENT_DICT[uid] = name
+                return name
 
         except ClientError:
-            self.base_url = ""
-            return ""
+            self.__base_url = ""
 
-        return self.STUDENT_DICT[uid]
+        return None
 
-    @cached(TTLCache(maxsize=99, ttl=60 * 60 * 24 * 7))
+    @cached(TTLCache(maxsize=9, ttl=60 * 60 * 24 * 7))
     async def get_students_by_year_and_department(
         self,
         year: str,
         department: str,
-    ) -> dict[str, str]:
+    ) -> Optional[dict[str, str]]:
         """
-        Retrieves a dict of students by year and department from a website.
-        Uses caching to store the results for a week and makes asynchronous HTTP requests to fetch the data.
+        Async function to retrieve students by year and department.
 
         Args:
-            year (str): The year of the students to retrieve.
-            department (str): The department of the students to retrieve.
+            year (str): The year for which to retrieve students.
+            department (str): The department for which to retrieve students.
 
         Returns:
-            dict[str, str]: A dictionary containing the student numbers as keys and their corresponding names as values.
+            Optional[dict[str, str]]: A dictionary of student numbers and names, or None if an error occurs.
         """
 
         students = dict[str, str]()
-        url = self.base_url + self.STUDENT_SEARCH_URL
+        url = self.__base_url + self.__STUDENT_SEARCH_URL
         params = {
             "fmScope": "2",
             "page": "1",
@@ -123,31 +119,25 @@ class IDRequest:
         try:
             async with ClientSession() as session:
                 async with session.get(url, params=params) as res:
-                    text = await res.text("utf-8")
-                    data = Bs4(text, "lxml")
+                    data = Bs4(await res.text("utf-8"), "lxml")
                     pages = len(data.find_all("span", {"class": "item"}))
-                    await sleep(random.uniform(0.1, 0.2))
 
-                    for i in range(1, pages):
-                        params["page"] = str(i)
+                for i in range(1, pages):
+                    await sleep(uniform(0.05, 0.15))
 
-                        async with session.get(url, params=params) as res:
-                            text = await res.text("utf-8")
-                            data = Bs4(text, "lxml")
+                    params["page"] = str(i)
+                    async with session.get(url, params=params) as res:
+                        data = Bs4(await res.text("utf-8"), "lxml")
 
-                            for item in data.find_all(
-                                "div", {"class": "bloglistTitle"}
-                            ):
-                                name = item.find("a").text
-                                number = item.find("a").get("href").split("/")[-1]
-                                students[number] = name
-                                self.STUDENT_DICT[number] = name
-
-                        await sleep(random.uniform(0.1, 0.2))
+                    for item in data.find_all("div", {"class": "bloglistTitle"}):
+                        name = item.find("a").text
+                        number = item.find("a").get("href").split("/")[-1]
+                        self.STUDENT_DICT[number] = name
+                        students[number] = name
 
         except ClientError:
-            self.base_url = ""
-            return {}
+            self.__base_url = ""
+            return None
 
         return students
 

@@ -5,28 +5,29 @@ from aiohttp import ClientSession
 from bs4 import BeautifulSoup as Bs4
 from sanic import Sanic
 
-SPY_FAMILY_URLS = [
-    "https://spy-family.net/tvseries/special/special1_season1.php",
-    "https://spy-family.net/tvseries/special/special2_season1.php",
-    "https://spy-family.net/tvseries/special/special9_season1.php",
-    "https://spy-family.net/tvseries/special/special13_season1.php",
-    "https://spy-family.net/tvseries/special/special16_season1.php",
-    "https://spy-family.net/tvseries/special/special17_season1.php",
-    "https://spy-family.net/tvseries/special/special3.php",
-]
-
-ICHIGO_PRODUCTION_URL = "https://ichigoproduction.com/special/present_icon.html"
-
 
 class StickerUtil:
+    __SPY_FAMILY_URLS = [
+        "https://spy-family.net/tvseries/special/special1_season1.php",
+        "https://spy-family.net/tvseries/special/special2_season1.php",
+        "https://spy-family.net/tvseries/special/special9_season1.php",
+        "https://spy-family.net/tvseries/special/special13_season1.php",
+        "https://spy-family.net/tvseries/special/special16_season1.php",
+        "https://spy-family.net/tvseries/special/special17_season1.php",
+        "https://spy-family.net/tvseries/special/special3.php",
+    ]
+    __ICHIGO_PRODUCTION_URL = "https://ichigoproduction.com/special/present_icon.html"
     STICKER_LIST = list[str]()
 
     async def is_healthy(self, app: Sanic) -> bool:
         """
-        Checks if the `stickers` list is empty.
+        Check if the application is healthy.
 
-        If it is empty, adds the `load_stickers` task to the Sanic app and return False.
-        Otherwise, returns True.
+        Args:
+            app (Sanic): The Sanic application.
+
+        Returns:
+            bool: True if the application is healthy, False otherwise.
         """
 
         if not self.STICKER_LIST:
@@ -43,28 +44,24 @@ class StickerUtil:
         """
 
         async with ClientSession() as session:
-            for url in SPY_FAMILY_URLS:
+            for url in self.__SPY_FAMILY_URLS:
                 async with session.get(url) as response:
-                    text = await response.text()
-                    soup = Bs4(text, "lxml")
-                    temp = soup.select("ul.icondlLists > li > a > img")
+                    soup = Bs4(await response.text(), "lxml")
 
-                    for i in temp:
-                        self.STICKER_LIST.append(
-                            f"https://spy-family.net/{i['src'][3:]}"
-                        )
+                for i in soup.select("ul.icondlLists > li > a > img"):
+                    self.STICKER_LIST.append(
+                        f"https://spy-family.net/tvseries/{i['src'][3:]}"
+                    )
 
                 await sleep(0.05)
 
-            async with session.get(ICHIGO_PRODUCTION_URL) as response:
-                text = await response.text()
-                soup = Bs4(text, "lxml")
-                temp = soup.select("ul.tp5 > li > div.ph > a")
+            async with session.get(self.__ICHIGO_PRODUCTION_URL) as response:
+                soup = Bs4(await response.text(), "lxml")
 
-                for i in temp:
-                    self.STICKER_LIST.append(
-                        f"https://ichigoproduction.com/{i['href'][3:]}"
-                    )
+            for i in soup.select("ul.tp5 > li > div.ph > a"):
+                self.STICKER_LIST.append(
+                    f"https://ichigoproduction.com/{i['href'][3:]}"
+                )
 
 
 STICKER = StickerUtil()

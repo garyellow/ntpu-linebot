@@ -5,8 +5,8 @@ from typing import Optional
 
 from linebot.v3.messaging.models import (
     ButtonsTemplate,
-    CarouselTemplate,
     CarouselColumn,
+    CarouselTemplate,
     ConfirmTemplate,
     Message,
     MessageAction,
@@ -18,13 +18,14 @@ from linebot.v3.messaging.models import (
 )
 
 from ..abs_bot import Bot
-from ..line_bot_util import get_sender, instruction
+from ..line_bot_util import EMPTY_POSTBACK_ACTION, get_sender
 from .util import (
     DEPARTMENT_CODE,
     DEPARTMENT_NAME,
     FULL_DEPARTMENT_CODE,
     FULL_DEPARTMENT_NAME,
     Order,
+    search_student_by_id,
     search_students_by_name,
     search_students_by_year_and_department,
     student_info_format,
@@ -32,11 +33,10 @@ from .util import (
 
 
 class IDBot(Bot):
-    SPILT_CODE = "@"
-    SENDER_NAME = "學號魔法師"
-    ALL_DEPARTMENT_CODE = "所有系代碼"
-    HELP_COMMANDS = ["使用說明", "help"]
-    COLLAGES = [
+    __SPILT_CODE = "@"
+    __SENDER_NAME = "學號魔法師"
+    __ALL_DEPARTMENT_CODE = "所有系代碼"
+    __COLLEGE_NAMES = [
         "人文學院",
         "法律學院",
         "商學院",
@@ -57,7 +57,7 @@ class IDBot(Bot):
             PostbackAction: A postback action object that represents the college.
         """
 
-        data = year + self.SPILT_CODE + college_name
+        data = year + self.__SPILT_CODE + college_name
         return PostbackAction(
             label=college_name,
             displayText=college_name,
@@ -91,7 +91,7 @@ class IDBot(Bot):
         else:
             display_text += "系"
 
-        data = year + self.SPILT_CODE + department_code
+        data = year + self.__SPILT_CODE + department_code
 
         return PostbackAction(
             label=full_name,
@@ -128,7 +128,7 @@ class IDBot(Bot):
         ]
 
         while len(actions) > 4 and len(actions) % 3 != 0:
-            actions.append(PostbackAction(label=" ", data="null"))
+            actions.append(EMPTY_POSTBACK_ACTION)
 
         if len(actions) <= 4:
             template = ButtonsTemplate(
@@ -153,7 +153,7 @@ class IDBot(Bot):
         return TemplateMessage(
             alt_text=f"選擇{department_class}",
             template=template,
-            sender=get_sender(self.SENDER_NAME),
+            sender=get_sender(self.__SENDER_NAME),
         )
 
     async def handle_text_message(
@@ -164,21 +164,21 @@ class IDBot(Bot):
         """處理文字訊息"""
 
         if payload.isdecimal():
-            if payload in FULL_DEPARTMENT_NAME:
+            if text := FULL_DEPARTMENT_NAME.get(payload):
                 return [
                     TextMessage(
-                        text=FULL_DEPARTMENT_NAME[payload],
+                        text=text,
                         quickReply=QuickReply(
                             items=[
                                 QuickReplyItem(
                                     action=MessageAction(
-                                        label=self.ALL_DEPARTMENT_CODE,
-                                        text=self.ALL_DEPARTMENT_CODE,
+                                        label=self.__ALL_DEPARTMENT_CODE,
+                                        text=self.__ALL_DEPARTMENT_CODE,
                                     ),
                                 ),
                             ]
                         ),
-                        sender=get_sender(self.SENDER_NAME),
+                        sender=get_sender(self.__SENDER_NAME),
                         quoteToken=quote_token,
                     ),
                 ]
@@ -190,21 +190,24 @@ class IDBot(Bot):
                     return [
                         TextMessage(
                             text="你未來人？(⊙ˍ⊙)",
-                            sender=get_sender(self.SENDER_NAME),
+                            sender=get_sender(self.__SENDER_NAME),
+                            quoteToken=quote_token,
                         )
                     ]
                 if year < 90:
                     return [
                         TextMessage(
                             text="學校都還沒蓋好(￣▽￣)",
-                            sender=get_sender(self.SENDER_NAME),
+                            sender=get_sender(self.__SENDER_NAME),
+                            quoteToken=quote_token,
                         )
                     ]
                 if 90 <= year < 95:
                     return [
                         TextMessage(
                             text="數位學苑還沒出生喔~~",
-                            sender=get_sender(self.SENDER_NAME),
+                            sender=get_sender(self.__SENDER_NAME),
+                            quoteToken=quote_token,
                         )
                     ]
 
@@ -217,7 +220,7 @@ class IDBot(Bot):
                                 PostbackAction(
                                     label="哪次不是",
                                     displayText="哪次不是",
-                                    data=f"{year}{self.SPILT_CODE}搜尋全系",
+                                    data=f"{year}{self.__SPILT_CODE}搜尋全系",
                                     inputOption="openRichMenu",
                                 ),
                                 PostbackAction(
@@ -228,30 +231,29 @@ class IDBot(Bot):
                                 ),
                             ],
                         ),
-                        sender=get_sender(self.SENDER_NAME),
+                        sender=get_sender(self.__SENDER_NAME),
                     )
                 ]
 
             if 8 <= len(payload) <= 9:
-                students = await student_info_format(
-                    payload,
-                    order=[Order.YEAR, Order.FULL_DEPARTMENT, Order.NAME],
-                    space=2,
-                )
-
-                if not students:
+                if (student := await search_student_by_id(payload)) is None:
                     return [
                         TextMessage(
                             text=f"學號 {payload} 不存在OAO",
-                            sender=get_sender(self.SENDER_NAME),
+                            sender=get_sender(self.__SENDER_NAME),
                             quoteToken=quote_token,
                         ),
                     ]
 
                 messages = [
                     TextMessage(
-                        text=students,
-                        sender=get_sender(self.SENDER_NAME),
+                        text=student_info_format(
+                            payload,
+                            student,
+                            order=[Order.YEAR, Order.FULL_DEPARTMENT, Order.NAME],
+                            space=2,
+                        ),
+                        sender=get_sender(self.__SENDER_NAME),
                         quoteToken=quote_token,
                     ),
                 ]
@@ -280,7 +282,7 @@ class IDBot(Bot):
                                 action=PostbackAction(
                                     label=show_text,
                                     displayText=f"正在{show_text}",
-                                    data=year + self.SPILT_CODE + department,
+                                    data=year + self.__SPILT_CODE + department,
                                     inputOption="closeRichMenu",
                                 ),
                             ),
@@ -290,10 +292,7 @@ class IDBot(Bot):
                 return messages
 
         else:
-            if payload in self.HELP_COMMANDS:
-                return instruction()
-
-            if payload == self.ALL_DEPARTMENT_CODE:
+            if payload == self.__ALL_DEPARTMENT_CODE:
                 students = "\n".join(
                     [f"{x}系 -> {y}" for x, y in DEPARTMENT_CODE.items()]
                 )
@@ -301,58 +300,59 @@ class IDBot(Bot):
                 return [
                     TextMessage(
                         text=students,
-                        sender=get_sender(self.SENDER_NAME),
+                        sender=get_sender(self.__SENDER_NAME),
                         quoteToken=quote_token,
                     ),
                 ]
 
-            if payload.rstrip("系") in DEPARTMENT_CODE:
+            if text := DEPARTMENT_CODE.get(payload.rstrip("系")):
                 return [
                     TextMessage(
-                        text=DEPARTMENT_CODE[payload.rstrip("系")],
+                        text=text,
                         quickReply=QuickReply(
                             items=[
                                 QuickReplyItem(
                                     action=MessageAction(
-                                        label=self.ALL_DEPARTMENT_CODE,
-                                        text=self.ALL_DEPARTMENT_CODE,
+                                        label=self.__ALL_DEPARTMENT_CODE,
+                                        text=self.__ALL_DEPARTMENT_CODE,
                                     )
                                 ),
                             ]
                         ),
-                        sender=get_sender(self.SENDER_NAME),
+                        sender=get_sender(self.__SENDER_NAME),
+                        quoteToken=quote_token,
                     ),
                 ]
 
-            if payload in FULL_DEPARTMENT_CODE:
+            if text := FULL_DEPARTMENT_CODE.get(payload):
                 return [
                     TextMessage(
-                        text=FULL_DEPARTMENT_CODE[payload],
+                        text=text,
                         quickReply=QuickReply(
                             items=[
                                 QuickReplyItem(
                                     action=MessageAction(
-                                        label=self.ALL_DEPARTMENT_CODE,
-                                        text=self.ALL_DEPARTMENT_CODE,
+                                        label=self.__ALL_DEPARTMENT_CODE,
+                                        text=self.__ALL_DEPARTMENT_CODE,
                                     )
                                 ),
                             ]
                         ),
-                        sender=get_sender(self.SENDER_NAME),
+                        sender=get_sender(self.__SENDER_NAME),
+                        quoteToken=quote_token,
                     ),
                 ]
 
-            students = search_students_by_name(payload)
-            if students:
-                students = sorted(students, key=lambda x: (not x[0], int(x[0])))
+            if students := search_students_by_name(payload):
+                students = sorted(students, key=lambda student: int(student[0]))[-500:]
 
                 messages = list[TextMessage]()
-                for i in range(min(ceil(len(students) / 100), 5), 0, -1):
+                for i in range(0, ceil(len(students) / 100)):
                     students_info = "\n".join(
                         [
-                            await student_info_format(x[0], x[1])
-                            for x in students[
-                                -i * 100 : -(i - 1) * 100 if i - 1 else None
+                            student_info_format(student_id, student_name)
+                            for student_id, student_name in students[
+                                i * 100 : (i + 1) * 100
                             ]
                         ]
                     )
@@ -360,7 +360,7 @@ class IDBot(Bot):
                     messages.append(
                         TextMessage(
                             text=students_info,
-                            sender=get_sender(self.SENDER_NAME),
+                            sender=get_sender(self.__SENDER_NAME),
                             quoteToken=quote_token,
                         )
                     )
@@ -369,22 +369,19 @@ class IDBot(Bot):
 
         return list[Message]()
 
-    async def handle_postback_event(self, payload: str) -> None:
+    async def handle_postback_event(self, payload: str) -> list[Message]:
         """處理回傳事件"""
-
-        if payload in self.HELP_COMMANDS:
-            return instruction()
 
         if payload == "兇":
             return [
                 TextMessage(
                     text="泥好兇喔~~இ௰இ",
-                    sender=get_sender(self.SENDER_NAME),
+                    sender=get_sender(self.__SENDER_NAME),
                 ),
             ]
 
-        if self.SPILT_CODE in payload:
-            year, data = payload.split(self.SPILT_CODE)
+        if self.__SPILT_CODE in payload:
+            year, data = payload.split(self.__SPILT_CODE)
             if data == "搜尋全系":
                 return [
                     TemplateMessage(
@@ -398,7 +395,7 @@ class IDBot(Bot):
                                 self.college_postback("公社電資", year),
                             ],
                         ),
-                        sender=get_sender(self.SENDER_NAME),
+                        sender=get_sender(self.__SENDER_NAME),
                     ),
                 ]
 
@@ -423,11 +420,11 @@ class IDBot(Bot):
                                 ]
                             ),
                         ),
-                        sender=get_sender(self.SENDER_NAME),
+                        sender=get_sender(self.__SENDER_NAME),
                     ),
                 ]
 
-            if data in self.COLLAGES:
+            if data in self.__COLLEGE_NAMES:
                 department_message = {
                     "人文學院": self.choose_department_message(
                         year,
@@ -467,9 +464,11 @@ class IDBot(Bot):
             return [
                 TextMessage(
                     text=await search_students_by_year_and_department(year, data),
-                    sender=get_sender(self.SENDER_NAME),
-                ),
+                    sender=get_sender(self.__SENDER_NAME),
+                )
             ]
+
+        return list[Message]()
 
 
 ID_BOT = IDBot()
