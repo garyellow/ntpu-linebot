@@ -14,10 +14,11 @@ on:
     types: [synchronize]
     paths:
       - app.py
-      - ntpu_linebot/*
+      - ntpu_linebot/**/.py
       - pyproject.toml
       - poetry.lock
       - Dockerfile
+      - .github/workflows/*.yml
 
 jobs:
   prepare:
