@@ -61,6 +61,8 @@ jobs:
         with:
           push: true
           tags: ${{ vars.REGISTRY }}/${{ github.repository }}:${{ needs.prepare.outputs.head_ref }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   fetch:
     name: FETCH PREVIEW ON RENDER

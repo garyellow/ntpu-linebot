@@ -43,6 +43,8 @@ jobs:
         with:
           push: true
           tags: ${{ vars.REGISTRY }}/${{ github.repository }}:latest
+          cache-from: type=gha
+          cache-to: type=gha, mode=max
 
   backup:
     name: BACKUP TO DOCKER HUB
@@ -66,6 +68,8 @@ jobs:
         with:
           push: true
           tags: ${{ github.repository }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   render:
     name: DEPLOY TO RENDER
