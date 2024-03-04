@@ -14,10 +14,11 @@ on:
     types: [synchronize]
     paths:
       - app.py
-      - ntpu_linebot/*
+      - ntpu_linebot/**/.py
       - pyproject.toml
       - poetry.lock
       - Dockerfile
+      - .github/workflows/*.yml
 
 jobs:
   prepare:
@@ -60,6 +61,8 @@ jobs:
         with:
           push: true
           tags: ${{ vars.REGISTRY }}/${{ github.repository }}:${{ needs.prepare.outputs.head_ref }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   fetch:
     name: FETCH PREVIEW ON RENDER
@@ -120,6 +123,12 @@ jobs:
                     }
                 }
             }
+
+      - name: Redeploy Render Preview Service
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: https://api.render.com/v1/services/${{ fromJson(steps.render.outputs.response).service.id }}/deploys
+          bearerToken: ${{ secrets.RENDER_API_KEY }}
 
       - name: Comment on Pull Request
         uses: thollander/actions-comment-pull-request@v2
