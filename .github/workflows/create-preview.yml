@@ -95,6 +95,12 @@ jobs:
                 }
             }
 
+      - name: Redeploy Render Preview Service
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: https://api.render.com/v1/services/${{ fromJson(steps.render.outputs.response).service.id }}/deploys
+          bearerToken: ${{ secrets.RENDER_API_KEY }}
+
       - name: Comment Pull Request
         uses: thollander/actions-comment-pull-request@v2
         with:
