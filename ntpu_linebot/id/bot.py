@@ -25,7 +25,7 @@ from .util import (
     FULL_DEPARTMENT_CODE,
     FULL_DEPARTMENT_NAME,
     Order,
-    search_student_by_id,
+    search_student_by_uid,
     search_students_by_name,
     search_students_by_year_and_department,
     student_info_format,
@@ -236,7 +236,7 @@ class IDBot(Bot):
                 ]
 
             if 8 <= len(payload) <= 9:
-                if (student := await search_student_by_id(payload)) is None:
+                if (student := await search_student_by_uid(payload)) is None:
                     return [
                         TextMessage(
                             text=f"學號 {payload} 不存在OAO",

@@ -7,14 +7,14 @@ class SimpleCourse:
         self,
         year: int,
         term: int,
-        uid: str,
+        no: str,
         title: str,
         teachers: list[str],
         times: list[str],
     ):
         self.__year = year
         self.__term = term
-        self.__uid = uid
+        self.__no = no
         self.__title = title
         self.__teachers = teachers
         self.__times = times
@@ -30,9 +30,9 @@ class SimpleCourse:
         return self.__term
 
     @property
-    def uid(self) -> str:
-        """Getter for uid"""
-        return self.__uid
+    def no(self) -> str:
+        """Getter for no"""
+        return self.__no
 
     @property
     def title(self) -> str:
@@ -49,8 +49,13 @@ class SimpleCourse:
         """Getter for times"""
         return self.__times
 
+    @property
+    def uid(self) -> str:
+        """Getter for uid"""
+        return f"{self.__year}{self.__term}{self.__no}"
+
     def __str__(self) -> str:
-        return f"{self.__year}{self.__term}{self.__uid}"
+        return self.uid
 
 
 class Course(SimpleCourse):
@@ -63,7 +68,7 @@ class Course(SimpleCourse):
         self,
         year: int,
         term: int,
-        uid: str,
+        no: str,
         title: str,
         teachers: list[str],
         teachers_url: list[str],
@@ -72,7 +77,7 @@ class Course(SimpleCourse):
         detail_url: str,
         note: str,
     ):
-        super().__init__(year, term, uid, title, teachers, times)
+        super().__init__(year, term, no, title, teachers, times)
         self.__teachers_url = teachers_url
         self.__locations = locations
         self.__detail_url = detail_url
@@ -89,9 +94,9 @@ class Course(SimpleCourse):
         return super().term
 
     @property
-    def uid(self) -> str:
-        """Getter for uid"""
-        return super().uid
+    def no(self) -> str:
+        """Getter for no"""
+        return super().no
 
     @property
     def title(self) -> str:
@@ -145,5 +150,5 @@ class Course(SimpleCourse):
         return (
             self.__REAL_BASE_URL
             + self.__COURSE_QUERY_URL
-            + f"?qYear={self.year}&qTerm={self.term}&courseno={self.uid}&seq1=A&seq2=M"
+            + f"?qYear={self.year}&qTerm={self.term}&courseno={self.no}&seq1=A&seq2=M"
         )
