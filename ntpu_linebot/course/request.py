@@ -32,10 +32,12 @@ def prase_title_field(data: Bs4) -> tuple[str, str, str, Optional[str]]:
     detail_url = data.find("a").get("href")
     detail_url = "?" + detail_url.split("?")[1]
 
-    note = data.find("font").text[3:]
-    location = (
-        sub(r"\s", " ", s.group()) if (s := search(__CLASSROOM_REGEX, note)) else None
-    )
+    if note := data.find("font").text[3:].strip():
+        location = (
+            sub(r"\s", " ", s.group())
+            if (s := search(__CLASSROOM_REGEX, note))
+            else None
+        )
 
     return title, detail_url, note, location
 
