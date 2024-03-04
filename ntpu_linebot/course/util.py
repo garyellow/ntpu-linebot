@@ -61,7 +61,7 @@ async def search_course_by_uid(uid: str) -> Optional[Course]:
 class SearchArgument(Enum):
     """Enumeration representing the search arguments."""
 
-    UID = auto()
+    NO = auto()
     TITLE = auto()
     TEACHER = auto()
 
@@ -85,11 +85,11 @@ def search_simple_courses_by_condition(
     """
 
     match condition:
-        case SearchArgument.UID:
+        case SearchArgument.NO:
             courses = [
                 course
                 for course in COURSE_REQUEST.COURSE_DICT.values()
-                if criteria in course.uid
+                if criteria in course.no
             ]
 
         case SearchArgument.TITLE:
@@ -110,6 +110,6 @@ def search_simple_courses_by_condition(
         case _:
             raise ValueError("Invalid SearchArgument")
 
-    return sorted(courses, key=lambda course: (-course.year, course.term, course.uid))[
+    return sorted(courses, key=lambda course: (-course.year, course.term, course.no))[
         :limit
     ]

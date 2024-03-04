@@ -152,14 +152,14 @@ class CourseRequest:
         url = self.__base_url + self.__COURSE_QUERY_URL
 
         is_over_99 = len(uid) == 9
-        year = int(uid[: 2 + is_over_99])
-        term = int(uid[2 + is_over_99])
-        courseno = uid[3 + is_over_99 :]
+        year = uid[: 2 + is_over_99]
+        term = uid[2 + is_over_99]
+        no = uid[3 + is_over_99 :]
 
         params = {
             "qYear": year,
             "qTerm": term,
-            "courseno": courseno,
+            "courseno": no,
             "seq1": "A",
             "seq2": "M",
         }
@@ -173,8 +173,6 @@ class CourseRequest:
                 course_infos = table.find("tbody").find("tr")
                 course_field = course_infos.find_all("td")
 
-                term = int(course_field[2].text)
-                uid = course_field[3].text
                 title, detail_url, note, location = prase_title_field(course_field[7])
                 teachers, teachers_url = prase_teacher_field(course_field[8])
                 times, locations = prase_time_location_filed(course_field[13])
@@ -183,9 +181,9 @@ class CourseRequest:
                     locations.append(location)
 
                 c = Course(
-                    year=year,
-                    term=term,
-                    uid=uid,
+                    year=int(year),
+                    term=int(term),
+                    no=no,
                     title=title,
                     teachers=teachers,
                     times=times,
@@ -220,14 +218,14 @@ class CourseRequest:
 
         courses = dict[str, SimpleCourse]()
         url = self.__base_url + self.__COURSE_QUERY_URL
+        params = {
+            "qYear": str(year),
+            "seq1": "A",
+            "seq2": "M",
+        }
 
         for code in ALL_COURSE_CODE:
-            params = {
-                "qYear": year,
-                "courseno": code,
-                "seq1": "A",
-                "seq2": "M",
-            }
+            params["courseno"] = code
 
             try:
                 async with ClientSession() as session:
@@ -240,7 +238,7 @@ class CourseRequest:
                         course_field = course_info.find_all("td")
 
                         term = int(course_field[2].text)
-                        uid = course_field[3].text
+                        no = course_field[3].text
                         title = prase_title_field(course_field[7])[0]
                         teachers = prase_teacher_field(course_field[8])[0]
                         times = prase_time_location_filed(course_field[13])[0]
@@ -248,7 +246,7 @@ class CourseRequest:
                         sc = SimpleCourse(
                             year=year,
                             term=term,
-                            uid=uid,
+                            no=no,
                             title=title,
                             teachers=teachers,
                             times=times,

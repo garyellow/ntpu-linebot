@@ -172,7 +172,7 @@ async def renew_student_dict() -> None:
             await sleep(random.uniform(5, 15))
 
 
-async def search_student_by_id(uid: str) -> Optional[str]:
+async def search_student_by_uid(uid: str) -> Optional[str]:
     """
     Async function to search for a student by ID.
 
@@ -183,7 +183,7 @@ async def search_student_by_id(uid: str) -> Optional[str]:
         Optional[str]: The information of the student if found, otherwise None.
     """
 
-    return await ID_REQUEST.get_student_by_id(uid)
+    return await ID_REQUEST.get_student_by_uid(uid)
 
 
 def search_students_by_name(name: str) -> list[tuple[str, str]]:

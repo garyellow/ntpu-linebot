@@ -72,7 +72,7 @@ def choose_course_message(courses: list[SimpleCourse]) -> CarouselTemplate:
     """
 
     courses = sorted(
-        courses, key=lambda course: (-course.year, course.term, course.uid)
+        courses, key=lambda course: (-course.year, course.term, course.no)
     )[:30]
 
     texts = [
