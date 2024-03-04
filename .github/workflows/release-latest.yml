@@ -8,7 +8,7 @@
 #
 # - REGISTRY (the registry to push the image to, e.g. docker.io)
 
-name: Release
+name: Release the Latest Version
 
 on:
   push:
@@ -16,39 +16,13 @@ on:
       - master
 
 jobs:
-  registry:
-    name: RELEASE IMAGE TO REGISTRY
+  release:
+    name: RELEASE LATEST IMAGE TO REGISTRY
     runs-on: ubuntu-latest
 
     permissions:
       contents: read
       packages: write
-
-    steps:
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ vars.REGISTRY }}
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and Push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          push: true
-          tags: ${{ vars.REGISTRY }}/${{ github.repository }}:latest
-          cache-from: type=gha
-          cache-to: type=gha, mode=max
-
-  backup:
-    name: BACKUP TO DOCKER HUB
-    runs-on: ubuntu-latest
 
     steps:
       - name: Set up QEMU
@@ -63,18 +37,25 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Log in to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ vars.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build and Push Docker image
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: ${{ github.repository }}:latest
+          tags: ${{ github.repository }}:latest,${{ vars.REGISTRY }}/${{ github.repository }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   render:
     name: DEPLOY TO RENDER
     runs-on: ubuntu-latest
-    needs: registry
+    needs: release
 
     steps:
       - name: Deploy to Render
