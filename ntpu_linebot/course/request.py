@@ -77,15 +77,14 @@ def prase_time_location_filed(data: Bs4) -> tuple[list[str], list[str]]:
 
     times = list[str]()
     locations = list[str]()
-    for line in (line.text for line in data.find_all("a")):
-        if line.find("每週未維護") > -1:
+    for line_info in (str(line.text) for line in data.find_all("a")):
+        if line_info.find("每週未維護") > -1:
             continue
 
-        infos = line.split("\t")
-
+        infos = line_info.split("\t", maxsplit=1)
         times.append(infos[0])
-        if location := "".join(infos[1:]) if len(infos) > 1 and infos[1] else None:
-            locations.append(location)
+        if len(infos) > 1:
+            locations.append(infos[1])
 
     return times, locations
 
