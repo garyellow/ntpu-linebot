@@ -230,15 +230,15 @@ class CourseBot(Bot):
 
             match condition:
                 case SearchArgument.TITLE:
-                    condition_str = "課程名稱"
+                    condition_str = "名稱"
                 case SearchArgument.TEACHER:
-                    condition_str = "教師名稱"
+                    condition_str = "授課教師姓名"
                 case _:
                     condition_str = "未知"
 
             return [
                 TextMessage(
-                    text=f"查無含有「{criteria}」的{condition_str}，請重新輸入",
+                    text=f"查無{condition_str}含有「{criteria}」的課程，請重新輸入",
                     sender=get_sender(self.__SENDER_NAME),
                     quoteToken=quote_token,
                 )
