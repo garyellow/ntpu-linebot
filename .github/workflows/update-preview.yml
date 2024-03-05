@@ -25,13 +25,13 @@ jobs:
     name: PREPARE HEAD REF
     runs-on: ubuntu-latest
 
-    outputs:
-      head_ref: ${{ steps.head_ref.outputs.head_ref }}
-
     steps:
       - name: Generate github.head_ref with underline style
         id: head_ref
         run: echo "head_ref=$(echo ${{ github.head_ref }} | tr / _)" >> $GITHUB_OUTPUT
+
+    outputs:
+      head_ref: ${{ steps.head_ref.outputs.head_ref }}
 
   registry:
     name: PUSH PREVIEW IMAGE TO REGISTRY
@@ -64,21 +64,10 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Delete Untagged Images
-        uses: vlaurin/action-ghcr-prune@v0.6.0
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          container: ${{ github.event.repository.name }}
-          prune-untagged: true
-
   fetch:
     name: FETCH PREVIEW ON RENDER
     runs-on: ubuntu-latest
     needs: prepare
-
-    outputs:
-      response: ${{ steps.service.outputs.response }}
-      head_ref: ${{ needs.prepare.outputs.head_ref }}
 
     steps:
       - name: Generate Tags substring
@@ -92,6 +81,10 @@ jobs:
           method: GET
           url: https://api.render.com/v1/services?type=web_service&limit=1&name=NTPU-LINEBOT%20Preview%20${{ steps.tag.outputs.service-name }}
           bearerToken: ${{ secrets.RENDER_API_KEY }}
+
+    outputs:
+      response: ${{ steps.service.outputs.response }}
+      head_ref: ${{ needs.prepare.outputs.head_ref }}
 
   create:
     if: needs.fetch.outputs.response == '[]'

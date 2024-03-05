@@ -1,0 +1,129 @@
+# This Action requires setting the following secrets:
+#
+# - RENDER_API_KEY (create from the Account Settings page)
+# - RENDER_SERVICE_ID (the service to create a preview for)
+#
+# And the following variables:
+#
+# - REGISTRY (the registry to push the image to, e.g. docker.io)
+
+name: CI CD Check
+
+on:
+  workflow_dispatch:
+  push:
+    branches-ignore:
+      - master
+
+jobs:
+  ci:
+    name: CI CHECK
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ vars.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: ${{ vars.REGISTRY }}/${{ github.repository }}:preview
+
+  fetch:
+    name: FETCH CD PREVIEW SERVICE ON RENDER
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get Render Preview services
+        uses: fjogeleit/http-request-action@v1
+        id: service
+        with:
+          method: GET
+          url: https://api.render.com/v1/services?type=web_service&limit=1&name=NTPU-LINEBOT%20Preview%20preview
+          bearerToken: ${{ secrets.RENDER_API_KEY }}
+
+    outputs:
+      response: ${{ steps.service.outputs.response }}
+
+  create:
+    if: needs.fetch.outputs.response == '[]'
+    name: CD CHECK
+    runs-on: ubuntu-latest
+    needs: [ci, fetch]
+
+    steps:
+      - name: Create Render Preview Service
+        uses: fjogeleit/http-request-action@v1
+        id: render
+        with:
+          url: https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/preview
+          bearerToken: ${{ secrets.RENDER_API_KEY }}
+          data: |
+            {
+              "imagePath": "${{ vars.REGISTRY }}/${{ github.repository }}:preview"
+            }
+
+      - name: Wait for Deployment to Finish
+        id: check
+        run: |
+          while true; do
+            sleep 15
+
+            response=$(curl -sSL https://api.render.com/v1/services/${{ fromJson(steps.render.outputs.response).service.id }}/deploys/${{ fromJson(steps.render.outputs.response).deployId }} -H 'authorization: Bearer ${{ secrets.RENDER_API_KEY }}')
+
+            if [[ $(echo $response | jq -r .status) != *_in_progress ]]; then
+              echo "status=$(echo $response | jq -r .status)" >> $GITHUB_OUTPUT
+              break
+            fi
+          done
+
+      - if: steps.check.outputs.status != 'live'
+        name: Make Failure
+        run: exit 1
+
+  update:
+    if: needs.fetch.outputs.response != '[]'
+    name: CD CHECK
+    runs-on: ubuntu-latest
+    needs: [ci, fetch]
+
+    steps:
+      - name: Redeploy Render Preview Service
+        uses: fjogeleit/http-request-action@v1
+        id: render
+        with:
+          url: https://api.render.com/v1/services/${{ fromJson(needs.fetch.outputs.response)[0].service.id }}/deploys
+          bearerToken: ${{ secrets.RENDER_API_KEY }}
+
+      - name: Wait for Deployment to Finish
+        id: check
+        run: |
+          while true; do
+            sleep 15
+
+            response=$(curl -sSL https://api.render.com/v1/services/${{ fromJson(needs.fetch.outputs.response)[0].service.id }}/deploys/${{ fromJson(steps.render.outputs.response).id }} -H 'authorization: Bearer ${{ secrets.RENDER_API_KEY }}')
+
+            if [[ $(echo $response | jq -r .status) != *_in_progress ]]; then
+              echo "status=$(echo $response | jq -r .status)" >> $GITHUB_OUTPUT
+              break
+            fi
+          done
+
+      - if: steps.check.outputs.status != 'live'
+        name: Make Failure
+        run: exit 1
