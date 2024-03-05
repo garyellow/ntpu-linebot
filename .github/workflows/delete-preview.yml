@@ -36,8 +36,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           container: ${{ github.event.repository.name }}
           prune-tags-regexes: ^${{ needs.prepare.outputs.head_ref }}$
-          prune-untagged: true
-
 
   render:
     name: DELETE PREVIEW SERVICE

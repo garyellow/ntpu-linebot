@@ -57,13 +57,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Delete Untagged Images
-        uses: vlaurin/action-ghcr-prune@v0.6.0
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          container: ${{ github.event.repository.name }}
-          prune-untagged: true
-
     outputs:
       head_ref: ${{ needs.prepare.outputs.head_ref }}
 
