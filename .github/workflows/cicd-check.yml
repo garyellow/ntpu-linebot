@@ -48,9 +48,6 @@ jobs:
     name: FETCH CD PREVIEW SERVICE ON RENDER
     runs-on: ubuntu-latest
 
-    outputs:
-      response: ${{ steps.service.outputs.response }}
-
     steps:
       - name: Get Render Preview services
         uses: fjogeleit/http-request-action@v1
@@ -59,6 +56,9 @@ jobs:
           method: GET
           url: https://api.render.com/v1/services?type=web_service&limit=1&name=NTPU-LINEBOT%20Preview%20preview
           bearerToken: ${{ secrets.RENDER_API_KEY }}
+
+    outputs:
+      response: ${{ steps.service.outputs.response }}
 
   create:
     if: needs.fetch.outputs.response == '[]'
