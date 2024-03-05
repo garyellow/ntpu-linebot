@@ -17,7 +17,7 @@ __CLASSROOM_REGEX = (
 )
 
 
-def prase_title_field(data: Bs4) -> tuple[str, str, str, Optional[str]]:
+def prase_title_field(data: Bs4) -> tuple[str, str, str, str]:
     """
     Parse the title field from the given data.
 
@@ -25,19 +25,18 @@ def prase_title_field(data: Bs4) -> tuple[str, str, str, Optional[str]]:
         data (Bs4): The BeautifulSoup data to parse.
 
     Returns:
-        tuple[str, str, str, Optional[str]]: A tuple contain title, detail url, note, and location.
+        tuple[str, str, str, str]: A tuple contain title, detail url, note, and location.
     """
 
     title = data.find("a").text.strip()
     detail_url = data.find("a").get("href")
     detail_url = "?" + detail_url.split("?")[1]
 
+    note = ""
+    location = ""
     if note := data.find("font").text[3:].strip():
-        location = (
-            sub(r"\s", " ", s.group())
-            if (s := search(__CLASSROOM_REGEX, note))
-            else None
-        )
+        if l := search(__CLASSROOM_REGEX, note):
+            location = sub(r"\s", " ", l.group())
 
     return title, detail_url, note, location
 
@@ -213,7 +212,7 @@ class CourseRequest:
             year (int): The year for which to retrieve the courses.
 
         Returns:
-            Optional[dict[str, SimpleCourse]]: A dictionary of SimpleCourse objects, or None if an error occurs.
+            Optional[dict[str, SimpleCourse]]: A dictionary of SimpleCourse, or None if an error occurs.
         """
 
         courses = dict[str, SimpleCourse]()
@@ -233,8 +232,7 @@ class CourseRequest:
                         soup = Bs4(await res.text(errors="ignore"), "lxml")
 
                 if table := soup.find("table"):
-                    course_infos = table.find("tbody").find_all("tr")
-                    for course_info in course_infos:
+                    for course_info in table.find("tbody").find_all("tr"):
                         course_field = course_info.find_all("td")
 
                         term = int(course_field[2].text)
