@@ -8,7 +8,7 @@
 #
 # - REGISTRY (the registry to push the image to, e.g. docker.io)
 
-name: Release the Specific tag Version
+name: Release the Specific Tag Version
 
 on:
   push:
