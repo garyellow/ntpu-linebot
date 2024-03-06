@@ -203,7 +203,8 @@ class CourseRequest:
         return None
 
     async def get_simple_courses_by_year(
-        self, year: int
+        self,
+        year: int,
     ) -> Optional[dict[str, SimpleCourse]]:
         """
         Asynchronously retrieves simple courses by year.

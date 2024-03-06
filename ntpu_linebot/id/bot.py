@@ -463,7 +463,7 @@ class IDBot(Bot):
 
             return [
                 TextMessage(
-                    text=await search_students_by_year_and_department(year, data),
+                    text=await search_students_by_year_and_department(int(year), data),
                     sender=get_sender(self.__SENDER_NAME),
                 )
             ]

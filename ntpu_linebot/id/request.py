@@ -94,14 +94,14 @@ class IDRequest:
     @cached(TTLCache(maxsize=9, ttl=60 * 60 * 24 * 7))
     async def get_students_by_year_and_department(
         self,
-        year: str,
+        year: int,
         department: str,
     ) -> Optional[dict[str, str]]:
         """
         Async function to retrieve students by year and department.
 
         Args:
-            year (str): The year for which to retrieve students.
+            year (int): The year for which to retrieve students.
             department (str): The department for which to retrieve students.
 
         Returns:
