@@ -176,7 +176,7 @@ class CourseRequest:
                 teachers, teachers_url = prase_teacher_field(course_field[8])
                 times, locations = prase_time_location_filed(course_field[13])
 
-                if location is not None:
+                if location:
                     locations.append(location)
 
                 c = Course(

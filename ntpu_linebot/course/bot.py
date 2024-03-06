@@ -82,7 +82,7 @@ def choose_course_message(courses: list[SimpleCourse]) -> CarouselTemplate:
                 (
                     temp := "\n".join(
                         [
-                            f"課程：{course.title}",
+                            f"課程：{course.title if len(course.title) <= 15 else course.title[:14] + '…'}",
                             f"教師：{', '.join(course.teachers)}",
                             (
                                 f"時間：{course.year}"
@@ -103,7 +103,7 @@ def choose_course_message(courses: list[SimpleCourse]) -> CarouselTemplate:
         PostbackAction(
             label=course.title,
             displayText=f"正在查詢 {course.title} 的課程資訊",
-            data=str(course),
+            data=course.uid,
         )
         for course in courses
     ]
