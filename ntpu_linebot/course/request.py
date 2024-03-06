@@ -193,7 +193,7 @@ class CourseRequest:
                 )
 
                 sc = super(Course, c)
-                self.COURSE_DICT[str(sc)] = sc
+                self.COURSE_DICT[sc.uid] = sc
 
                 return c
 
@@ -250,8 +250,8 @@ class CourseRequest:
                             times=times,
                         )
 
-                        self.COURSE_DICT[str(sc)] = sc
-                        courses[str(sc)] = sc
+                        self.COURSE_DICT[sc.uid] = sc
+                        courses[sc.uid] = sc
 
             except ClientError:
                 self.__base_url = ""
