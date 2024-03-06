@@ -168,7 +168,7 @@ async def renew_student_dict() -> None:
     cur_year = datetime.now().year - 1911
     for year in range(cur_year, cur_year - 6, -1):
         for dep in DEPARTMENT_CODE.values():
-            await ID_REQUEST.get_students_by_year_and_department(str(year), dep)
+            await ID_REQUEST.get_students_by_year_and_department(year, dep)
             await sleep(random.uniform(5, 15))
 
 
@@ -204,12 +204,12 @@ def search_students_by_name(name: str) -> list[tuple[str, str]]:
     ]
 
 
-async def search_students_by_year_and_department(year: str, department: str) -> str:
+async def search_students_by_year_and_department(year: int, department: str) -> str:
     """
     Asynchronously search for students by year and department.
 
     Args:
-        year (str): The year to search for.
+        year (int): The year to search for.
         department (str): The department to search within.
 
     Returns:

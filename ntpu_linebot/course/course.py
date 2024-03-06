@@ -54,9 +54,6 @@ class SimpleCourse:
         """Getter for uid"""
         return f"{self.__year}{self.__term}{self.__no}"
 
-    def __str__(self) -> str:
-        return self.uid
-
 
 class Course(SimpleCourse):
     __REAL_BASE_URL = "https://sea.cc.ntpu.edu.tw"

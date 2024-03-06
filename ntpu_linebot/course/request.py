@@ -176,7 +176,7 @@ class CourseRequest:
                 teachers, teachers_url = prase_teacher_field(course_field[8])
                 times, locations = prase_time_location_filed(course_field[13])
 
-                if location is not None:
+                if location:
                     locations.append(location)
 
                 c = Course(
@@ -193,7 +193,7 @@ class CourseRequest:
                 )
 
                 sc = super(Course, c)
-                self.COURSE_DICT[str(sc)] = sc
+                self.COURSE_DICT[sc.uid] = sc
 
                 return c
 
@@ -203,7 +203,8 @@ class CourseRequest:
         return None
 
     async def get_simple_courses_by_year(
-        self, year: int
+        self,
+        year: int,
     ) -> Optional[dict[str, SimpleCourse]]:
         """
         Asynchronously retrieves simple courses by year.
@@ -250,8 +251,8 @@ class CourseRequest:
                             times=times,
                         )
 
-                        self.COURSE_DICT[str(sc)] = sc
-                        courses[str(sc)] = sc
+                        self.COURSE_DICT[sc.uid] = sc
+                        courses[sc.uid] = sc
 
             except ClientError:
                 self.__base_url = ""
