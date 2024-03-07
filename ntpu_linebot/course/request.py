@@ -192,8 +192,7 @@ class CourseRequest:
                     note=note,
                 )
 
-                sc = super(Course, c)
-                self.COURSE_DICT[sc.uid] = sc
+                self.COURSE_DICT[c.uid] = super(Course, c)
 
                 return c
 
