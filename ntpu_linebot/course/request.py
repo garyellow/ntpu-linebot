@@ -6,6 +6,7 @@ from aiohttp import ClientError, ClientSession
 from asyncache import cached
 from bs4 import BeautifulSoup as Bs4
 from cachetools import TTLCache
+from fake_useragent import UserAgent
 
 from .course import ALL_COURSE_CODE, Course, SimpleCourse
 
@@ -96,6 +97,7 @@ class CourseRequest:
         "https://sea.cc.ntpu.edu.tw",
     ]
     __COURSE_QUERY_URL = "/pls/dev_stud/course_query_all.queryByKeyword"
+    __UA = UserAgent(min_percentage=1.0)
     COURSE_DICT = dict[str, SimpleCourse]()
 
     async def check_url(self, url: Optional[str] = None) -> bool:
@@ -162,10 +164,13 @@ class CourseRequest:
             "seq1": "A",
             "seq2": "M",
         }
+        headers = {
+            "User-Agent": self.__UA.random,
+        }
 
         try:
             async with ClientSession() as session:
-                async with session.get(url, params=params) as res:
+                async with session.get(url, params=params, headers=headers) as res:
                     soup = Bs4(await res.text(errors="ignore"), "lxml")
 
             if table := soup.find("table"):
@@ -222,13 +227,16 @@ class CourseRequest:
             "seq1": "A",
             "seq2": "M",
         }
+        headers = {
+            "User-Agent": self.__UA.random,
+        }
 
         for code in ALL_COURSE_CODE:
             params["courseno"] = code
 
             try:
                 async with ClientSession() as session:
-                    async with session.get(url, params=params) as res:
+                    async with session.get(url, params=params, headers=headers) as res:
                         soup = Bs4(await res.text(errors="ignore"), "lxml")
 
                 if table := soup.find("table"):

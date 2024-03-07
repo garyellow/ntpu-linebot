@@ -7,6 +7,7 @@ from aiohttp import ClientError, ClientSession
 from asyncache import cached
 from bs4 import BeautifulSoup as Bs4
 from cachetools import TTLCache
+from fake_useragent import UserAgent
 
 
 class IDRequest:
@@ -17,6 +18,7 @@ class IDRequest:
         "https://lms.ntpu.edu.tw",
     ]
     __STUDENT_SEARCH_URL = "/portfolio/search.php"
+    __UA = UserAgent(min_percentage=1.0)
     STUDENT_DICT = dict[str, str]()
 
     async def check_url(self, url: Optional[str] = None) -> bool:
@@ -75,10 +77,13 @@ class IDRequest:
             "page": "1",
             "fmKeyword": uid,
         }
+        headers = {
+            "User-Agent": self.__UA.random,
+        }
 
         try:
             async with ClientSession() as session:
-                async with session.get(url, params=params) as res:
+                async with session.get(url, params=params, headers=headers) as res:
                     soup = Bs4(await res.text("utf-8"), "lxml")
 
             if student := soup.find("div", {"class": "bloglistTitle"}):
@@ -115,10 +120,13 @@ class IDRequest:
             "page": "1",
             "fmKeyword": f"4{year}{department}",
         }
+        headers = {
+            "User-Agent": self.__UA.random,
+        }
 
         try:
             async with ClientSession() as session:
-                async with session.get(url, params=params) as res:
+                async with session.get(url, params=params, headers=headers) as res:
                     data = Bs4(await res.text("utf-8"), "lxml")
                     pages = len(data.find_all("span", {"class": "item"}))
 
@@ -126,7 +134,7 @@ class IDRequest:
                     await sleep(uniform(0.05, 0.15))
 
                     params["page"] = str(i)
-                    async with session.get(url, params=params) as res:
+                    async with session.get(url, params=params, headers=headers) as res:
                         data = Bs4(await res.text("utf-8"), "lxml")
 
                     for item in data.find_all("div", {"class": "bloglistTitle"}):
