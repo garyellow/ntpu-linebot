@@ -110,6 +110,4 @@ def search_simple_courses_by_condition(
         case _:
             raise ValueError("Invalid SearchArgument")
 
-    return sorted(courses, key=lambda course: (-course.year, course.term, course.no))[
-        :limit
-    ]
+    return sorted(courses, key=lambda c: (-c.year, c.term, c.no))[:limit]

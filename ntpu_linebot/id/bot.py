@@ -344,7 +344,7 @@ class IDBot(Bot):
                 ]
 
             if students := search_students_by_name(payload):
-                students = sorted(students, key=lambda student: int(student[0]))[-500:]
+                students = sorted(students, key=lambda s: int(s[0]))[-500:]
 
                 messages = list[TextMessage]()
                 for i in range(0, ceil(len(students) / 100)):
