@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-from re import fullmatch, match, search
+from re import IGNORECASE, fullmatch, match, search
 from typing import Optional
 
 from linebot.v3.messaging.models import (
@@ -60,6 +60,33 @@ def course_info_message(course: Course) -> ButtonsTemplate:
     return ButtonsTemplate(title=course.title, text=text, actions=actions)
 
 
+def generate_course_text(course: SimpleCourse) -> str:
+    """
+    Generate a text representation of the given SimpleCourse object.
+
+    Args:
+        course (SimpleCourse): The SimpleCourse object for which to generate the text.
+
+    Returns:
+        str: The text representation of the SimpleCourse object.
+    """
+
+    text = "\n".join(
+        [
+            f"課程：{course.title if len(course.title) <= 15 else course.title[:14] + '…'}",
+            f"教師：{', '.join(course.teachers)}",
+            f"時間：{course.year}"
+            + ("上" if course.term == 1 else "下")
+            + f" {', '.join(course.times)}",
+        ]
+    )
+
+    if len(text) > 34:
+        text = text[:33] + "…"
+
+    return text
+
+
 def choose_course_message(courses: list[SimpleCourse]) -> CarouselTemplate:
     """
     Generates a carousel template with the details of the given courses for the LINE chatbot.
@@ -71,34 +98,7 @@ def choose_course_message(courses: list[SimpleCourse]) -> CarouselTemplate:
         CarouselTemplate: The carousel template containing the course details for display.
     """
 
-    courses = sorted(
-        courses, key=lambda course: (-course.year, course.term, course.no)
-    )[:30]
-
-    texts = [
-        (
-            temp
-            if len(
-                (
-                    temp := "\n".join(
-                        [
-                            f"課程：{course.title if len(course.title) <= 15 else course.title[:14] + '…'}",
-                            f"教師：{', '.join(course.teachers)}",
-                            (
-                                f"時間：{course.year}"
-                                + ("上" if course.term == 1 else "下")
-                                + f" {', '.join(course.times)}"
-                            ),
-                        ]
-                    )
-                )
-            )
-            <= 34
-            else temp[:33] + "…"
-        )
-        for course in courses
-    ]
-
+    texts = [generate_course_text(course) for course in courses]
     actions = [
         PostbackAction(
             label=course.title,
@@ -124,70 +124,42 @@ def choose_course_message(courses: list[SimpleCourse]) -> CarouselTemplate:
 
 class CourseBot(Bot):
     __SENDER_NAME = "課程魔法師"
-    __CLASS_STR_LIST = [
-        "c",
-        "C",
+    __VALID_CLASS_STR = [
         "class",
         "course",
-        "Class",
-        "Course",
-        "title",
-        "Title",
         "課",
-        "科",
         "課程",
-        "科目",
         "課名",
-        "科名",
-        "名稱",
         "課程名",
-        "科目名",
         "課程名稱",
+        "科目",
+        "科目名",
         "科目名種",
     ]
     __TEACHER_STR_LIST = [
-        "t",
-        "T",
-        "p",
-        "P",
-        "d",
-        "D",
-        "th",
-        "Th",
-        "pr",
-        "Pr",
         "dr",
-        "Dr",
         "prof",
-        "Prof",
         "teacher",
-        "Teacher",
         "professor",
-        "Professor",
         "doctor",
-        "Doctor",
         "師",
         "老師",
         "教師",
         "教授",
-        "講師",
         "老師名",
         "教師名",
         "教授名",
-        "講師名",
         "老師名稱",
         "教師名稱",
         "教授名稱",
-        "講師名稱",
         "授課教師",
         "授課老師",
         "授課教授",
-        "授課講師",
     ]
     __UID_REGEX = r"\d{3,4}[" + "".join(ALL_COURSE_CODE) + r"]\d{4}"
-    __SEARCH_REGEX = r"|".join(__CLASS_STR_LIST + __TEACHER_STR_LIST)
+    __SEARCH_REGEX = r"|".join(__VALID_CLASS_STR + __TEACHER_STR_LIST)
     __TITLE_REGEX = (
-        r"(?<=(" + r"|".join(rf"(?<={c})" for c in __CLASS_STR_LIST) + r")[ +]).*"
+        r"(?<=(" + r"|".join(rf"(?<={c})" for c in __VALID_CLASS_STR) + r")[ +]).*"
     )
     __TEACHER_REGEX = (
         r"(?<=(" + r"|".join(rf"(?<={s})" for s in __TEACHER_STR_LIST) + r")[ +]).*"
@@ -200,7 +172,7 @@ class CourseBot(Bot):
     ) -> list[Message]:
         """處理文字訊息"""
 
-        if fullmatch(self.__UID_REGEX, payload):
+        if fullmatch(self.__UID_REGEX, payload, IGNORECASE):
             if course := await search_course_by_uid(payload):
                 return [
                     TemplateMessage(
@@ -210,12 +182,12 @@ class CourseBot(Bot):
                     )
                 ]
 
-        if match(self.__SEARCH_REGEX, payload):
-            if m := search(self.__TITLE_REGEX, payload):
+        if match(self.__SEARCH_REGEX, payload, IGNORECASE):
+            if m := search(self.__TITLE_REGEX, payload, IGNORECASE):
                 criteria = m.group()
                 condition = SearchArgument.TITLE
 
-            if m := search(self.__TEACHER_REGEX, payload):
+            if m := search(self.__TEACHER_REGEX, payload, IGNORECASE):
                 criteria = m.group()
                 condition = SearchArgument.TEACHER
 
@@ -249,7 +221,7 @@ class CourseBot(Bot):
     async def handle_postback_event(self, payload: str) -> list[Message]:
         """處理回傳事件"""
 
-        if fullmatch(self.__UID_REGEX, payload):
+        if fullmatch(self.__UID_REGEX, payload, IGNORECASE):
             if course := await search_course_by_uid(payload):
                 return [
                     TemplateMessage(

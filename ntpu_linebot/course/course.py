@@ -40,7 +40,7 @@ class SimpleCourse:
         return self.__title
 
     @property
-    def teachers(self) -> list[tuple[str, str]]:
+    def teachers(self) -> list[str]:
         """Getter for teachers"""
         return self.__teachers
 

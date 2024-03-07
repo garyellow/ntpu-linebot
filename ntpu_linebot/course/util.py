@@ -76,7 +76,7 @@ def search_simple_courses_by_condition(
     Function to search courses by a given value and condition, with an optional limit.
 
     Args:
-        value (str): The value to search for.
+        criteria (str): The value to search for.
         condition (SearchArgument): The condition to apply to the search.
         limit (int, optional): The maximum number of results to return. Defaults to 30.
 
@@ -84,6 +84,8 @@ def search_simple_courses_by_condition(
         list[SimpleCourse]: A list of courses matching the criteria, up to the specified limit.
     """
 
+    criteria = criteria.lower()
+    criteria_set = set(criteria)
     match condition:
         case SearchArgument.NO:
             courses = [
@@ -96,7 +98,7 @@ def search_simple_courses_by_condition(
             courses = [
                 course
                 for course in COURSE_REQUEST.COURSE_DICT.values()
-                if set(criteria).issubset(set(course.title))
+                if criteria_set.issubset(set(course.title.lower()))
             ]
 
         case SearchArgument.TEACHER:
@@ -104,12 +106,10 @@ def search_simple_courses_by_condition(
                 course
                 for course in COURSE_REQUEST.COURSE_DICT.values()
                 for teacher in course.teachers
-                if set(criteria).issubset(set(teacher))
+                if criteria_set.issubset(set(teacher.lower()))
             ]
 
         case _:
             raise ValueError("Invalid SearchArgument")
 
-    return sorted(courses, key=lambda course: (-course.year, course.term, course.no))[
-        :limit
-    ]
+    return sorted(courses, key=lambda c: (-c.year, c.term, c.no))[:limit]
