@@ -17,9 +17,9 @@ from ..abs_bot import Bot
 from ..line_bot_util import EMPTY_POSTBACK_ACTION, get_sender
 from .course import ALL_COURSE_CODE, Course, SimpleCourse
 from .util import (
-    SearchArgument,
+    SearchKind,
     search_course_by_uid,
-    search_simple_courses_by_condition,
+    search_simple_courses_by_criteria_and_kind,
 )
 
 
@@ -185,13 +185,13 @@ class CourseBot(Bot):
         if match(self.__SEARCH_REGEX, payload, IGNORECASE):
             if m := search(self.__TITLE_REGEX, payload, IGNORECASE):
                 criteria = m.group()
-                condition = SearchArgument.TITLE
+                kind = SearchKind.TITLE
 
             if m := search(self.__TEACHER_REGEX, payload, IGNORECASE):
                 criteria = m.group()
-                condition = SearchArgument.TEACHER
+                kind = SearchKind.TEACHER
 
-            if courses := search_simple_courses_by_condition(criteria, condition):
+            if courses := search_simple_courses_by_criteria_and_kind(criteria, kind):
                 return [
                     TemplateMessage(
                         altText="請選擇要查詢的課程",
@@ -200,10 +200,10 @@ class CourseBot(Bot):
                     )
                 ]
 
-            match condition:
-                case SearchArgument.TITLE:
+            match kind:
+                case SearchKind.TITLE:
                     condition_str = "名稱"
-                case SearchArgument.TEACHER:
+                case SearchKind.TEACHER:
                     condition_str = "授課教師姓名"
                 case _:
                     condition_str = "未知"

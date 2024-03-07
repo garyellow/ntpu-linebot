@@ -58,7 +58,7 @@ async def search_course_by_uid(uid: str) -> Optional[Course]:
 
 
 @unique
-class SearchArgument(Enum):
+class SearchKind(Enum):
     """Enumeration representing the search arguments."""
 
     NO = auto()
@@ -67,9 +67,9 @@ class SearchArgument(Enum):
 
 
 @cached(TTLCache(maxsize=99, ttl=60 * 60))
-def search_simple_courses_by_condition(
+def search_simple_courses_by_criteria_and_kind(
     criteria: str,
-    condition: SearchArgument,
+    kind: SearchKind,
     limit: int = 30,
 ) -> list[SimpleCourse]:
     """
@@ -77,7 +77,7 @@ def search_simple_courses_by_condition(
 
     Args:
         criteria (str): The value to search for.
-        condition (SearchArgument): The condition to apply to the search.
+        kind (SearchKind): The kind of search to perform.
         limit (int, optional): The maximum number of results to return. Defaults to 30.
 
     Returns:
@@ -86,22 +86,22 @@ def search_simple_courses_by_condition(
 
     criteria = criteria.lower()
     criteria_set = set(criteria)
-    match condition:
-        case SearchArgument.NO:
+    match kind:
+        case SearchKind.NO:
             courses = [
                 course
                 for course in COURSE_REQUEST.COURSE_DICT.values()
                 if criteria in course.no
             ]
 
-        case SearchArgument.TITLE:
+        case SearchKind.TITLE:
             courses = [
                 course
                 for course in COURSE_REQUEST.COURSE_DICT.values()
                 if criteria_set.issubset(set(course.title.lower()))
             ]
 
-        case SearchArgument.TEACHER:
+        case SearchKind.TEACHER:
             courses = [
                 course
                 for course in COURSE_REQUEST.COURSE_DICT.values()
