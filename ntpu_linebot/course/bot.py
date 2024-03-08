@@ -136,7 +136,7 @@ class CourseBot(Bot):
         "科目名",
         "科目名種",
     ]
-    __TEACHER_STR_LIST = [
+    __VALID_TEACHER_STR = [
         "dr",
         "prof",
         "teacher",
@@ -157,12 +157,12 @@ class CourseBot(Bot):
         "授課教授",
     ]
     __UID_REGEX = r"\d{3,4}[" + "".join(ALL_COURSE_CODE) + r"]\d{4}"
-    __SEARCH_REGEX = r"|".join(__VALID_CLASS_STR + __TEACHER_STR_LIST)
-    __TITLE_REGEX = (
+    __SEARCH_REGEX = r"|".join(__VALID_CLASS_STR + __VALID_TEACHER_STR)
+    __CLASS_REGEX = (
         r"(?<=(" + r"|".join(rf"(?<={c})" for c in __VALID_CLASS_STR) + r")[ +]).*"
     )
     __TEACHER_REGEX = (
-        r"(?<=(" + r"|".join(rf"(?<={s})" for s in __TEACHER_STR_LIST) + r")[ +]).*"
+        r"(?<=(" + r"|".join(rf"(?<={s})" for s in __VALID_TEACHER_STR) + r")[ +]).*"
     )
 
     async def handle_text_message(
@@ -183,7 +183,7 @@ class CourseBot(Bot):
                 ]
 
         if match(self.__SEARCH_REGEX, payload, IGNORECASE):
-            if m := search(self.__TITLE_REGEX, payload, IGNORECASE):
+            if m := search(self.__CLASS_REGEX, payload, IGNORECASE):
                 criteria = m.group()
                 kind = SearchKind.TITLE
 
