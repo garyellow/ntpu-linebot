@@ -172,16 +172,6 @@ class CourseBot(Bot):
     ) -> list[Message]:
         """處理文字訊息"""
 
-        if fullmatch(self.__UID_REGEX, payload, IGNORECASE):
-            if course := await search_course_by_uid(payload):
-                return [
-                    TemplateMessage(
-                        altText=f"{course.title}的課程資訊",
-                        template=course_info_message(course),
-                        sender=get_sender(self.__SENDER_NAME),
-                    )
-                ]
-
         if match(self.__SEARCH_REGEX, payload, IGNORECASE):
             if m := search(self.__CLASS_REGEX, payload, IGNORECASE):
                 criteria = m.group()
