@@ -59,7 +59,7 @@ class IDRequest:
         self.__base_url = ""
         return False
 
-    @cached(TTLCache(maxsize=99, ttl=60 * 60 * 24 * 7))
+    @cached(TTLCache(maxsize=999, ttl=60 * 60 * 24 * 15))
     async def get_student_by_uid(self, uid: str) -> Optional[str]:
         """
         Asynchronously gets a student by their ID.
@@ -96,7 +96,7 @@ class IDRequest:
 
         return None
 
-    @cached(TTLCache(maxsize=9, ttl=60 * 60 * 24 * 7))
+    @cached(TTLCache(maxsize=99, ttl=60 * 60 * 24 * 15))
     async def get_students_by_year_and_department(
         self,
         year: int,

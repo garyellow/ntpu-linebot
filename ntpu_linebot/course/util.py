@@ -5,8 +5,6 @@ from datetime import datetime
 from enum import Enum, auto, unique
 from typing import Optional
 
-from asyncache import cached
-from cachetools import TTLCache
 from sanic import Sanic
 
 from .course import Course, SimpleCourse
@@ -66,7 +64,6 @@ class SearchKind(Enum):
     TEACHER = auto()
 
 
-@cached(TTLCache(maxsize=99, ttl=60 * 60))
 def search_simple_courses_by_criteria_and_kind(
     criteria: str,
     kind: SearchKind,
