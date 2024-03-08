@@ -33,7 +33,6 @@ from .util import (
 
 
 class IDBot(Bot):
-    __SPILT_CODE = "@"
     __SENDER_NAME = "學號魔法師"
     __ALL_DEPARTMENT_CODE = "所有系代碼"
     __COLLEGE_NAMES = [
@@ -57,7 +56,7 @@ class IDBot(Bot):
             PostbackAction: A postback action object that represents the college.
         """
 
-        data = year + self.__SPILT_CODE + college_name
+        data = f"{year} {college_name}"
         return PostbackAction(
             label=college_name,
             displayText=college_name,
@@ -91,7 +90,7 @@ class IDBot(Bot):
         else:
             display_text += "系"
 
-        data = year + self.__SPILT_CODE + department_code
+        data = f"{year} {department_code}"
 
         return PostbackAction(
             label=full_name,
@@ -220,7 +219,7 @@ class IDBot(Bot):
                                 PostbackAction(
                                     label="哪次不是",
                                     displayText="哪次不是",
-                                    data=f"{year}{self.__SPILT_CODE}搜尋全系",
+                                    data=f"{year} 搜尋全系",
                                     inputOption="openRichMenu",
                                 ),
                                 PostbackAction(
@@ -282,7 +281,7 @@ class IDBot(Bot):
                                 action=PostbackAction(
                                     label=show_text,
                                     displayText=f"正在{show_text}",
-                                    data=year + self.__SPILT_CODE + department,
+                                    data=f"{year} {department}",
                                     inputOption="closeRichMenu",
                                 ),
                             ),
@@ -380,8 +379,8 @@ class IDBot(Bot):
                 ),
             ]
 
-        if self.__SPILT_CODE in payload:
-            year, data = payload.split(self.__SPILT_CODE)
+        if " " in payload:
+            year, data = payload.split(" ")
             if data == "搜尋全系":
                 return [
                     TemplateMessage(
