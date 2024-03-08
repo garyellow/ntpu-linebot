@@ -95,7 +95,7 @@ def search_simple_courses_by_criteria_and_kind(
             courses = [
                 course
                 for course in COURSE_REQUEST.COURSE_DICT.values()
-                if criteria_set.issubset(set(course.title.lower()))
+                if criteria_set.issubset(course.title.lower())
             ]
 
         case SearchKind.TEACHER:
@@ -103,7 +103,7 @@ def search_simple_courses_by_criteria_and_kind(
                 course
                 for course in COURSE_REQUEST.COURSE_DICT.values()
                 for teacher in course.teachers
-                if criteria_set.issubset(set(teacher.lower()))
+                if criteria_set.issubset(teacher.lower())
             ]
 
         case _:

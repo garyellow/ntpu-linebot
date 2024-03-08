@@ -200,7 +200,7 @@ def search_students_by_name(name: str) -> list[tuple[str, str]]:
     return [
         (key, value)
         for key, value in ID_REQUEST.STUDENT_DICT.items()
-        if set(name).issubset(set(value))
+        if set(name).issubset(value)
     ]
 
 
