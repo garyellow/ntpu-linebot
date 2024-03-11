@@ -18,7 +18,7 @@ class StickerUtil:
         "https://spy-family.net/tvseries/special/special3.php",
     ]
     __ICHIGO_PRODUCTION_URL = "https://ichigoproduction.com/special/present_icon.html"
-    __UA = UserAgent(min_percentage=1.0)
+    __UA = UserAgent(min_percentage=2.5)
     STICKER_LIST = list[str]()
 
     async def is_healthy(self, app: Sanic) -> bool:
