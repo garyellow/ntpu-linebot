@@ -3,6 +3,7 @@ from asyncio import sleep
 
 from aiohttp import ClientSession
 from bs4 import BeautifulSoup as Bs4
+from fake_useragent import UserAgent
 from sanic import Sanic
 
 
@@ -17,6 +18,7 @@ class StickerUtil:
         "https://spy-family.net/tvseries/special/special3.php",
     ]
     __ICHIGO_PRODUCTION_URL = "https://ichigoproduction.com/special/present_icon.html"
+    __UA = UserAgent(min_percentage=2.5)
     STICKER_LIST = list[str]()
 
     async def is_healthy(self, app: Sanic) -> bool:
@@ -30,7 +32,7 @@ class StickerUtil:
             bool: True if the application is healthy, False otherwise.
         """
 
-        if not self.STICKER_LIST:
+        if len(self.STICKER_LIST) == 0:
             await app.cancel_task("load_stickers", raise_exception=False)
             app.add_task(self.load_stickers, name="load_stickers")
             return False
@@ -43,9 +45,13 @@ class StickerUtil:
         Appends the URLs of the stickers to the stickers list.
         """
 
+        headers = {
+            "User-Agent": self.__UA.random,
+        }
+
         async with ClientSession() as session:
             for url in self.__SPY_FAMILY_URLS:
-                async with session.get(url) as response:
+                async with session.get(url, headers=headers) as response:
                     soup = Bs4(await response.text(), "lxml")
 
                 for i in soup.select("ul.icondlLists > li > a > img"):
@@ -55,7 +61,10 @@ class StickerUtil:
 
                 await sleep(0.05)
 
-            async with session.get(self.__ICHIGO_PRODUCTION_URL) as response:
+            async with session.get(
+                self.__ICHIGO_PRODUCTION_URL,
+                headers=headers,
+            ) as response:
                 soup = Bs4(await response.text(), "lxml")
 
             for i in soup.select("ul.tp5 > li > div.ph > a"):

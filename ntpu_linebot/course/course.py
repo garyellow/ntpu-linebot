@@ -73,7 +73,7 @@ class Course(SimpleCourse):
         locations: list[str],
         detail_url: str,
         note: str,
-    ):
+    ) -> None:
         super().__init__(year, term, no, title, teachers, times)
         self.__teachers_url = teachers_url
         self.__locations = locations

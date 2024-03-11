@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 from re import sub
 
-from linebot.v3.messaging import ImageMessage, TextMessage
+from linebot.v3.messaging import ImageMessage, Message, TextMessage
 from linebot.v3.webhooks import (
     FollowEvent,
     JoinEvent,
@@ -10,12 +10,13 @@ from linebot.v3.webhooks import (
     PostbackEvent,
 )
 
+from .contact import CONTACT_BOT
 from .course import COURSE_BOT
 from .id import ID_BOT
 from .line_api_util import LINE_API_UTIL
 from .line_bot_util import get_sender, instruction
 
-HELP_COMMANDS = ["使用說明", "help"]
+__HELP_COMMANDS = ["使用說明", "help"]
 __PUNCTUATION_REGEX = r"[][!\"#$%&'()*+,./:;<=>?@\\^_`{|}~-]"
 
 
@@ -31,11 +32,15 @@ async def handle_text_message(event: MessageEvent) -> None:
     payload = sub(r"\s", " ", event.message.text)
     payload = sub(__PUNCTUATION_REGEX, "", payload)
 
-    if payload in HELP_COMMANDS:
-        messages = instruction()
+    messages = list[Message]()
+    if payload in __HELP_COMMANDS:
+        messages += instruction()
 
     else:
-        messages = await ID_BOT.handle_text_message(payload, event.message.quote_token)
+        messages += await ID_BOT.handle_text_message(payload, event.message.quote_token)
+        messages += await CONTACT_BOT.handle_text_message(
+            payload, event.message.quote_token
+        )
         messages += await COURSE_BOT.handle_text_message(
             payload, event.message.quote_token
         )
@@ -54,11 +59,13 @@ async def handle_postback_event(event: PostbackEvent) -> None:
 
     payload = event.postback.data
 
-    if payload in HELP_COMMANDS:
-        messages = instruction()
+    messages = list[Message]()
+    if payload in __HELP_COMMANDS:
+        messages += instruction()
 
     else:
-        messages = await ID_BOT.handle_postback_event(payload)
+        messages += await ID_BOT.handle_postback_event(payload)
+        messages += await CONTACT_BOT.handle_postback_event(payload)
         messages += await COURSE_BOT.handle_postback_event(payload)
 
     if messages:
@@ -114,7 +121,7 @@ async def handle_follow_join_event(
             sender=mes_sender,
         ),
         TextMessage(
-            text="資料來源：\n國立臺北大學數位學苑 2.0\n國立臺北大學課程查詢系統",
+            text="資料來源：\n國立臺北大學數位學苑 2.0\n國立臺北大學校園聯絡簿\n國立臺北大學課程查詢系統",
             sender=mes_sender,
         ),
     ]

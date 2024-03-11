@@ -19,6 +19,7 @@ from linebot.v3.messaging.models import (
 
 from ..abs_bot import Bot
 from ..line_bot_util import EMPTY_POSTBACK_ACTION, get_sender
+from ..normal_util import partition
 from .util import (
     DEPARTMENT_CODE,
     DEPARTMENT_NAME,
@@ -31,10 +32,118 @@ from .util import (
     student_info_format,
 )
 
+SPILT_CHAR = "@"
+
+
+def college_postback(college_name: str, year: str) -> PostbackAction:
+    """
+    Creates a postback action for a college.
+
+    Args:
+        college_name (str): The name of the college.
+        year (str): The year for which the action is being created.
+
+    Returns:
+        PostbackAction: A postback action object that represents the college.
+    """
+
+    data = f"{year}{SPILT_CHAR}{college_name}"
+    return PostbackAction(
+        label=college_name,
+        displayText=college_name,
+        data=data,
+        inputOption="closeRichMenu",
+    )
+
+
+def department_postback(department_code: str, year: str) -> PostbackAction:
+    """
+    Creates a postback action object for a department.
+
+    Args:
+        department_code (str): The code of the department.
+        year (str): The year for which the action is being created.
+
+    Returns:
+        PostbackAction: A postback action object that represents the department.
+    """
+
+    full_name = FULL_DEPARTMENT_NAME[department_code]
+
+    display_text = f"正在搜尋{year}學年度"
+
+    if department_code[0:2] == DEPARTMENT_CODE["法律"]:
+        display_text += "法律系"
+
+    display_text += DEPARTMENT_NAME[department_code]
+
+    if department_code[0:2] == DEPARTMENT_CODE["法律"]:
+        display_text += "組"
+    else:
+        display_text += "系"
+
+    data = f"{year}{SPILT_CHAR}{department_code}"
+
+    return PostbackAction(
+        label=full_name,
+        displayText=display_text,
+        data=data,
+        inputOption="closeRichMenu",
+    )
+
+
+def choose_department_message(
+    year: str,
+    image_url: str,
+    departments: list[str],
+    is_law: bool = False,
+) -> ButtonsTemplate | CarouselTemplate:
+    """
+    Creates a template with a button or carousel template for selecting a department.
+
+    Args:
+        year (str): The year for which the department is being selected.
+        image_url (str): The URL of the image to be displayed in the template message.
+        departments (list[str]): A list of department names to be displayed as buttons.
+        is_law (bool): Optional parameter indicating if the department is a law department.
+
+    Returns:
+        CarouselTemplate: A template for selecting a department.
+    """
+
+    department_class = "組別" if is_law else "科系"
+
+    actions = [department_postback(DEPARTMENT_CODE[name], year) for name in departments]
+
+    while len(actions) > 4 and len(actions) % 3 != 0:
+        actions.append(EMPTY_POSTBACK_ACTION)
+
+    if len(actions) <= 4:
+        template = ButtonsTemplate(
+            thumbnailImageUrl=image_url,
+            title=f"選擇{department_class}",
+            text=f"請選擇要查詢的{department_class}",
+            actions=actions,
+        )
+    else:
+        template = CarouselTemplate(
+            columns=[
+                CarouselColumn(
+                    thumbnailImageUrl=image_url,
+                    title=f"選擇{department_class}",
+                    text=f"請選擇要查詢的{department_class}",
+                    actions=action_group,
+                )
+                for action_group in partition(actions, 3)
+            ]
+        )
+
+    return template
+
 
 class IDBot(Bot):
-    __SPILT_CODE = "@"
     __SENDER_NAME = "學號魔法師"
+    __SPILT_CHAR = "#"
     __ALL_DEPARTMENT_CODE = "所有系代碼"
     __COLLEGE_NAMES = [
         "人文學院",
@@ -44,117 +153,6 @@ class IDBot(Bot):
         "社會科學學院",
         "電機資訊學院",
     ]
-
-    def college_postback(self, college_name: str, year: str) -> PostbackAction:
-        """
-        Creates a postback action for a college.
-
-        Args:
-            college_name (str): The name of the college.
-            year (str): The year for which the action is being created.
-
-        Returns:
-            PostbackAction: A postback action object that represents the college.
-        """
-
-        data = year + self.__SPILT_CODE + college_name
-        return PostbackAction(
-            label=college_name,
-            displayText=college_name,
-            data=data,
-            inputOption="closeRichMenu",
-        )
-
-    def department_postback(self, department_code: str, year: str) -> PostbackAction:
-        """
-        Creates a postback action object for a department.
-
-        Args:
-            department_code (str): The code of the department.
-            year (str): The year for which the action is being created.
-
-        Returns:
-            PostbackAction: A postback action object that represents the department.
-        """
-
-        full_name = FULL_DEPARTMENT_NAME[department_code]
-
-        display_text = f"正在搜尋{year}學年度"
-
-        if department_code[0:2] == DEPARTMENT_CODE["法律"]:
-            display_text += "法律系"
-
-        display_text += DEPARTMENT_NAME[department_code]
-
-        if department_code[0:2] == DEPARTMENT_CODE["法律"]:
-            display_text += "組"
-        else:
-            display_text += "系"
-
-        data = year + self.__SPILT_CODE + department_code
-
-        return PostbackAction(
-            label=full_name,
-            displayText=display_text,
-            data=data,
-            inputOption="closeRichMenu",
-        )
-
-    def choose_department_message(
-        self,
-        year: str,
-        image_url: str,
-        departments: list[str],
-        is_law: bool = False,
-    ) -> TemplateMessage:
-        """
-        Creates a template message with a button or carousel template for selecting a department.
-
-        Args:
-            year (str): The year for which the department is being selected.
-            image_url (str): The URL of the image to be displayed in the template message.
-            departments (list[str]): A list of department names to be displayed as buttons.
-            is_law (bool): Optional parameter indicating if the department is a law department.
-
-        Returns:
-            TemplateMessage: A template message for selecting a department.
-        """
-
-        department_class = "組別" if is_law else "科系"
-
-        actions = [
-            self.department_postback(DEPARTMENT_CODE[name], year)
-            for name in departments
-        ]
-
-        while len(actions) > 4 and len(actions) % 3 != 0:
-            actions.append(EMPTY_POSTBACK_ACTION)
-
-        if len(actions) <= 4:
-            template = ButtonsTemplate(
-                thumbnailImageUrl=image_url,
-                title=f"選擇{department_class}",
-                text=f"請選擇要查詢的{department_class}",
-                actions=actions,
-            )
-        else:
-            template = CarouselTemplate(
-                columns=[
-                    CarouselColumn(
-                        thumbnailImageUrl=image_url,
-                        title=f"選擇{department_class}",
-                        text=f"請選擇要查詢的{department_class}",
-                        actions=actions[i * 3 : (i + 1) * 3],
-                    )
-                    for i in range(len(actions) // 3)
-                ]
-            )
-
-        return TemplateMessage(
-            alt_text=f"選擇{department_class}",
-            template=template,
-            sender=get_sender(self.__SENDER_NAME),
-        )
 
     async def handle_text_message(
         self,
@@ -213,14 +211,14 @@ class IDBot(Bot):
 
                 return [
                     TemplateMessage(
-                        alt_text="確認學年度",
+                        altText="確認學年度",
                         template=ConfirmTemplate(
                             text=f"是否要搜尋 {year} 學年度的學生",
                             actions=[
                                 PostbackAction(
                                     label="哪次不是",
                                     displayText="哪次不是",
-                                    data=f"{year}{self.__SPILT_CODE}搜尋全系",
+                                    data=f"{year}{self.__SPILT_CHAR}搜尋全系",
                                     inputOption="openRichMenu",
                                 ),
                                 PostbackAction(
@@ -282,7 +280,7 @@ class IDBot(Bot):
                                 action=PostbackAction(
                                     label=show_text,
                                     displayText=f"正在{show_text}",
-                                    data=year + self.__SPILT_CODE + department,
+                                    data=f"{year}{self.__SPILT_CHAR}{department}",
                                     inputOption="closeRichMenu",
                                 ),
                             ),
@@ -380,19 +378,20 @@ class IDBot(Bot):
                 ),
             ]
 
-        if self.__SPILT_CODE in payload:
-            year, data = payload.split(self.__SPILT_CODE)
+        if SPILT_CHAR in payload:
+            year, data = payload.split(" ")
+
             if data == "搜尋全系":
                 return [
                     TemplateMessage(
-                        alt_text="選擇學院群",
+                        altText="選擇學院群",
                         template=ButtonsTemplate(
                             thumbnailImageUrl="https://new.ntpu.edu.tw/assets/logo/ntpu_logo.png",
                             title="選擇學院群",
                             text="請選擇科系所屬學院群",
                             actions=[
-                                self.college_postback("文法商", year),
-                                self.college_postback("公社電資", year),
+                                college_postback("文法商", year),
+                                college_postback("公社電資", year),
                             ],
                         ),
                         sender=get_sender(self.__SENDER_NAME),
@@ -402,21 +401,21 @@ class IDBot(Bot):
             if data in ["文法商", "公社電資"]:
                 return [
                     TemplateMessage(
-                        alt_text="選擇學院",
+                        altText="選擇學院",
                         template=ButtonsTemplate(
                             title="選擇學院",
                             text="請選擇科系所屬學院",
                             actions=(
                                 [
-                                    self.college_postback("人文學院", year),
-                                    self.college_postback("法律學院", year),
-                                    self.college_postback("商學院", year),
+                                    college_postback("人文學院", year),
+                                    college_postback("法律學院", year),
+                                    college_postback("商學院", year),
                                 ]
                                 if data == "文法商"
                                 else [
-                                    self.college_postback("公共事務學院", year),
-                                    self.college_postback("社會科學學院", year),
-                                    self.college_postback("電機資訊學院", year),
+                                    college_postback("公共事務學院", year),
+                                    college_postback("社會科學學院", year),
+                                    college_postback("電機資訊學院", year),
                                 ]
                             ),
                         ),
@@ -426,40 +425,46 @@ class IDBot(Bot):
 
             if data in self.__COLLEGE_NAMES:
                 department_message = {
-                    "人文學院": self.choose_department_message(
+                    "人文學院": choose_department_message(
                         year,
                         "https://walkinto.in/upload/-192z7YDP8-JlchfXtDvI.JPG",
                         ["中文", "應外", "歷史"],
                     ),
-                    "法律學院": self.choose_department_message(
+                    "法律學院": choose_department_message(
                         year,
                         "https://walkinto.in/upload/byupdk9PvIZyxupOy9Dw8.JPG",
                         ["法學", "司法", "財法"],
                         is_law=True,
                     ),
-                    "商學院": self.choose_department_message(
+                    "商學院": choose_department_message(
                         year,
                         "https://walkinto.in/upload/ZJum7EYwPUZkedmXNtvPL.JPG",
                         ["企管", "金融", "會計", "統計", "休運"],
                     ),
-                    "公共事務學院": self.choose_department_message(
+                    "公共事務學院": choose_department_message(
                         year,
                         "https://walkinto.in/upload/ZJhs4wEaDIWklhiVwV6DI.jpg",
                         ["公行", "不動", "財政"],
                     ),
-                    "社會科學學院": self.choose_department_message(
+                    "社會科學學院": choose_department_message(
                         year,
                         "https://walkinto.in/upload/WyPbshN6DIZ1gvZo2NTvU.JPG",
                         ["經濟", "社學", "社工"],
                     ),
-                    "電機資訊學院": self.choose_department_message(
+                    "電機資訊學院": choose_department_message(
                         year,
                         "https://walkinto.in/upload/bJ9zWWHaPLWJg9fW-STD8.png",
                         ["電機", "資工", "通訊"],
                     ),
                 }
 
-                return [department_message[data]]
+                return [
+                    TemplateMessage(
+                        altText=f"選擇{"組別" if data == "法律學院" else "科系"}",
+                        template=department_message[data],
+                        sender=get_sender(self.__SENDER_NAME),
+                    )
+                ]
 
             return [
                 TextMessage(

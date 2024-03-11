@@ -14,12 +14,13 @@ from linebot.v3.messaging.models import (
 )
 
 from ..abs_bot import Bot
+from ..contact.bot import SPILT_CHAR as CONTACT_SPILT_CHAR
 from ..line_bot_util import EMPTY_POSTBACK_ACTION, get_sender
 from .course import ALL_COURSE_CODE, Course, SimpleCourse
 from .util import (
-    SearchArgument,
+    SearchKind,
     search_course_by_uid,
-    search_simple_courses_by_condition,
+    search_simple_courses_by_criteria_and_kind,
 )
 
 
@@ -136,7 +137,7 @@ class CourseBot(Bot):
         "科目名",
         "科目名種",
     ]
-    __TEACHER_STR_LIST = [
+    __VALID_TEACHER_STR = [
         "dr",
         "prof",
         "teacher",
@@ -157,12 +158,12 @@ class CourseBot(Bot):
         "授課教授",
     ]
     __UID_REGEX = r"\d{3,4}[" + "".join(ALL_COURSE_CODE) + r"]\d{4}"
-    __SEARCH_REGEX = r"|".join(__VALID_CLASS_STR + __TEACHER_STR_LIST)
-    __TITLE_REGEX = (
+    __SEARCH_REGEX = r"|".join(__VALID_CLASS_STR + __VALID_TEACHER_STR)
+    __CLASS_REGEX = (
         r"(?<=(" + r"|".join(rf"(?<={c})" for c in __VALID_CLASS_STR) + r")[ +]).*"
     )
     __TEACHER_REGEX = (
-        r"(?<=(" + r"|".join(rf"(?<={s})" for s in __TEACHER_STR_LIST) + r")[ +]).*"
+        r"(?<=(" + r"|".join(rf"(?<={s})" for s in __VALID_TEACHER_STR) + r")[ +]).*"
     )
 
     async def handle_text_message(
@@ -172,26 +173,16 @@ class CourseBot(Bot):
     ) -> list[Message]:
         """處理文字訊息"""
 
-        if fullmatch(self.__UID_REGEX, payload, IGNORECASE):
-            if course := await search_course_by_uid(payload):
-                return [
-                    TemplateMessage(
-                        altText=f"{course.title}的課程資訊",
-                        template=course_info_message(course),
-                        sender=get_sender(self.__SENDER_NAME),
-                    )
-                ]
-
         if match(self.__SEARCH_REGEX, payload, IGNORECASE):
-            if m := search(self.__TITLE_REGEX, payload, IGNORECASE):
+            if m := search(self.__CLASS_REGEX, payload, IGNORECASE):
                 criteria = m.group()
-                condition = SearchArgument.TITLE
+                kind = SearchKind.TITLE
 
             if m := search(self.__TEACHER_REGEX, payload, IGNORECASE):
                 criteria = m.group()
-                condition = SearchArgument.TEACHER
+                kind = SearchKind.TEACHER
 
-            if courses := search_simple_courses_by_condition(criteria, condition):
+            if courses := search_simple_courses_by_criteria_and_kind(criteria, kind):
                 return [
                     TemplateMessage(
                         altText="請選擇要查詢的課程",
@@ -200,10 +191,10 @@ class CourseBot(Bot):
                     )
                 ]
 
-            match condition:
-                case SearchArgument.TITLE:
+            match kind:
+                case SearchKind.TITLE:
                     condition_str = "名稱"
-                case SearchArgument.TEACHER:
+                case SearchKind.TEACHER:
                     condition_str = "授課教師姓名"
                 case _:
                     condition_str = "未知"
@@ -221,6 +212,28 @@ class CourseBot(Bot):
     async def handle_postback_event(self, payload: str) -> list[Message]:
         """處理回傳事件"""
 
+        if payload.startswith("授課課程"):
+            payload = payload.split(CONTACT_SPILT_CHAR)[1]
+
+            if courses := search_simple_courses_by_criteria_and_kind(
+                payload,
+                SearchKind.STRICT_TEACHER,
+            ):
+                return [
+                    TemplateMessage(
+                        altText="請選擇要查詢的課程",
+                        template=choose_course_message(courses),
+                        sender=get_sender(self.__SENDER_NAME),
+                    )
+                ]
+
+            return [
+                TextMessage(
+                    text=f"查無授課教師為「{payload}」的課程",
+                    sender=get_sender(self.__SENDER_NAME),
+                )
+            ]
+
         if fullmatch(self.__UID_REGEX, payload, IGNORECASE):
             if course := await search_course_by_uid(payload):
                 return [
@@ -230,6 +243,13 @@ class CourseBot(Bot):
                         sender=get_sender(self.__SENDER_NAME),
                     )
                 ]
+
+            return [
+                TextMessage(
+                    text=f"查無 uid 為「{payload}」的課程",
+                    sender=get_sender(self.__SENDER_NAME),
+                )
+            ]
 
         return list[Message]()
 

@@ -5,8 +5,6 @@ from datetime import datetime
 from enum import Enum, auto, unique
 from typing import Optional
 
-from asyncache import cached
-from cachetools import TTLCache
 from sanic import Sanic
 
 from .course import Course, SimpleCourse
@@ -39,8 +37,8 @@ async def renew_course_dict() -> None:
 
     cur_year = datetime.now().year - 1911
     for year in range(cur_year, cur_year - 5, -1):
+        await sleep(random.uniform(10, 30))
         await COURSE_REQUEST.get_simple_courses_by_year(year)
-        await sleep(random.uniform(10, 20))
 
 
 async def search_course_by_uid(uid: str) -> Optional[Course]:
@@ -58,18 +56,18 @@ async def search_course_by_uid(uid: str) -> Optional[Course]:
 
 
 @unique
-class SearchArgument(Enum):
+class SearchKind(Enum):
     """Enumeration representing the search arguments."""
 
     NO = auto()
     TITLE = auto()
     TEACHER = auto()
+    STRICT_TEACHER = auto()
 
 
-@cached(TTLCache(maxsize=99, ttl=60 * 60))
-def search_simple_courses_by_condition(
+def search_simple_courses_by_criteria_and_kind(
     criteria: str,
-    condition: SearchArgument,
+    kind: SearchKind,
     limit: int = 30,
 ) -> list[SimpleCourse]:
     """
@@ -77,36 +75,42 @@ def search_simple_courses_by_condition(
 
     Args:
         criteria (str): The value to search for.
-        condition (SearchArgument): The condition to apply to the search.
+        kind (SearchKind): The kind of search to perform.
         limit (int, optional): The maximum number of results to return. Defaults to 30.
 
     Returns:
         list[SimpleCourse]: A list of courses matching the criteria, up to the specified limit.
     """
 
-    criteria = criteria.lower()
-    criteria_set = set(criteria)
-    match condition:
-        case SearchArgument.NO:
+    criteria_set = set(criteria.lower())
+    match kind:
+        case SearchKind.NO:
             courses = [
                 course
                 for course in COURSE_REQUEST.COURSE_DICT.values()
                 if criteria in course.no
             ]
 
-        case SearchArgument.TITLE:
+        case SearchKind.TITLE:
             courses = [
                 course
                 for course in COURSE_REQUEST.COURSE_DICT.values()
-                if criteria_set.issubset(set(course.title.lower()))
+                if criteria_set.issubset(course.title.lower())
             ]
 
-        case SearchArgument.TEACHER:
+        case SearchKind.TEACHER:
             courses = [
                 course
                 for course in COURSE_REQUEST.COURSE_DICT.values()
                 for teacher in course.teachers
-                if criteria_set.issubset(set(teacher.lower()))
+                if criteria_set.issubset(teacher.lower())
+            ]
+
+        case SearchKind.STRICT_TEACHER:
+            courses = [
+                course
+                for course in COURSE_REQUEST.COURSE_DICT.values()
+                if criteria in course.teachers
             ]
 
         case _:

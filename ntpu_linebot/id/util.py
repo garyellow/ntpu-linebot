@@ -66,6 +66,37 @@ DEPARTMENT_NAME = {v: k for k, v in DEPARTMENT_CODE.items()}
 FULL_DEPARTMENT_NAME = {v: k for k, v in FULL_DEPARTMENT_CODE.items()}
 
 
+async def healthz(app: Sanic) -> bool:
+    """
+    Perform a health check on a URL.
+
+    Args:
+        app (Sanic): The Sanic application.
+
+    Returns:
+        bool: True if the health check is successful, False otherwise.
+    """
+
+    if not await ID_REQUEST.check_url():
+        if await ID_REQUEST.change_base_url():
+            await app.cancel_task("renew_student_dict", raise_exception=False)
+            app.add_task(renew_student_dict, name="renew_student_dict")
+
+        return False
+
+    return True
+
+
+async def renew_student_dict() -> None:
+    """Updates the student dict for each department and year."""
+
+    cur_year = datetime.now().year - 1911
+    for year in range(cur_year, cur_year - 6, -1):
+        for dep in DEPARTMENT_CODE.values():
+            await sleep(random.uniform(10, 20))
+            await ID_REQUEST.get_students_by_year_and_department(year, dep)
+
+
 @unique
 class Order(Enum):
     """Enumeration representing the order in which different items should be displayed or sorted."""
@@ -89,7 +120,7 @@ def student_info_format(
     Args:
         student_id (str): The ID of the student
         name (str): The name of the student. Defaults to None.
-        order (list[Order], optional): The order in which the student information should be formatted. Defaults to None.
+        order (list[Order], optional): The order of the information. Defaults to None.
         space (int, optional): The space between the formatted information. Defaults to 1.
 
     Returns:
@@ -141,37 +172,6 @@ def student_info_format(
     return (" " * space).join(message)
 
 
-async def healthz(app: Sanic) -> bool:
-    """
-    Asynchronous function to check the health of the application.
-
-    Args:
-        app (Sanic): The Sanic application.
-
-    Returns:
-        bool: True if the health check is successful, False otherwise.
-    """
-
-    if not await ID_REQUEST.check_url():
-        if await ID_REQUEST.change_base_url():
-            await app.cancel_task("renew_student_dict", raise_exception=False)
-            app.add_task(renew_student_dict, name="renew_student_dict")
-
-        return False
-
-    return True
-
-
-async def renew_student_dict() -> None:
-    """Updates the student dict for each department and year."""
-
-    cur_year = datetime.now().year - 1911
-    for year in range(cur_year, cur_year - 6, -1):
-        for dep in DEPARTMENT_CODE.values():
-            await ID_REQUEST.get_students_by_year_and_department(year, dep)
-            await sleep(random.uniform(5, 15))
-
-
 async def search_student_by_uid(uid: str) -> Optional[str]:
     """
     Async function to search for a student by ID.
@@ -200,7 +200,7 @@ def search_students_by_name(name: str) -> list[tuple[str, str]]:
     return [
         (key, value)
         for key, value in ID_REQUEST.STUDENT_DICT.items()
-        if set(name).issubset(set(value))
+        if set(name).issubset(value)
     ]
 
 
