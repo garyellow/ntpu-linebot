@@ -66,16 +66,22 @@ DEPARTMENT_NAME = {v: k for k, v in DEPARTMENT_CODE.items()}
 FULL_DEPARTMENT_NAME = {v: k for k, v in FULL_DEPARTMENT_CODE.items()}
 
 
-async def healthz(app: Sanic) -> bool:
+async def healthz(app: Sanic, force: bool = False) -> bool:
     """
     Perform a health check on a URL.
 
     Args:
         app (Sanic): The Sanic application.
+        force (bool, optional): Whether to force the renew. Defaults to False.
 
     Returns:
         bool: True if the health check is successful, False otherwise.
     """
+
+    if force:
+        await app.cancel_task("renew_student_dict", raise_exception=False)
+        app.add_task(renew_student_dict, name="renew_student_dict")
+        return True
 
     if not await ID_REQUEST.check_url():
         if await ID_REQUEST.change_base_url():
@@ -90,6 +96,7 @@ async def healthz(app: Sanic) -> bool:
 async def renew_student_dict() -> None:
     """Updates the student dict for each department and year."""
 
+    ID_REQUEST.STUDENT_DICT.clear()
     cur_year = datetime.now().year - 1911
     for year in range(cur_year, cur_year - 6, -1):
         for dep in DEPARTMENT_CODE.values():

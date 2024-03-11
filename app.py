@@ -1,5 +1,6 @@
 # -*- coding:utf-8 -*-
 from asyncio import gather
+from random import randint
 
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.webhooks import (
@@ -92,6 +93,12 @@ async def healthy(request: Request) -> HTTPResponse:
 
     if not await ntpu_course.healthz(request.app):
         raise ServiceUnavailable("Course Unavailable")
+
+    if randint(0, 1000) == 0:
+        STICKER.is_healthy(request.app, force=True)
+        ntpu_id.healthz(request.app, force=True)
+        ntpu_contact.healthz(request.app, force=True)
+        ntpu_course.healthz(request.app, force=True)
 
     return empty()
 
