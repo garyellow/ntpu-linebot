@@ -28,6 +28,7 @@ from ntpu_linebot import (
     handle_postback_event,
     handle_sticker_message,
     handle_text_message,
+    ntpu_contact,
     ntpu_course,
     ntpu_id,
 )
@@ -48,6 +49,7 @@ async def before_server_start(sanic: Sanic):
         *[
             STICKER.is_healthy(sanic),
             ntpu_id.healthz(sanic),
+            ntpu_contact.healthz(sanic),
             ntpu_course.healthz(sanic),
         ]
     )
@@ -84,6 +86,9 @@ async def healthy(request: Request) -> HTTPResponse:
 
     if not await ntpu_id.healthz(request.app):
         raise ServiceUnavailable("ID Unavailable")
+
+    if not await ntpu_contact.healthz(request.app):
+        raise ServiceUnavailable("Contact Unavailable")
 
     if not await ntpu_course.healthz(request.app):
         raise ServiceUnavailable("Course Unavailable")

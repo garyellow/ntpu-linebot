@@ -14,6 +14,7 @@ from linebot.v3.messaging.models import (
 )
 
 from ..abs_bot import Bot
+from ..contact.bot import SPILT_CHAR as CONTACT_SPILT_CHAR
 from ..line_bot_util import EMPTY_POSTBACK_ACTION, get_sender
 from .course import ALL_COURSE_CODE, Course, SimpleCourse
 from .util import (
@@ -210,6 +211,28 @@ class CourseBot(Bot):
 
     async def handle_postback_event(self, payload: str) -> list[Message]:
         """處理回傳事件"""
+
+        if payload.startswith("授課課程"):
+            payload = payload.split(CONTACT_SPILT_CHAR)[1]
+
+            if courses := search_simple_courses_by_criteria_and_kind(
+                payload,
+                SearchKind.STRICT_TEACHER,
+            ):
+                return [
+                    TemplateMessage(
+                        altText="請選擇要查詢的課程",
+                        template=choose_course_message(courses),
+                        sender=get_sender(self.__SENDER_NAME),
+                    )
+                ]
+
+            return [
+                TextMessage(
+                    text=f"查無授課教師為「{payload}」的課程",
+                    sender=get_sender(self.__SENDER_NAME),
+                )
+            ]
 
         if fullmatch(self.__UID_REGEX, payload, IGNORECASE):
             if course := await search_course_by_uid(payload):

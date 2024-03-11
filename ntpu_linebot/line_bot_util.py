@@ -41,6 +41,25 @@ def instruction() -> list[TextMessage]:
         ]
     )
 
+    course_text = "\n".join(
+        [
+            "輸入「課程 {課程名}」可尋找課程",
+            "輸入「教師 {教師名}」可尋找教師開的課",
+        ]
+    )
+
+    contact_text = "\n".join(
+        [
+            "輸入「聯繫 {單位/成員名}」可尋找聯繫方式",
+        ]
+    )
+
+    text_note = "\n".join(
+        [
+            "P.S. 符號{}中的部分要換成實際值",
+        ]
+    )
+
     id_example = "\n".join(
         [
             "學號：`412345678`",
@@ -65,9 +84,21 @@ def instruction() -> list[TextMessage]:
         ]
     )
 
+    contact_text = "\n".join(
+        [
+            "輸入「聯繫+{單位/成員名}」可尋找聯繫方式",
+        ]
+    )
+
+    contact_example = "\n".join(
+        [
+            "聯繫：`聯繫 資工系`",
+        ]
+    )
+
     example_note = "\n".join(
         [
-            "P.S. 符號``中間的字代表實際要輸入的",
+            "P.S. 符號``中的部分是實際要輸入的",
         ]
     )
 
@@ -77,6 +108,8 @@ def instruction() -> list[TextMessage]:
                 [
                     id_text,
                     course_text,
+                    contact_text,
+                    text_note,
                 ]
             ),
             sender=mes_sender,
@@ -86,6 +119,7 @@ def instruction() -> list[TextMessage]:
                 [
                     id_example,
                     course_example,
+                    contact_example,
                     example_note,
                 ]
             ),
@@ -96,7 +130,7 @@ def instruction() -> list[TextMessage]:
             sender=mes_sender,
         ),
         TextMessage(
-            text="資料來源：\n國立臺北大學數位學苑 2.0\n國立臺北大學課程查詢系統",
+            text="資料來源：\n國立臺北大學數位學苑 2.0\n國立臺北大學校園聯絡簿\n國立臺北大學課程查詢系統",
             sender=mes_sender,
         ),
     ]
