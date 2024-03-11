@@ -68,7 +68,7 @@ FULL_DEPARTMENT_NAME = {v: k for k, v in FULL_DEPARTMENT_CODE.items()}
 
 async def healthz(app: Sanic) -> bool:
     """
-    Asynchronous function to check the health of the application.
+    Perform a health check on a URL.
 
     Args:
         app (Sanic): The Sanic application.

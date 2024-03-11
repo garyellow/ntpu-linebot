@@ -32,7 +32,7 @@ class StickerUtil:
             bool: True if the application is healthy, False otherwise.
         """
 
-        if not self.STICKER_LIST:
+        if len(self.STICKER_LIST) == 0:
             await app.cancel_task("load_stickers", raise_exception=False)
             app.add_task(self.load_stickers, name="load_stickers")
             return False
