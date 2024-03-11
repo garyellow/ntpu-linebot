@@ -72,8 +72,8 @@ def instruction() -> list[TextMessage]:
 
     course_text = "\n".join(
         [
-            "輸入「課程+{課程名}」可尋找課程",
-            "輸入「教師+{教師名}」可尋找教師開的課",
+            "輸入「課程 {課程名}」可尋找課程",
+            "輸入「教師 {教師名}」可尋找教師開的課",
         ]
     )
 
@@ -86,7 +86,7 @@ def instruction() -> list[TextMessage]:
 
     contact_text = "\n".join(
         [
-            "輸入「聯繫+{單位/成員名}」可尋找聯繫方式",
+            "輸入「聯繫 {單位/成員名}」可尋找聯繫方式",
         ]
     )
 
