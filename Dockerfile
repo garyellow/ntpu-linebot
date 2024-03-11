@@ -22,7 +22,7 @@ LABEL org.opencontainers.image.title="ntpu-linebot"
 LABEL org.opencontainers.image.description="Linebot for NTPU"
 LABEL org.opencontainers.image.authors="garyellow"
 LABEL org.opencontainers.image.source=https://github.com/garyellow/ntpu-linebot
-LABEL org.opencontainers.image.version="3.0.1"
+LABEL org.opencontainers.image.version="3.1.0"
 LABEL org.opencontainers.image.licenses=MIT
 
 # 複製第一階段的 wheels 和 requirements.txt
