@@ -21,16 +21,22 @@ class StickerUtil:
     __UA = UserAgent(min_percentage=2.5)
     STICKER_LIST = list[str]()
 
-    async def is_healthy(self, app: Sanic) -> bool:
+    async def is_healthy(self, app: Sanic, force: bool = False) -> bool:
         """
         Check if the application is healthy.
 
         Args:
             app (Sanic): The Sanic application.
+            force (bool, optional): Whether to force the renew. Defaults to False.
 
         Returns:
             bool: True if the application is healthy, False otherwise.
         """
+
+        if force:
+            await app.cancel_task("load_stickers", raise_exception=False)
+            app.add_task(self.load_stickers, name="load_stickers")
+            return True
 
         if len(self.STICKER_LIST) == 0:
             await app.cancel_task("load_stickers", raise_exception=False)
@@ -45,6 +51,7 @@ class StickerUtil:
         Appends the URLs of the stickers to the stickers list.
         """
 
+        self.STICKER_LIST.clear()
         headers = {
             "User-Agent": self.__UA.random,
         }

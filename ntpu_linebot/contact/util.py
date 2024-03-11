@@ -10,16 +10,22 @@ from ntpu_linebot.contact.contact import Contact, Organization
 from .request import CONTACT_REQUEST
 
 
-async def healthz(app: Sanic) -> bool:
+async def healthz(app: Sanic, force: bool = False) -> bool:
     """
     Perform a health check on a URL.
 
     Args:
-        app (Sanic): An instance of the Sanic class representing the Sanic application.
+        app (Sanic): The Sanic application.
+        force (bool, optional): Whether to force the renew. Defaults to False.
 
     Returns:
         bool: True if the health check is successful, False otherwise.
     """
+
+    if force:
+        await app.cancel_task("renew_contact_dict", raise_exception=False)
+        app.add_task(renew_contact_dict, name="renew_contact_dict")
+        return True
 
     if not await CONTACT_REQUEST.check_url():
         if await CONTACT_REQUEST.change_base_url():
@@ -34,6 +40,7 @@ async def healthz(app: Sanic) -> bool:
 async def renew_contact_dict() -> None:
     """Updates the contact dict for each year."""
 
+    CONTACT_REQUEST.CONTACT_DICT.clear()
     await sleep(random.uniform(20, 40))
     await CONTACT_REQUEST.get_administrative_contacts()
     await sleep(random.uniform(20, 40))
