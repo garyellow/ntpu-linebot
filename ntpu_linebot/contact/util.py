@@ -34,9 +34,9 @@ async def healthz(app: Sanic) -> bool:
 async def renew_contact_dict() -> None:
     """Updates the contact dict for each year."""
 
-    await sleep(random.uniform(10, 20))
+    await sleep(random.uniform(20, 40))
     await CONTACT_REQUEST.get_administrative_contacts()
-    await sleep(random.uniform(10, 20))
+    await sleep(random.uniform(20, 40))
     await CONTACT_REQUEST.get_academic_contacts()
 
 

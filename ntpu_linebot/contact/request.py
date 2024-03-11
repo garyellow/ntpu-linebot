@@ -1,6 +1,5 @@
 # -*- coding:utf-8 -*-
 from asyncio import sleep
-from random import uniform
 from typing import Optional
 from urllib.parse import quote
 
@@ -170,7 +169,7 @@ class ContactRequest:
                 for department in soup.find_all("div", {"class": "card-header"}):
                     url = f"{self.__base_url}/pls/ld/{department.find("a")["href"]}"
                     contacts += await self.get_contacts_by_url(url)
-                    await sleep(uniform(5, 15))
+                    await sleep(0)
 
         except ClientError:
             self.__base_url = ""

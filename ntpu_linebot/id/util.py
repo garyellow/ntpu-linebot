@@ -93,7 +93,7 @@ async def renew_student_dict() -> None:
     cur_year = datetime.now().year - 1911
     for year in range(cur_year, cur_year - 6, -1):
         for dep in DEPARTMENT_CODE.values():
-            await sleep(random.uniform(5, 15))
+            await sleep(random.uniform(10, 20))
             await ID_REQUEST.get_students_by_year_and_department(year, dep)
 
 

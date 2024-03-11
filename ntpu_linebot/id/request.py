@@ -1,6 +1,5 @@
 # -*- coding:utf-8 -*-
 from asyncio import sleep
-from random import uniform
 from typing import Optional
 
 from aiohttp import ClientError, ClientSession
@@ -131,7 +130,7 @@ class IDRequest:
                     pages = len(data.find_all("span", {"class": "item"}))
 
                 for i in range(1, pages):
-                    await sleep(uniform(0.05, 0.15))
+                    await sleep(0)
 
                     params["page"] = str(i)
                     async with session.get(url, params=params, headers=headers) as res:

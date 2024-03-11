@@ -37,7 +37,7 @@ async def renew_course_dict() -> None:
 
     cur_year = datetime.now().year - 1911
     for year in range(cur_year, cur_year - 5, -1):
-        await sleep(random.uniform(10, 20))
+        await sleep(random.uniform(10, 30))
         await COURSE_REQUEST.get_simple_courses_by_year(year)
 
 
