@@ -221,6 +221,13 @@ class CourseBot(Bot):
                     )
                 ]
 
+            return [
+                TextMessage(
+                    text=f"查無 uid 為「{payload}」的課程",
+                    sender=get_sender(self.__SENDER_NAME),
+                )
+            ]
+
         return list[Message]()
 
 

@@ -36,8 +36,7 @@ class LineAPIUtil:
                 )
 
             else:
-                print("Specify LINE_CHANNEL_ACCESS_TOKEN as environment variable.")
-                sys.exit(1)
+                sys.exit("Specify LINE_CHANNEL_ACCESS_TOKEN as environment variable.")
 
         return self.__line_bot_api
 
@@ -55,8 +54,7 @@ class LineAPIUtil:
                 self.__parser = WebhookParser(channel_secret)
 
             else:
-                print("Specify LINE_CHANNEL_SECRET as environment variable.")
-                sys.exit(1)
+                sys.exit("Specify LINE_CHANNEL_SECRET as environment variable.")
 
         return self.__parser
 

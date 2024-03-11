@@ -37,8 +37,8 @@ async def renew_course_dict() -> None:
 
     cur_year = datetime.now().year - 1911
     for year in range(cur_year, cur_year - 5, -1):
-        await COURSE_REQUEST.get_simple_courses_by_year(year)
         await sleep(random.uniform(10, 20))
+        await COURSE_REQUEST.get_simple_courses_by_year(year)
 
 
 async def search_course_by_uid(uid: str) -> Optional[Course]:
@@ -62,6 +62,7 @@ class SearchKind(Enum):
     NO = auto()
     TITLE = auto()
     TEACHER = auto()
+    STRICT_TEACHER = auto()
 
 
 def search_simple_courses_by_criteria_and_kind(
@@ -81,8 +82,7 @@ def search_simple_courses_by_criteria_and_kind(
         list[SimpleCourse]: A list of courses matching the criteria, up to the specified limit.
     """
 
-    criteria = criteria.lower()
-    criteria_set = set(criteria)
+    criteria_set = set(criteria.lower())
     match kind:
         case SearchKind.NO:
             courses = [
@@ -104,6 +104,13 @@ def search_simple_courses_by_criteria_and_kind(
                 for course in COURSE_REQUEST.COURSE_DICT.values()
                 for teacher in course.teachers
                 if criteria_set.issubset(teacher.lower())
+            ]
+
+        case SearchKind.STRICT_TEACHER:
+            courses = [
+                course
+                for course in COURSE_REQUEST.COURSE_DICT.values()
+                if criteria in course.teachers
             ]
 
         case _:
