@@ -378,7 +378,7 @@ class IDBot(Bot):
             ]
 
         if SPILT_CHAR in payload:
-            year, data = payload.split(" ")
+            year, data = payload.split(SPILT_CHAR)
 
             if data == "搜尋全系":
                 return [
