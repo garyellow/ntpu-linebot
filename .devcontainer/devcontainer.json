@@ -6,7 +6,7 @@
 		"args": {
 			"VARIANT": "3.12",
 			"DOCKER_IN_DOCKER": "1",
-			"OH_MY_POSH": "1"
+			"OH_MY_POSH": "1" // Requires Nerd fonts, set this to 0 to disable
 		}
 	},
 	"features": {
@@ -34,8 +34,8 @@
 		10000
 	],
 	"postCreateCommand": {
-		"bash": "if [ -e .devcontainer/theme.omp.json ]; then echo 'eval \"$(oh-my-posh init bash --config .devcontainer/theme.omp.json)\"' >> ~/.bashrc; fi",
-		"zsh": "if [ -e .devcontainer/theme.omp.json ]; then echo 'eval \"$(oh-my-posh init zsh --config .devcontainer/theme.omp.json)\"' >> ~/.zshrc; fi"
+		"bash": "if [ -e /usr/local/bin/oh-my-posh ]; then echo 'eval \"$(oh-my-posh init bash --config .devcontainer/theme.omp.json)\"' >> ~/.bashrc; fi",
+		"zsh": "if [ -e /usr/local/bin/oh-my-posh ]; then echo 'eval \"$(oh-my-posh init zsh --config .devcontainer/theme.omp.json)\"' >> ~/.zshrc; fi"
 	},
 	"postStartCommand": "if [ -e pyproject.toml ]; then rm -rf .venv && poetry install --sync --no-root; fi"
 }
