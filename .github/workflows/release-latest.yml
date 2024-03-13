@@ -13,7 +13,7 @@ name: Release the Latest Version
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   release:
