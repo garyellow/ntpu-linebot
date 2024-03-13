@@ -8,8 +8,8 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "~3.12"
-setuptools = "^69.1.1"
-fake-useragent = "^1.4.0"
+setuptools = "^69.2.0"
+fake-useragent = "^1.5.0"
 aiohttp = { extras = ["speedups"], version = "^3.9.3" }
 lxml = "^5.1.0"
 beautifulsoup4 = "^4.12.3"
