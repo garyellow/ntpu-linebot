@@ -143,7 +143,6 @@ def choose_department_message(
 
 class IDBot(Bot):
     __SENDER_NAME = "學號魔法師"
-    __SPILT_CHAR = "#"
     __ALL_DEPARTMENT_CODE = "所有系代碼"
     __COLLEGE_NAMES = [
         "人文學院",
@@ -218,7 +217,7 @@ class IDBot(Bot):
                                 PostbackAction(
                                     label="哪次不是",
                                     displayText="哪次不是",
-                                    data=f"{year}{self.__SPILT_CHAR}搜尋全系",
+                                    data=f"{year}{SPILT_CHAR}搜尋全系",
                                     inputOption="openRichMenu",
                                 ),
                                 PostbackAction(
@@ -280,7 +279,7 @@ class IDBot(Bot):
                                 action=PostbackAction(
                                     label=show_text,
                                     displayText=f"正在{show_text}",
-                                    data=f"{year}{self.__SPILT_CHAR}{department}",
+                                    data=f"{year}{SPILT_CHAR}{department}",
                                     inputOption="closeRichMenu",
                                 ),
                             ),
