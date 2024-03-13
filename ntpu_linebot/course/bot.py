@@ -44,18 +44,16 @@ def course_info_message(course: Course) -> ButtonsTemplate:
         URIAction(label="課程查詢系統", uri=course.course_query_url),
     ]
 
-    text = "\n".join(
-        [
-            f"教師：{', '.join(course.teachers)}",
-            f"時間：{', '.join(course.times)}",
-            f"地點：{', '.join(course.locations)}",
-        ]
-    )
+    texts = [
+        f"教師：{', '.join(course.teachers)}",
+        f"時間：{', '.join(course.times)}",
+        f"地點：{', '.join(course.locations)}",
+    ]
 
     if course.note:
-        text += f"\n備註：{course.note}"
+        texts.append(f"\n備註：{course.note}")
 
-    if len(text) > 60:
+    if len(text := "\n".join(texts)) > 60:
         text = text[:59] + "…"
 
     return ButtonsTemplate(title=course.title, text=text, actions=actions)
@@ -72,17 +70,15 @@ def generate_course_text(course: SimpleCourse) -> str:
         str: The text representation of the SimpleCourse object.
     """
 
-    text = "\n".join(
-        [
-            f"課程：{course.title if len(course.title) <= 15 else course.title[:14] + '…'}",
-            f"教師：{', '.join(course.teachers)}",
-            f"時間：{course.year}"
-            + ("上" if course.term == 1 else "下")
-            + f" {', '.join(course.times)}",
-        ]
-    )
+    texts = [
+        f"課程：{course.title if len(course.title) <= 15 else course.title[:14] + '…'}",
+        f"教師：{', '.join(course.teachers)}",
+        f"時間：{course.year}"
+        + ("上" if course.term == 1 else "下")
+        + f" {', '.join(course.times)}",
+    ]
 
-    if len(text) > 34:
+    if len(text := "\n".join(texts)) > 34:
         text = text[:33] + "…"
 
     return text

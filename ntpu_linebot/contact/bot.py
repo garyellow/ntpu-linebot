@@ -113,7 +113,7 @@ def generate_individual_carousel_column(
 
     return CarouselColumn(
         title=individual.name,
-        text="\n".join(texts),
+        text=text if len(text := "\n".join(texts)) <= 60 else text[:59] + "…",
         defaultAction=default_action,
         actions=actions,
     )
@@ -162,7 +162,7 @@ def generate_organization_carousel_column(organization: Organization) -> Carouse
 
     return CarouselColumn(
         title=organization.name,
-        text="\n".join(texts),
+        text=text if len(text := "\n".join(texts)) <= 60 else text[:59] + "…",
         defaultAction=default_action,
         actions=actions,
     )
