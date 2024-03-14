@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-from asyncio import gather, sleep
+from asyncio import gather
 from random import randint
 
 from linebot.v3.exceptions import InvalidSignatureError
@@ -46,17 +46,17 @@ async def before_server_start(sanic: Sanic):
         app (Sanic): The Sanic application instance.
     """
 
+    app.add_task(STICKER.load_stickers, name="load_stickers")
     while not all(
         await gather(
             *[
-                STICKER.is_healthy(sanic),
                 ntpu_id.healthz(sanic),
                 ntpu_contact.healthz(sanic),
                 ntpu_course.healthz(sanic),
             ]
         )
     ):
-        await sleep(0)
+        pass
 
 
 @app.route("/", methods=["HEAD", "GET"])
@@ -85,9 +85,6 @@ async def healthy(request: Request) -> HTTPResponse:
         HTTPResponse: Response object indicating the health status.
     """
 
-    if not await STICKER.is_healthy(request.app):
-        raise ServiceUnavailable("Sticker Unavailable")
-
     if not await ntpu_id.healthz(request.app):
         raise ServiceUnavailable("ID Unavailable")
 
@@ -98,7 +95,6 @@ async def healthy(request: Request) -> HTTPResponse:
         raise ServiceUnavailable("Course Unavailable")
 
     if randint(0, 1000) == 0:
-        STICKER.is_healthy(request.app, force=True)
         ntpu_id.healthz(request.app, force=True)
         ntpu_contact.healthz(request.app, force=True)
         ntpu_course.healthz(request.app, force=True)

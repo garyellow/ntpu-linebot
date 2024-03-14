@@ -4,7 +4,6 @@ from asyncio import sleep
 from aiohttp import ClientSession
 from bs4 import BeautifulSoup as Bs4
 from fake_useragent import UserAgent
-from sanic import Sanic
 
 
 class StickerUtil:
@@ -20,30 +19,6 @@ class StickerUtil:
     __ICHIGO_PRODUCTION_URL = "https://ichigoproduction.com/special/present_icon.html"
     __UA = UserAgent(min_percentage=2.5)
     STICKER_LIST = list[str]()
-
-    async def is_healthy(self, app: Sanic, force: bool = False) -> bool:
-        """
-        Check if the application is healthy.
-
-        Args:
-            app (Sanic): The Sanic application.
-            force (bool, optional): Whether to force the renew. Defaults to False.
-
-        Returns:
-            bool: True if the application is healthy, False otherwise.
-        """
-
-        if force:
-            await app.cancel_task("load_stickers", raise_exception=False)
-            app.add_task(self.load_stickers, name="load_stickers")
-            return True
-
-        if len(self.STICKER_LIST) == 0:
-            await app.cancel_task("load_stickers", raise_exception=False)
-            app.add_task(self.load_stickers, name="load_stickers")
-            return False
-
-        return True
 
     async def load_stickers(self) -> None:
         """
@@ -76,9 +51,7 @@ class StickerUtil:
 
             for i in soup.select("ul.tp5 > li > div.ph > a"):
                 if href := i.get("href"):
-                    self.STICKER_LIST.append(
-                        f"https://ichigoproduction.com/{href[3:]}"
-                    )
+                    self.STICKER_LIST.append(f"https://ichigoproduction.com/{href[3:]}")
 
 
 STICKER = StickerUtil()
