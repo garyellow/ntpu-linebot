@@ -95,9 +95,13 @@ async def healthy(request: Request) -> HTTPResponse:
         raise ServiceUnavailable("Course Unavailable")
 
     if randint(0, 1000) == 0:
-        ntpu_id.healthz(request.app, force=True)
-        ntpu_contact.healthz(request.app, force=True)
-        ntpu_course.healthz(request.app, force=True)
+        await gather(
+            *[
+                ntpu_id.healthz(request.app, force=True),
+                ntpu_contact.healthz(request.app, force=True),
+                ntpu_course.healthz(request.app, force=True),
+            ]
+        )
 
     return empty()
 
