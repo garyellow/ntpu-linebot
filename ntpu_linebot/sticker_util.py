@@ -61,10 +61,11 @@ class StickerUtil:
                 async with session.get(url, headers=headers) as response:
                     soup = Bs4(await response.text(), "lxml")
 
-                for i in soup.select("ul.icondlLists > li > a > img"):
-                    self.STICKER_LIST.append(
-                        f"https://spy-family.net/tvseries/{i['src'][3:]}"
-                    )
+                for i in soup.select("ul.icondlLists > li > a"):
+                    if herf := i.get("herf"):
+                        self.STICKER_LIST.append(
+                            f"https://spy-family.net/tvseries/{herf[3:]}"
+                        )
 
                 await sleep(0.05)
 
@@ -75,9 +76,10 @@ class StickerUtil:
                 soup = Bs4(await response.text(), "lxml")
 
             for i in soup.select("ul.tp5 > li > div.ph > a"):
-                self.STICKER_LIST.append(
-                    f"https://ichigoproduction.com/{i['href'][3:]}"
-                )
+                if href := i.get("href"):
+                    self.STICKER_LIST.append(
+                        f"https://ichigoproduction.com/{href[3:]}"
+                    )
 
 
 STICKER = StickerUtil()
