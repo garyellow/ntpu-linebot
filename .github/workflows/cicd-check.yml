@@ -96,7 +96,7 @@ jobs:
             response=$(curl -sSL https://api.render.com/v1/services/${{ fromJson(steps.render.outputs.response).service.id }}/deploys/${{ fromJson(steps.render.outputs.response).deployId }} -H 'authorization: Bearer ${{ secrets.RENDER_API_KEY }}')
 
             if [[ $(echo $response | jq -r .status) != *_in_progress ]]; then
-              echo "status=$(echo $response | jq -r .status)" >> $GITHUB_OUTPUT
+              echo "status=$(echo $response | jq -r .status)" >> "$GITHUB_OUTPUT"
               break
             fi
           done
@@ -128,7 +128,7 @@ jobs:
             response=$(curl -sSL https://api.render.com/v1/services/${{ fromJson(needs.fetch.outputs.response)[0].service.id }}/deploys/${{ fromJson(steps.render.outputs.response).id }} -H 'authorization: Bearer ${{ secrets.RENDER_API_KEY }}')
 
             if [[ $(echo $response | jq -r .status) != *_in_progress ]]; then
-              echo "status=$(echo $response | jq -r .status)" >> $GITHUB_OUTPUT
+              echo "status=$(echo $response | jq -r .status)" >> "$GITHUB_OUTPUT"
               break
             fi
           done
