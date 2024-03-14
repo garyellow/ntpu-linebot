@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-from asyncio import gather
+from asyncio import gather, sleep
 from random import randint
 
 from linebot.v3.exceptions import InvalidSignatureError
@@ -56,7 +56,7 @@ async def before_server_start(sanic: Sanic):
             ]
         )
     ):
-        pass
+        await sleep(0)
 
 
 @app.route("/", methods=["HEAD", "GET"])
