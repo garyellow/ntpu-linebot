@@ -24,23 +24,22 @@ async def healthz(app: Sanic, force: bool = False) -> bool:
 
     if force:
         await app.cancel_task("renew_contact_dict", raise_exception=False)
-        app.add_task(renew_contact_dict, name="renew_contact_dict")
+        app.add_task(load_contact_dict, name="renew_contact_dict")
         return True
 
     if not await CONTACT_REQUEST.check_url():
         if await CONTACT_REQUEST.change_base_url():
             await app.cancel_task("renew_contact_dict", raise_exception=False)
-            app.add_task(renew_contact_dict, name="renew_contact_dict")
+            app.add_task(load_contact_dict, name="renew_contact_dict")
 
         return False
 
     return True
 
 
-async def renew_contact_dict() -> None:
+async def load_contact_dict() -> None:
     """Updates the contact dict for each year."""
 
-    CONTACT_REQUEST.CONTACT_DICT.clear()
     await sleep(random.uniform(20, 40))
     await CONTACT_REQUEST.get_administrative_contacts()
     await sleep(random.uniform(20, 40))

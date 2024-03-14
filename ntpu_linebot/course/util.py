@@ -25,23 +25,22 @@ async def healthz(app: Sanic, force: bool = False) -> bool:
 
     if force:
         await app.cancel_task("renew_course_dict", raise_exception=False)
-        app.add_task(renew_course_dict, name="renew_course_dict")
+        app.add_task(load_course_dict, name="renew_course_dict")
         return True
 
     if not await COURSE_REQUEST.check_url():
         if await COURSE_REQUEST.change_base_url():
             await app.cancel_task("renew_course_dict", raise_exception=False)
-            app.add_task(renew_course_dict, name="renew_course_dict")
+            app.add_task(load_course_dict, name="renew_course_dict")
 
         return False
 
     return True
 
 
-async def renew_course_dict() -> None:
+async def load_course_dict() -> None:
     """Updates the course dict for each year."""
 
-    COURSE_REQUEST.COURSE_DICT.clear()
     cur_year = datetime.now().year - 1911
     for year in range(cur_year, cur_year - 5, -1):
         await sleep(random.uniform(10, 30))
