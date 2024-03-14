@@ -24,14 +24,14 @@ async def healthz(app: Sanic, force: bool = False) -> bool:
     """
 
     if force:
-        await app.cancel_task("renew_course_dict", raise_exception=False)
-        app.add_task(load_course_dict, name="renew_course_dict")
+        await app.cancel_task("load_course_dict", raise_exception=False)
+        app.add_task(load_course_dict, name="load_course_dict")
         return True
 
     if not await COURSE_REQUEST.check_url():
         if await COURSE_REQUEST.change_base_url():
-            await app.cancel_task("renew_course_dict", raise_exception=False)
-            app.add_task(load_course_dict, name="renew_course_dict")
+            await app.cancel_task("load_course_dict", raise_exception=False)
+            app.add_task(load_course_dict, name="load_course_dict")
 
         return False
 
