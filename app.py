@@ -46,14 +46,17 @@ async def before_server_start(sanic: Sanic):
         app (Sanic): The Sanic application instance.
     """
 
-    await gather(
-        *[
-            STICKER.is_healthy(sanic),
-            ntpu_id.healthz(sanic),
-            ntpu_contact.healthz(sanic),
-            ntpu_course.healthz(sanic),
-        ]
-    )
+    while not all(
+        await gather(
+            *[
+                STICKER.is_healthy(sanic),
+                ntpu_id.healthz(sanic),
+                ntpu_contact.healthz(sanic),
+                ntpu_course.healthz(sanic),
+            ]
+        )
+    ):
+        pass
 
 
 @app.route("/", methods=["HEAD", "GET"])
