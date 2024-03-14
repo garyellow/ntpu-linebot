@@ -51,7 +51,6 @@ class StickerUtil:
         Appends the URLs of the stickers to the stickers list.
         """
 
-        self.STICKER_LIST.clear()
         headers = {
             "User-Agent": self.__UA.random,
         }

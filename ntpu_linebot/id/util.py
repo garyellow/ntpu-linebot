@@ -80,23 +80,22 @@ async def healthz(app: Sanic, force: bool = False) -> bool:
 
     if force:
         await app.cancel_task("renew_student_dict", raise_exception=False)
-        app.add_task(renew_student_dict, name="renew_student_dict")
+        app.add_task(load_student_dict, name="renew_student_dict")
         return True
 
     if not await ID_REQUEST.check_url():
         if await ID_REQUEST.change_base_url():
             await app.cancel_task("renew_student_dict", raise_exception=False)
-            app.add_task(renew_student_dict, name="renew_student_dict")
+            app.add_task(load_student_dict, name="renew_student_dict")
 
         return False
 
     return True
 
 
-async def renew_student_dict() -> None:
+async def load_student_dict() -> None:
     """Updates the student dict for each department and year."""
 
-    ID_REQUEST.STUDENT_DICT.clear()
     cur_year = datetime.now().year - 1911
     for year in range(cur_year, cur_year - 6, -1):
         for dep in DEPARTMENT_CODE.values():
