@@ -50,6 +50,8 @@ jobs:
         with:
           push: true
           tags: ${{ vars.REGISTRY }}/${{ github.repository }}:preview
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   fetch:
     name: FETCH CD PREVIEW SERVICE ON RENDER
