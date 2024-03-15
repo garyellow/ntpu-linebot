@@ -1,16 +1,16 @@
 # ntpu-linebot
 
-A line bot for NTPU student id and name search.
+一個可以查詢北大公開資訊的小工具\
+加 Line 好友後即可使用(聊天)\
+有發現 bug 或想加什麼功能都歡迎提出來討論
 
 ID：[@148wrcch](https://lin.ee/QiMmPBv)
-<br><br>
-<a href="https://lin.ee/QiMmPBv">
-<img src="https://scdn.line-apps.com/n/line_add_friends/btn/zh-Hant.png" alt="加入好友" height="32">
-</a>
-<br><br>
-![qrcode](/qr_code/M_gainfriends_qr.png)
 
-## 功能清單
+[![friend](/add_friend/S_add_friend_button.png)](https://lin.ee/QiMmPBv)
+
+![qrcode](/add_friend/S_gainfriends_qr.png)
+
+## 目前功能清單
 
 1. 輸入**學號**查**姓名** (日夜)
 2. 輸入**姓名**查**學號** (日)
@@ -21,6 +21,31 @@ ID：[@148wrcch](https://lin.ee/QiMmPBv)
 7. 輸入**教師姓名**查**授課課程清單** (日夜)
 8. 輸入**單位/成員名稱**查**聯繫方式** (日夜)
 
-## 其他
+## 資料來源
 
-有 bug 或想加什麼功能都可以聯繫我
+1. [國立臺北大學數位學苑 2.0](https://lms.ntpu.edu.tw)
+2. [國立臺北大學校園聯絡簿](https://sea.cc.ntpu.edu.tw/pls/ld/campus_dir_m.main)
+3. [國立臺北大學課程查詢系統](https://sea.cc.ntpu.edu.tw/pls/dev_stud/course_query_all.CHI_MAIN)
+
+## 開發
+
+本專案使用 [Poetry](https://python-poetry.org/) 作為套件管理及建立虛擬環境的工具\
+詳細安裝及使用方式請參考官方文件，以下為常用的指令
+
+### 安裝套件
+
+```bash
+poetry install --no-root
+```
+
+### 進入虛擬環境
+
+```bash
+poetry shell
+```
+
+### 測試執行
+
+```bash
+sanic app:app --host=localhost --port=8000 --debug
+```
