@@ -30,7 +30,7 @@ COPY --from=builder /wheels /wheels
 COPY --from=builder /requirements.txt /requirements.txt
 
 # 安裝套件，並刪除 wheels 和 requirements.txt
-RUN pip install --no-cache-dir --no-index --find-links=/wheels -r requirements.txt &&\
+RUN pip install --no-cache-dir --no-index --find-links=/wheels -r requirements.txt && \
     rm -rf /wheels /requirements.txt
 
 # 將 app.py 和 ntpu_linebot 目錄複製到容器中

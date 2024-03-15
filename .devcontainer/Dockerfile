@@ -12,7 +12,7 @@ ARG DOCKER_COMPLETION_URL=https://raw.githubusercontent.com/docker/cli/master/co
 ARG DOCKER_COMPOSE_COMPLETION_URL=https://raw.githubusercontent.com/docker/compose/master/contrib/completion
 
 RUN \
-    # Update to latest packages and install fontconfig, bash-completion
+    # Update to latest packages and install bash-completion
     apt update && \
     apt install -y \
     bash-completion && \
@@ -29,7 +29,7 @@ RUN \
     curl -sSL ${DOCKER_COMPOSE_COMPLETION_URL}/bash/docker-compose -o ${BASH_COMPLETION_DIR}/docker-compose && \
     curl -sSL ${DOCKER_COMPOSE_COMPLETION_URL}/zsh/_docker-compose -o ${ZSH_COMPLETION_DIR}/_docker-compose; \
     fi && \
-    # Install oh-my-posh
+    # Install oh-my-posh and set theme
     if [ "${OH_MY_POSH}" = "1" ]; then \
     curl -sSL https://ohmyposh.dev/install.sh | bash -s && \
     echo 'eval "$(oh-my-posh init bash --config .devcontainer/theme.omp.json)"' >> ${BASHRC_PATH} && \
