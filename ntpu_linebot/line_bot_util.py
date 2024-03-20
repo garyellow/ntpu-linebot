@@ -31,6 +31,8 @@ def instruction() -> list[TextMessage]:
     mes_sender = get_sender("進階魔法師")
     last_year = datetime.now().year - 1
 
+    text_title = "使用說明："
+
     id_text = "\n".join(
         [
             "輸入「{學號}」可查詢姓名",
@@ -60,6 +62,8 @@ def instruction() -> list[TextMessage]:
         ]
     )
 
+    example_title = "範例："
+
     id_example = "\n".join(
         [
             "學號：`412345678`",
@@ -70,23 +74,10 @@ def instruction() -> list[TextMessage]:
         ]
     )
 
-    course_text = "\n".join(
-        [
-            "輸入「課程 {課程名}」可尋找課程",
-            "輸入「教師 {教師名}」可尋找教師開的課",
-        ]
-    )
-
     course_example = "\n".join(
         [
             "課程：`課程 程式設計`",
             "教師：`教師 李小美`",
-        ]
-    )
-
-    contact_text = "\n".join(
-        [
-            "輸入「聯繫 {單位/成員名}」可尋找聯繫方式",
         ]
     )
 
@@ -106,6 +97,7 @@ def instruction() -> list[TextMessage]:
         TextMessage(
             text="\n\n".join(
                 [
+                    text_title,
                     id_text,
                     course_text,
                     contact_text,
@@ -117,6 +109,7 @@ def instruction() -> list[TextMessage]:
         TextMessage(
             text="\n\n".join(
                 [
+                    example_title,
                     id_example,
                     course_example,
                     contact_example,
