@@ -14,13 +14,6 @@ on:
   push:
     branches-ignore:
       - main
-    paths:
-      - app.py
-      - ntpu_linebot/**/*.py
-      - pyproject.toml
-      - poetry.lock
-      - Dockerfile
-      - .github/workflows/*.yml
 
 jobs:
   ci:
