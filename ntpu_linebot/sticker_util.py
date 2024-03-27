@@ -36,7 +36,7 @@ class StickerUtil:
                     soup = Bs4(await response.text(), "lxml")
 
                 for i in soup.select("ul.icondlLists > li > a"):
-                    if herf := i.get("herf"):
+                    if herf := i.get("href"):
                         self.STICKER_LIST.append(
                             f"https://spy-family.net/tvseries/{herf[3:]}"
                         )
