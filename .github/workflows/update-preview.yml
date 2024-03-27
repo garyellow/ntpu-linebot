@@ -10,6 +10,12 @@
 name: Update Preview
 
 on:
+  workflow_call:
+    secrets:
+      RENDER_API_KEY:
+        required: true
+      RENDER_SERVICE_ID:
+        required: true
   pull_request:
     types: [synchronize]
     paths:
