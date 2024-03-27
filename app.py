@@ -46,7 +46,7 @@ async def before_server_start(sanic: Sanic):
         app (Sanic): The Sanic application instance.
     """
 
-    app.add_task(STICKER.load_stickers, name="load_stickers")
+    await STICKER.load_stickers()
     while not all(
         await gather(
             *[
