@@ -19,7 +19,6 @@ jobs:
     uses: ./.github/workflows/update-preview.yml
 
     permissions:
-      contents: read
       packages: write
       pull-requests: write
 
