@@ -45,7 +45,6 @@ jobs:
     needs: prepare
 
     permissions:
-      contents: read
       packages: write
 
     steps:
