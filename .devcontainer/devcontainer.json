@@ -26,7 +26,8 @@
 			],
 			"settings": {
 				"isort.check": true,
-				"python.defaultInterpreterPath": "/home/vscode/.cache/pypoetry/virtualenvs/ntpu-linebot-qOxGW-we-py3.12/bin/python"
+				"python.defaultInterpreterPath": "/home/vscode/.cache/pypoetry/virtualenvs/ntpu-linebot-qOxGW-we-py3.12/bin/python",
+				"terminal.integrated.defaultProfile.linux": "zsh"
 			}
 		}
 	},
