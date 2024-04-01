@@ -11,7 +11,7 @@ python = "~3.12"
 setuptools = "^69.2.0"
 fake-useragent = "^1.5.1"
 aiohttp = { extras = ["speedups"], version = "^3.9.3" }
-lxml = "^5.1.0"
+lxml = "^5.2.0"
 beautifulsoup4 = "^4.12.3"
 line-bot-sdk = "^3.9.0"
 cachetools = "^5.3.3"
