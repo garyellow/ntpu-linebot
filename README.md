@@ -35,7 +35,7 @@ ID：[@148wrcch](https://lin.ee/QiMmPBv)
 ### 安裝套件
 
 ```bash
-poetry install --no-root
+poetry install --sync
 ```
 
 ### 進入虛擬環境
