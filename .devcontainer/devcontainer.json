@@ -34,5 +34,5 @@
 	"forwardPorts": [
 		10000
 	],
-	"postStartCommand": "if [ -e pyproject.toml ]; then rm -rf .venv && poetry install --sync --no-root; fi"
+	"postStartCommand": "if [ -e pyproject.toml ]; then rm -rf .venv && poetry install --sync; fi"
 }
