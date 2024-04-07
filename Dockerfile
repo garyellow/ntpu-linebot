@@ -12,7 +12,7 @@ RUN if [ ! -f poetry.lock ]; then poetry lock; fi
 
 # 建立依賴清單
 RUN poetry export -f requirements.txt --output requirements.txt --without-hashes
-RUN pip wheel --no-cache-dir --no-deps --wheel-dir /wheels -r requirements.txt
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir wheels -r requirements.txt
 
 # 第二階段：建立執行環境
 FROM python:3.12-slim AS runner
@@ -26,16 +26,16 @@ LABEL org.opencontainers.image.version="3.1.0"
 LABEL org.opencontainers.image.licenses=MIT
 
 # 複製第一階段的 wheels 和 requirements.txt
-COPY --from=builder /wheels /wheels
-COPY --from=builder /requirements.txt /requirements.txt
+COPY --from=builder wheels wheels
+COPY --from=builder requirements.txt requirements.txt
 
 # 安裝套件，並刪除 wheels 和 requirements.txt
-RUN pip install --no-cache-dir --no-index --find-links=/wheels -r requirements.txt && \
-    rm -rf /wheels /requirements.txt
+RUN pip install --no-cache-dir --no-index --find-links=wheels -r requirements.txt && \
+    rm -rf wheels requirements.txt
 
 # 將 app.py 和 ntpu_linebot 目錄複製到容器中
-COPY app.py .
-COPY ntpu_linebot ntpu_linebot/
+COPY app.py app.py
+COPY ntpu_linebot ntpu_linebot
 
 # 使用 sanic 執行應用程式
 ENTRYPOINT ["sanic", "app:app"]
