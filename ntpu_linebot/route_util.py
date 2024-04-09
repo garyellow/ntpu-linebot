@@ -31,6 +31,8 @@ async def handle_text_message(event: MessageEvent) -> None:
     # Change whitespace and remove punctuation characters from the message text
     payload = sub(r"\s", " ", event.message.text)
     payload = sub(__PUNCTUATION_REGEX, "", payload)
+    if payload == "":
+        return
 
     messages = list[Message]()
     if payload in __HELP_COMMANDS:
