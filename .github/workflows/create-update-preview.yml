@@ -2,29 +2,12 @@
 #
 # - RENDER_API_KEY (create from the Account Settings page)
 # - RENDER_SERVICE_ID (the service to create a preview for)
-#
-# And the following variables:
-#
-# - REGISTRY (the registry to push the image to, e.g. docker.io)
 
 name: Update Preview
 
 on:
-  workflow_call:
-    secrets:
-      RENDER_API_KEY:
-        required: true
-      RENDER_SERVICE_ID:
-        required: true
   pull_request:
-    types: [synchronize]
-    paths:
-      - app.py
-      - ntpu_linebot/**/*.py
-      - pyproject.toml
-      - poetry.lock
-      - Dockerfile
-      - .github/workflows/*.yml
+    types: [opened, reopened, synchronize]
 
 jobs:
   prepare:
@@ -54,10 +37,10 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Registry
+      - name: Log in to GitHub Registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ vars.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -65,7 +48,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: ${{ vars.REGISTRY }}/${{ github.repository }}:${{ needs.prepare.outputs.head_ref }}
+          tags: ghcr.io/${{ github.repository }}:${{ needs.prepare.outputs.head_ref }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -109,7 +92,7 @@ jobs:
           bearerToken: ${{ secrets.RENDER_API_KEY }}
           data: |
             {
-              "imagePath": "${{ vars.REGISTRY }}/${{ github.repository }}:${{ needs.fetch.outputs.head_ref }}"
+              "imagePath": "ghcr.io/${{ github.repository }}:${{ needs.fetch.outputs.head_ref }}"
             }
 
       - name: Set Docker Command
@@ -141,7 +124,7 @@ jobs:
           message: |
             ## Preview is created!
 
-            Your Preview Image URL is https://${{ vars.REGISTRY }}/${{ github.repository }}:${{ needs.fetch.outputs.head_ref }}.
+            Your Preview Image URL is ghcr.io/${{ github.repository }}:${{ needs.fetch.outputs.head_ref }}.
 
             Your [Render](https://render.com) Preview Server URL is ${{ fromJson(steps.render.outputs.response).service.serviceDetails.url }}.
 
@@ -169,7 +152,7 @@ jobs:
           message: |
             ## Preview is updated!
 
-            Your Preview Image URL is https://${{ vars.REGISTRY }}/${{ github.repository }}:${{ needs.fetch.outputs.head_ref }}.
+            Your Preview Image URL is ghcr.io/${{ github.repository }}:${{ needs.fetch.outputs.head_ref }}.
 
             Your [Render](https://render.com) Preview Server URL is ${{ fromJson(needs.fetch.outputs.response)[0].service.serviceDetails.url }}.
 
