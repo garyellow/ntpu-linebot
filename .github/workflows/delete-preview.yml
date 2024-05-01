@@ -36,7 +36,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           container: ${{ github.event.repository.name }}
           prune-tags-regexes: ^${{ needs.prepare.outputs.head_ref }}$
-          prune-untagged: true
 
   render:
     name: DELETE PREVIEW SERVICE
@@ -79,4 +78,4 @@ jobs:
           message: |
             ## Preview is deleted!
 
-            Your Preview Image and Service has been deleted.
+            Your Preview Image and Service have been deleted.

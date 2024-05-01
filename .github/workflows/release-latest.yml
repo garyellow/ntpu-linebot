@@ -3,10 +3,6 @@
 # - RENDER_API_KEY (create from the Account Settings page)
 # - RENDER_SERVICE_ID (the service to create a preview for)
 # - DOCKERHUB_TOKEN (create from https://hub.docker.com/settings/security)
-#
-# And the following variables:
-#
-# - REGISTRY (the registry to push the image to, e.g. docker.io)
 
 name: Release the Latest Version
 
@@ -43,10 +39,10 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Log in to Registry
+      - name: Log in to GitHub Registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ vars.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -54,7 +50,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: ${{ github.repository }}:latest,${{ vars.REGISTRY }}/${{ github.repository }}:latest
+          tags: ${{ github.repository }}:latest,ghcr.io/${{ github.repository }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
