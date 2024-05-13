@@ -17,7 +17,7 @@ class StickerUtil:
         "https://spy-family.net/tvseries/special/special3.php",
     ]
     __ICHIGO_PRODUCTION_URL = "https://ichigoproduction.com/special/present_icon.html"
-    __UA = UserAgent(min_percentage=2.5)
+    __UA = UserAgent()
     STICKER_LIST = list[str]()
 
     async def load_stickers(self) -> None:

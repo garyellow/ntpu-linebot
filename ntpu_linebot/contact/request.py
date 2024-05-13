@@ -20,7 +20,7 @@ class ContactRequest:
         "https://120.126.197.7",
         "https://sea.cc.ntpu.edu.tw",
     ]
-    __UA = UserAgent(min_percentage=2.5)
+    __UA = UserAgent()
     __ALL_ADMINISTATIVE_URL = "/pls/ld/CAMPUS_DIR_M.p1?kind=1"
     __ALL_ACADEMIC_URL = "/pls/ld/CAMPUS_DIR_M.p1?kind=2"
     __SEARCH_URL = "/pls/ld/CAMPUS_DIR_M.pq?q="
