@@ -17,7 +17,7 @@ class IDRequest:
         "https://lms.ntpu.edu.tw",
     ]
     __STUDENT_SEARCH_URL = "/portfolio/search.php"
-    __UA = UserAgent()
+    __UA = UserAgent(browsers=["chrome", "safari"])
     STUDENT_DICT = dict[str, str]()
 
     async def check_url(self, url: Optional[str] = None) -> bool:
