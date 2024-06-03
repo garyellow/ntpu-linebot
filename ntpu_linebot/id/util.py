@@ -85,7 +85,6 @@ MASTER_DEPARTMENT_CODE = {
     "資訊工程學系碩士班": "83",
 }
 
-
 FULL_MASTER_DEPARTMENT_CODE = {
     "企業管理學系碩士班": "31",
     "會計學系碩士班": "32",
