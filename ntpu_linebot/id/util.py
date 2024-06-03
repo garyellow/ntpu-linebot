@@ -59,11 +59,97 @@ FULL_DEPARTMENT_CODE = {
     "電機工程學系": "87",
 }
 
+MASTER_DEPARTMENT_CODE = {
+    "法律學系碩士班一般生組": "51",
+    "法律學系碩士班法律專業組": "52",
+    "企業管理學系碩士班": "31",
+    "金融與合作經營學系碩士班": "34",
+    "會計學系碩士班": "32",
+    "統計學系碩士班": "33",
+    "國際企業研究所碩士班": "35",
+    "資訊管理研究所": "36",
+    "公共行政暨政策學系碩士班": "71",
+    "財政學系碩士班": "72",
+    "不動產與城鄉環境學系碩士班": "73",
+    "都市計劃研究所碩士班": "74",
+    "自然資源與環境管理研究所碩士班": "75",
+    "經濟學系碩士班": "61",
+    "社會工作學系碩士班": "63",
+    "社會學系碩士班": "62",
+    "犯罪學研究所": "64",
+    "民俗藝術與文化資產研究所": "41",
+    "中國文學系碩士班": "43",
+    "歷史學系碩士班": "44",
+    "通訊工程學系碩士班": "81",
+    "電機工程學系碩士班": "82",
+    "資訊工程學系碩士班": "83",
+}
+
+FULL_MASTER_DEPARTMENT_CODE = {
+    "企業管理學系碩士班": "31",
+    "會計學系碩士班": "32",
+    "統計學系碩士班": "33",
+    "金融與合作經營學系碩士班": "34",
+    "國際企業研究所碩士班": "35",
+    "資訊管理研究所": "36",
+    "財務金融英語碩士學位學程": "37",
+    "民俗藝術與文化資產研究所": "41",
+    "古典文獻學研究所": "42",
+    "中國文學系碩士班": "43",
+    "歷史學系碩士班": "44",
+    "法律學系碩士班一般生組": "51",
+    "法律學系碩士班法律專業組": "52",
+    "經濟學系碩士班": "61",
+    "社會學系碩士班": "62",
+    "社會工作學系碩士班": "63",
+    "犯罪學研究所": "64",
+    "公共行政暨政策學系碩士班": "71",
+    "財政學系碩士班": "72",
+    "不動產與城鄉環境學系碩士班": "73",
+    "都市計劃研究所碩士班": "74",
+    "自然資源與環境管理研究所碩士班": "75",
+    "城市治理英語碩士學位學程": "76",
+    "會計學系碩士在職專班": "77",
+    "統計學系碩士在職專班": "78",
+    "企業管理學系碩士在職專班": "79",
+    "通訊工程學系碩士班": "81",
+    "電機工程學系碩士班": "82",
+    "資訊工程學系碩士班": "83",
+    "智慧醫療管理英語碩士學位學程": "91",
+}
+
+PHD_DEPARTMENT_CODE = {
+    "會計學系博士班": "32",
+    "法律學系博士班": "51",
+    "經濟學系博士班": "61",
+    "公共行政暨政策學系博士班": "71",
+    "不動產與城鄉環境學系博士班": "73",
+    "都市計劃研究所博士班": "74",
+    "自然資源與環境管理研究所博士班": "75",
+    "電機資訊學院博士班": "76",
+}
+
+FULL_PHD_DEPARTMENT_CODE = {
+    "會計學系博士班": "32",
+    "法律學系博士班": "51",
+    "經濟學系博士班": "61",
+    "公共行政暨政策學系博士班": "71",
+    "不動產與城鄉環境學系博士班": "73",
+    "都市計劃研究所博士班": "74",
+    "自然資源與環境管理研究所博士班": "75",
+    "電機資訊學院博士班": "76",
+}
+
+
 # 科系代碼 -> 科系名稱
 DEPARTMENT_NAME = {v: k for k, v in DEPARTMENT_CODE.items()}
+MASTER_DEPARTMENT_NAME = {v: k for k, v in MASTER_DEPARTMENT_CODE.items()}
+PHD_DEPARTMENT_NAME = {v: k for k, v in PHD_DEPARTMENT_CODE.items()}
 
 # 科系代碼 -> 科系全名
 FULL_DEPARTMENT_NAME = {v: k for k, v in FULL_DEPARTMENT_CODE.items()}
+FULL_MASTER_DEPARTMENT_NAME = {v: k for k, v in FULL_MASTER_DEPARTMENT_CODE.items()}
+FULL_PHD_DEPARTMENT_NAME = {v: k for k, v in FULL_PHD_DEPARTMENT_CODE.items()}
 
 
 async def healthz(app: Sanic, force: bool = False) -> bool:
@@ -139,6 +225,8 @@ def student_info_format(
 
     message = []
     is_over_99 = len(student_id) == 9
+    is_master = student_id[0] == "7"
+    is_phd = student_id[0] == "8"
 
     # Format the student information based on the order
     for o in order:
@@ -155,6 +243,14 @@ def student_info_format(
 
             case Order.DEPARTMENT:
                 department = student_id[is_over_99 + 3 : is_over_99 + 5]
+                if is_master:
+                    message.append(MASTER_DEPARTMENT_NAME[department])
+                    continue
+
+                if is_phd:
+                    message.append(PHD_DEPARTMENT_NAME[department])
+                    continue
+
                 if department == DEPARTMENT_CODE["社學"][0:2]:
                     department += student_id[is_over_99 + 5]
 
@@ -162,6 +258,14 @@ def student_info_format(
 
             case Order.FULL_DEPARTMENT:
                 department = student_id[is_over_99 + 3 : is_over_99 + 5]
+                if is_master:
+                    message.append(FULL_MASTER_DEPARTMENT_NAME[department])
+                    continue
+
+                if is_phd:
+                    message.append(FULL_PHD_DEPARTMENT_NAME[department])
+                    continue
+
                 if department in [DEPARTMENT_CODE["法律"], DEPARTMENT_CODE["社學"][:2]]:
                     department += student_id[is_over_99 + 5]
 
