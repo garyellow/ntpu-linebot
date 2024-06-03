@@ -3,10 +3,10 @@ package-mode = false
 
 [tool.poetry.dependencies]
 python = "~3.12"
-setuptools = "^69.5.1"
+setuptools = "^70.0.0"
 fake-useragent = "^1.5.1"
 aiohttp = { extras = ["speedups"], version = "^3.9.5" }
-lxml = "^5.2.1"
+lxml = "^5.2.2"
 beautifulsoup4 = "^4.12.3"
 line-bot-sdk = "^3.11.0"
 cachetools = "^5.3.3"
