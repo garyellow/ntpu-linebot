@@ -1,0 +1,13 @@
+services:
+- type: web
+  name: NTPU-LINEBOT
+  runtime: image
+  image:
+    url: ghcr.io/garyellow/ntpu-linebot:latest
+  plan: free
+  envVars:
+  - fromGroup: LINE_CHANNEL
+  region: singapore
+  healthCheckPath: /healthz
+  maxShutdownDelaySeconds: 300
+version: "1"
