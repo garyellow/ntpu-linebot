@@ -24,13 +24,13 @@ async def healthz(app: Sanic, force: bool = False) -> bool:
 
     if force:
         await app.cancel_task("load_contact_dict", raise_exception=False)
-        app.add_task(load_contact_dict, name="load_contact_dict")
+        app.add_task(load_contact_dict(), name="load_contact_dict")
         return True
 
     if not await CONTACT_REQUEST.check_url():
         if await CONTACT_REQUEST.change_base_url():
             await app.cancel_task("load_contact_dict", raise_exception=False)
-            app.add_task(load_contact_dict, name="load_contact_dict")
+            app.add_task(load_contact_dict(), name="load_contact_dict")
 
         return False
 
@@ -80,7 +80,7 @@ def search_contacts_by_name(name: str) -> list[Contact]:
     ]
 
 
-async def search_contacts_by_criteria(criteria: str) -> Optional[list[Contact]]:
+async def search_contacts_by_criteria(criteria: str) -> list[Contact]:
     """
     Asynchronously searches contacts by the specified criteria and returns a list of contacts or None.
 
@@ -88,7 +88,7 @@ async def search_contacts_by_criteria(criteria: str) -> Optional[list[Contact]]:
         criteria (str): The criteria used for searching contacts.
 
     Returns:
-        Optional[list[Contact]]: A list of contacts matching the criteria, or None if no contacts are found.
+        list[Contact]: A list of contacts matching the criteria.
     """
 
     if contacts := [

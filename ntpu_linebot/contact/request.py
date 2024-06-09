@@ -64,7 +64,7 @@ class ContactRequest:
         self.__base_url = ""
         return False
 
-    async def get_contacts_by_url(self, url: str) -> Optional[list[Contact]]:
+    async def get_contacts_by_url(self, url: str) -> list[Contact]:
         """
         Asynchronously gets contacts by URL.
 
@@ -72,7 +72,7 @@ class ContactRequest:
             url (str): The URL to fetch contacts from.
 
         Returns:
-            Optional[list[Contact]]: A list of contacts, or None if an error occurs.
+            list[Contact]: A list of contacts, or throws an exception if the request fails.
         """
 
         contacts = list[Contact]()
@@ -139,13 +139,13 @@ class ContactRequest:
                     contacts.append(organization)
                     self.CONTACT_DICT[organization.uid] = organization
 
-        except ClientError:
+        except ClientError as exc:
             self.__base_url = ""
-            return None
+            raise ValueError("An error occurred while fetching contacts.") from exc
 
         return contacts
 
-    async def get_contact_pages_by_url(self, url: str) -> Optional[list[Contact]]:
+    async def get_contact_pages_by_url(self, url: str) -> list[Contact]:
         """
         An asynchronous function to retrieve contact pages by URL.
 
@@ -153,7 +153,7 @@ class ContactRequest:
             url (str): The URL for which contact pages are to be retrieved.
 
         Returns:
-            Optional[list[Contact]]: A list of contact pages if found, otherwise None.
+            list[Contact]: A list of contact pages if found, otherwise throws an exception.
         """
 
         contacts = list[Contact]()
@@ -171,36 +171,36 @@ class ContactRequest:
                     contacts += await self.get_contacts_by_url(url)
                     await sleep(0)
 
-        except ClientError:
+        except ClientError as exc:
             self.__base_url = ""
-            return None
+            raise ValueError("An error occurred while fetching contacts.") from exc
 
         return contacts
 
-    async def get_administrative_contacts(self) -> Optional[list[Contact]]:
+    async def get_administrative_contacts(self) -> list[Contact]:
         """
         Asynchronously gets administrative contacts.
 
         Returns:
-            Optional[list[Contact]]: A list of administrative contacts, or None if an error occurs.
+            list[Contact]: A list of administrative contacts.
         """
 
         url = self.__base_url + self.__ALL_ADMINISTATIVE_URL
         return await self.get_contact_pages_by_url(url)
 
-    async def get_academic_contacts(self) -> Optional[list[Contact]]:
+    async def get_academic_contacts(self) -> list[Contact]:
         """
         Asynchronously gets academic contacts.
 
         Returns:
-            Optional[list[Contact]]: A list of academic contacts, or None if an error occurs.
+            list[Contact]: A list of academic contacts.
         """
 
         url = self.__base_url + self.__ALL_ACADEMIC_URL
         return await self.get_contact_pages_by_url(url)
 
     @cached(TTLCache(maxsize=9, ttl=60 * 60 * 24 * 7))
-    async def get_contacts_by_criteria(self, criteria: str) -> Optional[list[Contact]]:
+    async def get_contacts_by_criteria(self, criteria: str) -> list[Contact]:
         """
         Asynchronously retrieves contacts by the given criteria and returns a list of Contact objects.
 
@@ -208,7 +208,7 @@ class ContactRequest:
             criteria (str): The criteria for searching contacts.
 
         Returns:
-            Optional[list[Contact]]: A list of Contact objects if found, else None.
+            list[Contact]: A list of Contact objects if found.
         """
 
         criteria = quote(criteria, encoding="big5")

@@ -25,13 +25,13 @@ async def healthz(app: Sanic, force: bool = False) -> bool:
 
     if force:
         await app.cancel_task("load_course_dict", raise_exception=False)
-        app.add_task(load_course_dict, name="load_course_dict")
+        app.add_task(load_course_dict(), name="load_course_dict")
         return True
 
     if not await COURSE_REQUEST.check_url():
         if await COURSE_REQUEST.change_base_url():
             await app.cancel_task("load_course_dict", raise_exception=False)
-            app.add_task(load_course_dict, name="load_course_dict")
+            app.add_task(load_course_dict(), name="load_course_dict")
 
         return False
 
@@ -47,7 +47,7 @@ async def load_course_dict() -> None:
         await COURSE_REQUEST.get_simple_courses_by_year(year)
 
 
-async def search_course_by_uid(uid: str) -> Optional[Course]:
+async def search_course_by_uid(uid: str) -> Course:
     """
     Asynchronously searches for course by UID.
 
@@ -55,7 +55,7 @@ async def search_course_by_uid(uid: str) -> Optional[Course]:
         uid (str): The unique identifier of the course to search for.
 
     Returns:
-        Optional[Course]: The course corresponding to the given UID, or None if not found.
+        Course: The course corresponding to the given UID.
     """
 
     return await COURSE_REQUEST.get_course_by_uid(uid)

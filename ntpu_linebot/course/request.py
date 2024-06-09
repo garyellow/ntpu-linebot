@@ -139,7 +139,7 @@ class CourseRequest:
         return False
 
     @cached(TTLCache(maxsize=99, ttl=60 * 60 * 24 * 7))
-    async def get_course_by_uid(self, uid: str) -> Optional[Course]:
+    async def get_course_by_uid(self, uid: str) -> Course:
         """
         Asynchronously retrieves a course by UID from the specified URL and returns a Course object if found, otherwise returns None.
 
@@ -147,7 +147,7 @@ class CourseRequest:
             uid (str): The unique identifier for the course.
 
         Returns:
-            Optional[Course]: The Course object if found, otherwise None.
+            Course: The Course object if found, otherwise throws an exception.
         """
 
         url = self.__base_url + self.__COURSE_QUERY_URL
@@ -197,19 +197,19 @@ class CourseRequest:
                     note=note,
                 )
 
-                self.COURSE_DICT[c.uid] = super(Course, c)
+                self.COURSE_DICT[c.uid] = c
 
                 return c
 
         except ClientError:
             self.__base_url = ""
 
-        return None
+        raise ValueError("Course not found.")
 
     async def get_simple_courses_by_year(
         self,
         year: int,
-    ) -> Optional[dict[str, SimpleCourse]]:
+    ) -> dict[str, SimpleCourse]:
         """
         Asynchronously retrieves simple courses by year.
 
@@ -217,7 +217,7 @@ class CourseRequest:
             year (int): The year for which to retrieve the courses.
 
         Returns:
-            Optional[dict[str, SimpleCourse]]: A dictionary of SimpleCourse, or None if an error occurs.
+            dict[str, SimpleCourse] A dictionary of SimpleCourse, or throws an exception.
         """
 
         courses = dict[str, SimpleCourse]()
@@ -261,9 +261,9 @@ class CourseRequest:
                         self.COURSE_DICT[sc.uid] = sc
                         courses[sc.uid] = sc
 
-            except ClientError:
+            except ClientError as exc:
                 self.__base_url = ""
-                return None
+                raise ValueError("An error occurred while fetching courses.") from exc
 
         return courses
 
