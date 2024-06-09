@@ -47,16 +47,22 @@ async def before_server_start(sanic: Sanic):
     """
 
     await STICKER.load_stickers()
-    while not all(
-        await gather(
-            *[
-                ntpu_id.healthz(sanic),
-                ntpu_contact.healthz(sanic),
-                ntpu_course.healthz(sanic),
-            ]
-        )
-    ):
-        pass
+
+
+@app.after_server_start
+async def after_server_start(sanic: Sanic):
+    """
+    Async function called after the server starts.
+
+    Args:
+        app (Sanic): The Sanic application instance.
+    """
+
+    await gather(
+        ntpu_id.healthz(sanic),
+        ntpu_contact.healthz(sanic),
+        ntpu_course.healthz(sanic),
+    )
 
 
 @app.route("/", methods=["HEAD", "GET"])
@@ -94,15 +100,6 @@ async def healthy(request: Request) -> HTTPResponse:
     if not await ntpu_course.healthz(request.app):
         raise ServiceUnavailable("Course Unavailable")
 
-    if randint(0, 1000) == 0:
-        await gather(
-            *[
-                ntpu_id.healthz(request.app, force=True),
-                ntpu_contact.healthz(request.app, force=True),
-                ntpu_course.healthz(request.app, force=True),
-            ]
-        )
-
     return empty()
 
 
@@ -117,6 +114,17 @@ async def callback(request: Request) -> HTTPResponse:
     Returns:
         HTTPResponse: The response object indicating the success of the callback function.
     """
+
+    if not all(
+        await gather(
+            *[
+                ntpu_id.healthz(request.app),
+                ntpu_contact.healthz(request.app),
+                ntpu_course.healthz(request.app),
+            ]
+        )
+    ):
+        raise ServiceUnavailable("Service Unavailable")
 
     try:
         events = LINE_API_UTIL.parser.parse(
