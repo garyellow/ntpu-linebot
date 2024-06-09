@@ -26,12 +26,12 @@ class Contact:
         return self.__name
 
     @property
-    def search_url(self) -> Optional[str]:
+    def search_url(self) -> str:
         """Getter for search_url"""
         try:
             return self.__SEARCH_URL + quote(self.__name, encoding="big5")
         except UnicodeEncodeError:
-            return None
+            return ""
 
 
 class Individual(Contact):

@@ -59,7 +59,7 @@ class IDRequest:
         return False
 
     @cached(TTLCache(maxsize=99, ttl=60 * 60 * 24 * 7))
-    async def get_student_by_uid(self, uid: str) -> Optional[str]:
+    async def get_student_by_uid(self, uid: str) -> str:
         """
         Asynchronously gets a student by their ID.
 
@@ -67,7 +67,7 @@ class IDRequest:
             uid (str): The unique ID of the student.
 
         Returns:
-            Optional[str]: The name of the student, if found. Otherwise, None.
+            str: The name of the student, if found. Otherwise, throws an exception.
         """
 
         url = self.__base_url + self.__STUDENT_SEARCH_URL
@@ -93,14 +93,14 @@ class IDRequest:
         except ClientError:
             self.__base_url = ""
 
-        return None
+        raise ValueError("Student not found.")
 
     @cached(TTLCache(maxsize=9, ttl=60 * 60 * 24 * 7))
     async def get_students_by_year_and_department(
         self,
         year: int,
         department: str,
-    ) -> Optional[dict[str, str]]:
+    ) -> dict[str, str]:
         """
         Async function to retrieve students by year and department.
 
@@ -109,7 +109,7 @@ class IDRequest:
             department (str): The department for which to retrieve students.
 
         Returns:
-            Optional[dict[str, str]]: A dictionary of student numbers and names, or None if an error occurs.
+            dict[str, str]: A dictionary of student numbers and names, or throws an exception if not found.
         """
 
         students = dict[str, str]()
@@ -142,9 +142,9 @@ class IDRequest:
                         self.STUDENT_DICT[number] = name
                         students[number] = name
 
-        except ClientError:
+        except ClientError as exc:
             self.__base_url = ""
-            return None
+            raise ValueError("An error occurred while fetching students.") from exc
 
         return students
 

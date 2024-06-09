@@ -166,13 +166,13 @@ async def healthz(app: Sanic, force: bool = False) -> bool:
 
     if force:
         await app.cancel_task("load_student_dict", raise_exception=False)
-        app.add_task(load_student_dict, name="load_student_dict")
+        app.add_task(load_student_dict(), name="load_student_dict")
         return True
 
     if not await ID_REQUEST.check_url():
         if await ID_REQUEST.change_base_url():
             await app.cancel_task("load_student_dict", raise_exception=False)
-            app.add_task(load_student_dict, name="load_student_dict")
+            app.add_task(load_student_dict(), name="load_student_dict")
 
         return False
 
@@ -282,7 +282,7 @@ def student_info_format(
     return (" " * space).join(message)
 
 
-async def search_student_by_uid(uid: str) -> Optional[str]:
+async def search_student_by_uid(uid: str) -> str:
     """
     Async function to search for a student by ID.
 
@@ -290,7 +290,7 @@ async def search_student_by_uid(uid: str) -> Optional[str]:
         uid (str): The unique identifier of the student.
 
     Returns:
-        Optional[str]: The information of the student if found, otherwise None.
+        str: The information of the student if found.
     """
 
     return await ID_REQUEST.get_student_by_uid(uid)
