@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 from asyncio import sleep
 
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ClientTimeout
 from bs4 import BeautifulSoup as Bs4
 from fake_useragent import UserAgent
 
@@ -20,7 +20,7 @@ class StickerUtil:
     __UA = UserAgent(browsers=["chrome", "safari"])
     STICKER_LIST = list[str]()
 
-    async def load_stickers(self) -> None:
+    async def load_stickers(self) -> bool:
         """
         Loads stickers by scraping the specified URLs using aiohttp and BeautifulSoup.
         Appends the URLs of the stickers to the stickers list.
@@ -30,28 +30,40 @@ class StickerUtil:
             "User-Agent": self.__UA.random,
         }
 
-        async with ClientSession() as session:
+        async with ClientSession(timeout=ClientTimeout(total=3)) as session:
             for url in self.__SPY_FAMILY_URLS:
-                async with session.get(url, headers=headers) as response:
-                    soup = Bs4(await response.text(), "lxml")
+                try:
+                    async with session.get(url, headers=headers) as response:
+                        soup = Bs4(await response.text(), "lxml")
 
-                for i in soup.select("ul.icondlLists > li > a"):
-                    if herf := i.get("href"):
-                        self.STICKER_LIST.append(
-                            f"https://spy-family.net/tvseries/{herf[3:]}"
-                        )
+                    for i in soup.select("ul.icondlLists > li > a"):
+                        if herf := i.get("href"):
+                            self.STICKER_LIST.append(
+                                f"https://spy-family.net/tvseries/{herf[3:]}"
+                            )
+
+                except TimeoutError:
+                    pass
 
                 await sleep(0.05)
 
-            async with session.get(
-                self.__ICHIGO_PRODUCTION_URL,
-                headers=headers,
-            ) as response:
-                soup = Bs4(await response.text(), "lxml")
+            try:
+                async with session.get(
+                    self.__ICHIGO_PRODUCTION_URL,
+                    headers=headers,
+                ) as response:
+                    soup = Bs4(await response.text(), "lxml")
 
-            for i in soup.select("ul.tp5 > li > div.ph > a"):
-                if href := i.get("href"):
-                    self.STICKER_LIST.append(f"https://ichigoproduction.com/{href[3:]}")
+                for i in soup.select("ul.tp5 > li > div.ph > a"):
+                    if href := i.get("href"):
+                        self.STICKER_LIST.append(
+                            f"https://ichigoproduction.com/{href[3:]}"
+                        )
+
+            except TimeoutError:
+                pass
+
+        return True
 
 
 STICKER = StickerUtil()

@@ -46,23 +46,15 @@ async def before_server_start(sanic: Sanic):
         app (Sanic): The Sanic application instance.
     """
 
-    await STICKER.load_stickers()
-
-
-@app.after_server_start
-async def after_server_start(sanic: Sanic):
-    """
-    Async function called after the server starts.
-
-    Args:
-        app (Sanic): The Sanic application instance.
-    """
-
-    await gather(
-        ntpu_id.healthz(sanic),
-        ntpu_contact.healthz(sanic),
-        ntpu_course.healthz(sanic),
-    )
+    while not all(
+        await gather(
+            STICKER.load_stickers(),
+            ntpu_id.healthz(sanic),
+            ntpu_contact.healthz(sanic),
+            ntpu_course.healthz(sanic),
+        )
+    ):
+        pass
 
 
 @app.route("/", methods=["HEAD", "GET"])
