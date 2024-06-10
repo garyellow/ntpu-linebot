@@ -22,7 +22,10 @@ def get_sender(name: Optional[str] = None) -> Sender:
         A Sender object with the name and iconUrl.
     """
 
-    return Sender(name=name, iconUrl=random.choice(STICKER.STICKER_LIST))
+    return Sender(
+        name=name,
+        iconUrl=random.choice(STICKER.STICKER_LIST) if STICKER.STICKER_LIST else None,
+    )
 
 
 def instruction() -> list[TextMessage]:
