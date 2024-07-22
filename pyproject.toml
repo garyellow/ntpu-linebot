@@ -9,7 +9,7 @@ aiohttp = { extras = ["speedups"], version = "^3.9.5" }
 lxml = "^5.2.2"
 beautifulsoup4 = "^4.12.3"
 line-bot-sdk = "^3.11.0"
-cachetools = "^5.3.3"
+cachetools = "^5.4.0"
 asyncache = "^0.3.1"
 sanic = "^23.12.1"
 
