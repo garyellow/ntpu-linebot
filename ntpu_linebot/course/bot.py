@@ -16,6 +16,7 @@ from linebot.v3.messaging.models import (
 from ..abs_bot import Bot
 from ..contact.bot import SPILT_CHAR as CONTACT_SPILT_CHAR
 from ..line_bot_util import EMPTY_POSTBACK_ACTION, get_sender
+from ..normal_util import list_to_regex
 from .course import ALL_COURSE_CODE, Course, SimpleCourse
 from .util import (
     SearchKind,
@@ -155,12 +156,8 @@ class CourseBot(Bot):
     ]
     __UID_REGEX = r"\d{3,4}[" + "".join(ALL_COURSE_CODE) + r"]\d{4}"
     __SEARCH_REGEX = r"|".join(__VALID_CLASS_STR + __VALID_TEACHER_STR)
-    __CLASS_REGEX = (
-        r"(?<=(" + r"|".join(rf"(?<={c})" for c in __VALID_CLASS_STR) + r")[ +]).*"
-    )
-    __TEACHER_REGEX = (
-        r"(?<=(" + r"|".join(rf"(?<={s})" for s in __VALID_TEACHER_STR) + r")[ +]).*"
-    )
+    __CLASS_REGEX = list_to_regex(__VALID_CLASS_STR)
+    __TEACHER_REGEX = list_to_regex(__VALID_TEACHER_STR)
 
     async def handle_text_message(
         self,
