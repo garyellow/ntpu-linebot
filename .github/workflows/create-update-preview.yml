@@ -67,7 +67,7 @@ jobs:
         id: service
         with:
           method: GET
-          url: https://api.render.com/v1/services?type=web_service&limit=1&name=NTPU-LINEBOT%20Preview%20${{ steps.tag.outputs.service-name }}
+          url: https://api.render.com/v1/services?type=web_service&limit=1&name=ntpu-linebot%20Preview%20${{ steps.tag.outputs.service-name }}
           bearerToken: ${{ secrets.RENDER_API_KEY }}
 
     outputs:
