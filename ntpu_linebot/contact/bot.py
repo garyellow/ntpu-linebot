@@ -17,7 +17,7 @@ from linebot.v3.messaging.models import (
 
 from ..abs_bot import Bot
 from ..line_bot_util import EMPTY_POSTBACK_ACTION, get_sender
-from ..normal_util import partition
+from ..normal_util import list_to_regex, partition
 from .contact import Contact, Individual, Organization
 from .util import search_contacts_by_criteria, search_contacts_by_name
 
@@ -169,14 +169,14 @@ def generate_organization_carousel_column(organization: Organization) -> Carouse
 
 
 def generate_contact_templates(
-    contacts: Sequence[Individual | Organization],
+    contacts: Sequence[Contact],
     depth: bool = False,
 ) -> list[CarouselTemplate]:
     """
     Generate contact templates based on the provided contacts and depth flag.
 
     Parameters:
-        contacts (Sequence[Individual | Organization]): The list of contacts to generate templates for.
+        contacts (Sequence[Contact]): The list of contacts to generate templates for.
         depth (bool, optional): Flag to indicate whether to include depth. Defaults to False.
 
     Returns:
@@ -208,6 +208,7 @@ def generate_contact_templates(
 class ContactBot(Bot):
     __SENDER_NAME = "聯繫魔法師"
     __VALID_CONTACT_STR = [
+        "touch",
         "contact",
         "connect",
         "聯繫",
@@ -219,9 +220,7 @@ class ContactBot(Bot):
         "連絡方式",
         "連絡方式",
     ]
-    __CONTACT_REGEX = (
-        r"(?<=(" + r"|".join(rf"(?<={c})" for c in __VALID_CONTACT_STR) + r")[ +]).*"
-    )
+    __CONTACT_REGEX = list_to_regex(__VALID_CONTACT_STR)
 
     async def handle_text_message(
         self,

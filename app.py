@@ -1,6 +1,5 @@
 # -*- coding:utf-8 -*-
 from asyncio import gather
-from random import randint
 
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.webhooks import (

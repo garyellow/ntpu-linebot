@@ -3,7 +3,6 @@ import random
 from asyncio import sleep
 from datetime import datetime
 from enum import Enum, auto, unique
-from typing import Optional
 
 from sanic import Sanic
 
