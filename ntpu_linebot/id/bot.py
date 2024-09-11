@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 from datetime import datetime
 from math import ceil
+from re import IGNORECASE, search
 from typing import Optional
 
 from linebot.v3.messaging.models import (
@@ -19,7 +20,7 @@ from linebot.v3.messaging.models import (
 
 from ..abs_bot import Bot
 from ..line_bot_util import EMPTY_POSTBACK_ACTION, get_sender
-from ..normal_util import partition
+from ..normal_util import list_to_regex, partition
 from .util import (
     DEPARTMENT_CODE,
     DEPARTMENT_NAME,
@@ -143,6 +144,52 @@ def choose_department_message(
 
 class IDBot(Bot):
     __SENDER_NAME = "學號魔法師"
+    __VALID_DEPARTMENT_STR = [
+        "dep",
+        "department",
+        "系",
+        "所",
+        "系所",
+        "科系",
+        "系名",
+        "系所名",
+        "科系名",
+        "系所名稱",
+        "科系名稱",
+    ]
+    __VALID_DEPARTMENT_CODE_STR = [
+        "depCode",
+        "departmentCode",
+        "系代碼",
+        "系所代碼",
+        "科系代碼",
+        "系編號",
+        "系所編號",
+        "科系編號",
+    ]
+    __VALID_YEAR_STR = [
+        "year",
+        "年份",
+        "學年",
+        "年度",
+        "學年度",
+        "入學年",
+        "入學學年",
+        "入學年度",
+    ]
+    __VALID_STUDENT_STR = [
+        "student",
+        "name",
+        "學生",
+        "姓名",
+        "學生姓名",
+        "學號",
+        "學生編號",
+    ]
+    __DEPARTMENT_REGEX = list_to_regex(__VALID_DEPARTMENT_STR)
+    __DEPARTMENT_CODE_REGEX = list_to_regex(__VALID_DEPARTMENT_CODE_STR)
+    __YEAR_REGEX = list_to_regex(__VALID_YEAR_STR)
+    __STUDENT_REGEX = list_to_regex(__VALID_STUDENT_STR)
     __ALL_DEPARTMENT_CODE = "所有系代碼"
     __COLLEGE_NAMES = [
         "人文學院",
@@ -160,8 +207,72 @@ class IDBot(Bot):
     ) -> list[Message]:
         """處理文字訊息"""
 
-        if payload.isdecimal():
-            if text := FULL_DEPARTMENT_NAME.get(payload):
+        if payload == self.__ALL_DEPARTMENT_CODE:
+            students_info = "\n".join(
+                [f"{x}系 -> {y}" for x, y in DEPARTMENT_CODE.items()]
+            )
+
+            return [
+                TextMessage(
+                    text=students_info,
+                    sender=get_sender(self.__SENDER_NAME),
+                    quoteToken=quote_token,
+                ),
+            ]
+
+        if m := search(self.__DEPARTMENT_REGEX, payload, IGNORECASE):
+            criteria = m.group()
+
+            if text := DEPARTMENT_CODE.get(criteria.rstrip("系")):
+                return [
+                    TextMessage(
+                        text=text,
+                        quickReply=QuickReply(
+                            items=[
+                                QuickReplyItem(
+                                    action=MessageAction(
+                                        label=self.__ALL_DEPARTMENT_CODE,
+                                        text=self.__ALL_DEPARTMENT_CODE,
+                                    )
+                                ),
+                            ]
+                        ),
+                        sender=get_sender(self.__SENDER_NAME),
+                        quoteToken=quote_token,
+                    ),
+                ]
+
+            if text := FULL_DEPARTMENT_CODE.get(criteria):
+                return [
+                    TextMessage(
+                        text=text,
+                        quickReply=QuickReply(
+                            items=[
+                                QuickReplyItem(
+                                    action=MessageAction(
+                                        label=self.__ALL_DEPARTMENT_CODE,
+                                        text=self.__ALL_DEPARTMENT_CODE,
+                                    )
+                                ),
+                            ]
+                        ),
+                        sender=get_sender(self.__SENDER_NAME),
+                        quoteToken=quote_token,
+                    ),
+                ]
+
+            return [
+                TextMessage(
+                    text="請輸入正確的系名",
+                    sender=get_sender(self.__SENDER_NAME),
+                    quoteToken=quote_token,
+                ),
+            ]
+
+        if m := search(self.__DEPARTMENT_CODE_REGEX, payload, IGNORECASE):
+            criteria = m.group()
+
+            if text := FULL_DEPARTMENT_NAME.get(criteria):
                 return [
                     TextMessage(
                         text=text,
@@ -180,13 +291,32 @@ class IDBot(Bot):
                     ),
                 ]
 
-            if 2 <= len(payload) <= 4:
-                year = int(payload) if int(payload) < 1911 else int(payload) - 1911
+            return [
+                TextMessage(
+                    text="請輸入正確的系代碼",
+                    sender=get_sender(self.__SENDER_NAME),
+                    quoteToken=quote_token,
+                ),
+            ]
+
+        if m := search(self.__YEAR_REGEX, payload, IGNORECASE):
+            criteria = m.group()
+
+            if 2 <= len(criteria) <= 4:
+                year = int(criteria) if int(criteria) < 1911 else int(criteria) - 1911
 
                 if year > datetime.now().year - 1911:
                     return [
                         TextMessage(
                             text="你未來人？(⊙ˍ⊙)",
+                            sender=get_sender(self.__SENDER_NAME),
+                            quoteToken=quote_token,
+                        )
+                    ]
+                if year >= 113:
+                    return [
+                        TextMessage(
+                            text="數位學苑2.0 R.I.P.",
                             sender=get_sender(self.__SENDER_NAME),
                             quoteToken=quote_token,
                         )
@@ -232,11 +362,22 @@ class IDBot(Bot):
                     )
                 ]
 
-            if 8 <= len(payload) <= 9:
-                if (student := await search_student_by_uid(payload)) is None:
+            return [
+                TextMessage(
+                    text="請輸入正確的年份",
+                    sender=get_sender(self.__SENDER_NAME),
+                    quoteToken=quote_token,
+                ),
+            ]
+
+        if m := search(self.__STUDENT_REGEX, payload, IGNORECASE):
+            criteria = m.group()
+
+            if criteria.isdecimal() and 8 <= len(criteria) <= 9:
+                if (student := await search_student_by_uid(criteria)) is None:
                     return [
                         TextMessage(
-                            text=f"學號 {payload} 不存在OAO",
+                            text=f"學號 {criteria} 不存在OAO",
                             sender=get_sender(self.__SENDER_NAME),
                             quoteToken=quote_token,
                         ),
@@ -245,7 +386,7 @@ class IDBot(Bot):
                 messages = [
                     TextMessage(
                         text=student_info_format(
-                            payload,
+                            criteria,
                             student,
                             order=[Order.YEAR, Order.FULL_DEPARTMENT, Order.NAME],
                             space=2,
@@ -255,16 +396,16 @@ class IDBot(Bot):
                     ),
                 ]
 
-                if payload[0] == "4":
-                    is_over_99 = len(payload) == 9
-                    year = payload[1 : is_over_99 + 3]
+                if criteria[0] == "4":
+                    is_over_99 = len(criteria) == 9
+                    year = int(criteria[1 : is_over_99 + 3])
 
-                    department = payload[is_over_99 + 3 : is_over_99 + 5]
+                    department = criteria[is_over_99 + 3 : is_over_99 + 5]
                     if department in [
                         DEPARTMENT_CODE["法律"],
                         DEPARTMENT_CODE["社學"][0:2],
                     ]:
-                        department += payload[is_over_99 + 5]
+                        department += criteria[is_over_99 + 5]
 
                     if department[0:2] == DEPARTMENT_CODE["法律"]:
                         show_text = (
@@ -288,59 +429,7 @@ class IDBot(Bot):
 
                 return messages
 
-        else:
-            if payload == self.__ALL_DEPARTMENT_CODE:
-                students = "\n".join(
-                    [f"{x}系 -> {y}" for x, y in DEPARTMENT_CODE.items()]
-                )
-
-                return [
-                    TextMessage(
-                        text=students,
-                        sender=get_sender(self.__SENDER_NAME),
-                        quoteToken=quote_token,
-                    ),
-                ]
-
-            if text := DEPARTMENT_CODE.get(payload.rstrip("系")):
-                return [
-                    TextMessage(
-                        text=text,
-                        quickReply=QuickReply(
-                            items=[
-                                QuickReplyItem(
-                                    action=MessageAction(
-                                        label=self.__ALL_DEPARTMENT_CODE,
-                                        text=self.__ALL_DEPARTMENT_CODE,
-                                    )
-                                ),
-                            ]
-                        ),
-                        sender=get_sender(self.__SENDER_NAME),
-                        quoteToken=quote_token,
-                    ),
-                ]
-
-            if text := FULL_DEPARTMENT_CODE.get(payload):
-                return [
-                    TextMessage(
-                        text=text,
-                        quickReply=QuickReply(
-                            items=[
-                                QuickReplyItem(
-                                    action=MessageAction(
-                                        label=self.__ALL_DEPARTMENT_CODE,
-                                        text=self.__ALL_DEPARTMENT_CODE,
-                                    )
-                                ),
-                            ]
-                        ),
-                        sender=get_sender(self.__SENDER_NAME),
-                        quoteToken=quote_token,
-                    ),
-                ]
-
-            if students := search_students_by_name(payload):
+            if students := search_students_by_name(criteria):
                 students = sorted(students, key=lambda s: int(s[0]))[-500:]
 
                 messages = list[TextMessage]()
@@ -363,6 +452,14 @@ class IDBot(Bot):
                     )
 
                 return messages
+
+            return [
+                TextMessage(
+                    text="查無學生",
+                    sender=get_sender(self.__SENDER_NAME),
+                    quoteToken=quote_token,
+                ),
+            ]
 
         return list[Message]()
 
