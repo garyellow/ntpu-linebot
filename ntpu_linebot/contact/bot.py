@@ -169,14 +169,14 @@ def generate_organization_carousel_column(organization: Organization) -> Carouse
 
 
 def generate_contact_templates(
-    contacts: Sequence[Individual | Organization],
+    contacts: Sequence[Contact],
     depth: bool = False,
 ) -> list[CarouselTemplate]:
     """
     Generate contact templates based on the provided contacts and depth flag.
 
     Parameters:
-        contacts (Sequence[Individual | Organization]): The list of contacts to generate templates for.
+        contacts (Sequence[Contact]): The list of contacts to generate templates for.
         depth (bool, optional): Flag to indicate whether to include depth. Defaults to False.
 
     Returns:
@@ -208,6 +208,7 @@ def generate_contact_templates(
 class ContactBot(Bot):
     __SENDER_NAME = "聯繫魔法師"
     __VALID_CONTACT_STR = [
+        "touch",
         "contact",
         "connect",
         "聯繫",
