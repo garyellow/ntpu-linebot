@@ -42,7 +42,7 @@ def instruction() -> list[TextMessage]:
             "輸入「學生 {姓名}」查詢學生",
             "輸入「科系 {系名}」查詢系代碼",
             "輸入「系代碼 {系代碼}」查詢系名",
-            "輸入「入學年 {入學年}」後選科系查學生名單",
+            "輸入「學年 {入學年份}」後選科系查學生名單",
         ]
     )
 
@@ -62,7 +62,7 @@ def instruction() -> list[TextMessage]:
     text_note = "\n".join(
         [
             "PS 符號{}中的部分要換成實際值",
-            "PPS 部分功能無法取得113學年後的資料",
+            "PPS 部分功能無113學年後的資料",
         ]
     )
 
@@ -71,10 +71,10 @@ def instruction() -> list[TextMessage]:
     id_example = "\n".join(
         [
             "學號：`學生 412345678`",
-            "姓名：`學生 林小明` or `學生 小明`",
+            "姓名：`學生 小明` or `學生 林小明`",
             "系名：`科系 資工系` or `科系 資訊工程學系`",
             "系代碼：`系代碼 85`",
-            f"入學年：`入學年 {last_year - 1911}` or `入學年 {last_year}`",
+            f"入學年：`學年 {last_year - 1911}` or `學年 {last_year}`",
         ]
     )
 
@@ -127,7 +127,7 @@ def instruction() -> list[TextMessage]:
             sender=mes_sender,
         ),
         TextMessage(
-            text="資料來源：\n國立臺北大學數位學苑2.0(已無新資料)\n國立臺北大學校園聯絡簿\n國立臺北大學課程查詢系統",
+            text="資料來源：國立臺北大學\n數位學苑2.0(已無新資料)\n校園聯絡簿\n課程查詢系統",
             sender=mes_sender,
         ),
     ]
