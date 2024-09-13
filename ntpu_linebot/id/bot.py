@@ -9,6 +9,7 @@ from linebot.v3.messaging.models import (
     CarouselColumn,
     CarouselTemplate,
     ConfirmTemplate,
+    ImageMessage,
     Message,
     MessageAction,
     PostbackAction,
@@ -314,10 +315,19 @@ class IDBot(Bot):
                         )
                     ]
                 if year >= 113:
+                    sender = get_sender(self.__SENDER_NAME)
+                    image_url = "https://raw.githubusercontent.com/garyellow/ntpu-linebot/main/asserts/rip.png"
+
                     return [
                         TextMessage(
-                            text="數位學苑2.0 R.I.P.",
-                            sender=get_sender(self.__SENDER_NAME),
+                            text="數位學苑 2.0 已停止使用，無法取得資料",
+                            sender=sender,
+                            quoteToken=quote_token,
+                        ),
+                        ImageMessage(
+                            originalContentUrl=image_url,
+                            previewImageUrl=image_url,
+                            sender=sender,
                             quoteToken=quote_token,
                         )
                     ]
