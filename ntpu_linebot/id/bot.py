@@ -316,7 +316,7 @@ class IDBot(Bot):
                     ]
                 if year >= 113:
                     sender = get_sender(self.__SENDER_NAME)
-                    image_url = "https://raw.githubusercontent.com/garyellow/ntpu-linebot/main/asserts/rip.png"
+                    image_url = "https://raw.githubusercontent.com/garyellow/ntpu-linebot/main/assets/rip.png"
 
                     return [
                         TextMessage(
