@@ -84,7 +84,7 @@ class LineAPIUtil:
         """
 
         await self.line_bot_api.show_loading_animation(
-            ShowLoadingAnimationRequest(chatId=user_id, loadingSeconds=60)
+            ShowLoadingAnimationRequest(chatId=user_id, loadingSeconds=10)
         )
 
 
