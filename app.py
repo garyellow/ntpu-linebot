@@ -124,6 +124,8 @@ async def callback(request: Request) -> HTTPResponse:
         )
 
         for event in events:
+            await LINE_API_UTIL.loading_message(event.source.user_id)
+
             if isinstance(event, MessageEvent):
                 if isinstance(event.message, TextMessageContent):
                     request.app.add_task(handle_text_message(event))
