@@ -10,6 +10,7 @@ from linebot.v3.messaging import (
     Configuration,
     Message,
     ReplyMessageRequest,
+    ShowLoadingAnimationRequest,
 )
 
 
@@ -72,6 +73,18 @@ class LineAPIUtil:
                 replyToken=reply_token,
                 messages=messages,
             )
+        )
+
+    async def loading_message(self, user_id: str) -> None:
+        """
+        Send a loading message in the Line messaging platform.
+
+        Args:
+            user_id (str): The user ID of the message sender.
+        """
+
+        await self.line_bot_api.show_loading_animation(
+            ShowLoadingAnimationRequest(chatId=user_id, loadingSeconds=10)
         )
 
 
