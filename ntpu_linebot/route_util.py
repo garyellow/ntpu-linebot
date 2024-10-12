@@ -111,11 +111,11 @@ async def handle_follow_join_event(
             sender=mes_sender,
         ),
         TextMessage(
-            text="詳細使用說明請點選下方選單\n或輸入「使用說明」",
+            text="使用說明請點選下方選單\n或輸入「使用說明」查看",
             sender=mes_sender,
         ),
         TextMessage(
-            text="有疑問可以先去看常見問題\n若無法解決或有發現 Bug\n可以到 GitHub 提出",
+            text="有疑問可以先去看常見問題\n若無法解決或有發現 Bug\n歡迎到 GitHub 提出",
             sender=mes_sender,
         ),
         TextMessage(
@@ -123,7 +123,7 @@ async def handle_follow_join_event(
             sender=mes_sender,
         ),
         TextMessage(
-            text="資料來源：\n國立臺北大學數位學苑 2.0\n國立臺北大學校園聯絡簿\n國立臺北大學課程查詢系統",
+           text="資料來源：國立臺北大學\n數位學苑2.0(已無新資料)\n校園聯絡簿\n課程查詢系統",
             sender=mes_sender,
         ),
     ]
