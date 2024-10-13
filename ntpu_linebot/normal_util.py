@@ -1,3 +1,4 @@
+# -*- coding:utf-8 -*-
 from typing import Iterator, Sequence
 
 from annotated_types import T
