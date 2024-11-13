@@ -100,7 +100,7 @@ def choose_course_message(courses: list[SimpleCourse]) -> CarouselTemplate:
     actions = [
         PostbackAction(
             label=course.title,
-            displayText=f"正在查詢 {course.title} 的課程資訊",
+            displayText=f"查詢 {course.title} 的課程資訊",
             data=course.uid,
         )
         for course in courses

@@ -62,7 +62,7 @@ def instruction() -> list[TextMessage]:
     text_note = "\n".join(
         [
             "PS 符號{}中的部分要換成實際值",
-            "PPS 學號相關功能已無113學年後的資料",
+            "PPS 學生相關功能已無113學年後的資料",
         ]
     )
 
