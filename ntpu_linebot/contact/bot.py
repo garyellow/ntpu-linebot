@@ -92,7 +92,7 @@ def generate_individual_carousel_column(
         actions.append(
             PostbackAction(
                 label="查看更多",
-                displayText=f"正在搜尋 {individual.name} 的更多資訊",
+                displayText=f"搜尋 {individual.name} 的更多資訊",
                 data=f"查看更多{SPILT_CHAR}{individual.name}",
             )
         )
@@ -100,7 +100,7 @@ def generate_individual_carousel_column(
         actions.append(
             PostbackAction(
                 label="授課課程",
-                displayText=f"正在搜尋 {individual.name} 的授課課程",
+                displayText=f"搜尋 {individual.name} 的授課課程",
                 data=f"授課課程{SPILT_CHAR}{individual.name}",
             )
         )
@@ -149,7 +149,7 @@ def generate_organization_carousel_column(organization: Organization) -> Carouse
     actions.append(
         PostbackAction(
             label="查看成員",
-            displayText=f"正在搜尋 {organization.name} 的成員",
+            displayText=f"搜尋 {organization.name} 的成員",
             data=f"查看成員{SPILT_CHAR}{organization.name}",
         )
     )

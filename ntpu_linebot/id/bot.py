@@ -72,7 +72,7 @@ def department_postback(department_code: str, year: str) -> PostbackAction:
 
     full_name = FULL_DEPARTMENT_NAME[department_code]
 
-    display_text = f"正在搜尋{year}學年度"
+    display_text = f"搜尋{year}學年度"
 
     if department_code[0:2] == DEPARTMENT_CODE["法律"]:
         display_text += "法律系"
@@ -429,7 +429,7 @@ class IDBot(Bot):
                             QuickReplyItem(
                                 action=PostbackAction(
                                     label=show_text,
-                                    displayText=f"正在{show_text}",
+                                    displayText=f"{show_text}",
                                     data=f"{year}{SPILT_CHAR}{department}",
                                     inputOption="closeRichMenu",
                                 ),
