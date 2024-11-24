@@ -30,7 +30,7 @@ jobs:
       packages: write
 
     steps:
-      - name: Delete Preview and Untagged Image
+      - name: Delete Preview Image
         uses: vlaurin/action-ghcr-prune@v0.6.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
