@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
-from asyncio import sleep
+from asyncio import gather
 
-from aiohttp import ClientSession, ClientTimeout
+from aiohttp import ClientError, ClientSession, ClientTimeout
 from bs4 import BeautifulSoup as Bs4
 from fake_useragent import UserAgent
 
@@ -17,53 +17,83 @@ class StickerUtil:
         "https://spy-family.net/tvseries/special/special3.php",
     ]
     __ICHIGO_PRODUCTION_URL = "https://ichigoproduction.com/special/present_icon.html"
-    __UA = UserAgent(browsers=["chrome", "safari"])
-    STICKER_LIST = list[str]()
+    STICKER_LIST: list[str] = []
 
-    async def load_stickers(self) -> bool:
+    async def _fetch_spy_family_stickers(
+        self, session: ClientSession, url: str
+    ) -> list[str]:
         """
-        Loads stickers by scraping the specified URLs using aiohttp and BeautifulSoup.
-        Appends the URLs of the stickers to the stickers list.
+        從 Spy Family 網站抓取貼圖連結
+
+        Args:
+            session (ClientSession): The aiohttp client session.
+            url (str): The URL to fetch the stickers from.
+
+        Returns:
+            list[str]: A list of sticker URLs.
         """
 
-        headers = {
-            "User-Agent": self.__UA.random,
-        }
-
-        async with ClientSession(timeout=ClientTimeout(total=3)) as session:
-            for url in self.__SPY_FAMILY_URLS:
-                try:
-                    async with session.get(url, headers=headers) as response:
-                        soup = Bs4(await response.text(), "lxml")
-
+        stickers = []
+        try:
+            async with session.get(
+                url, headers={"User-Agent": UserAgent(browsers=["chrome", "safari"]).random}
+            ) as response:
+                if response.status == 200:
+                    soup = Bs4(await response.text(), "lxml")
                     for i in soup.select("ul.icondlLists > li > a"):
-                        if herf := i.get("href"):
-                            self.STICKER_LIST.append(
-                                f"https://spy-family.net/tvseries/{herf[3:]}"
+                        if href := i.get("href"):
+                            stickers.append(
+                                f"https://spy-family.net/tvseries/{href[3:]}"
                             )
 
-                except TimeoutError:
-                    pass
+        except ClientError as e:
+            print(f"Error fetching {url}: {str(e)}")
 
-                await sleep(0.05)
+        return stickers
 
-            try:
-                async with session.get(
-                    self.__ICHIGO_PRODUCTION_URL,
-                    headers=headers,
-                ) as response:
+    async def _fetch_ichigo_stickers(self, session: ClientSession) -> list[str]:
+        """
+        從 Ichigo Production 網站抓取貼圖連結
+
+        Returns:
+            list[str]: A list of sticker URLs in the format "https://ichigoproduction.com/{path}"
+        """
+
+        stickers = []
+        try:
+            async with session.get(
+                self.__ICHIGO_PRODUCTION_URL,
+                headers={"User-Agent": UserAgent(browsers=["chrome", "safari"]).random},
+            ) as response:
+                if response.status == 200:
                     soup = Bs4(await response.text(), "lxml")
+                    for i in soup.select("ul.tp5 > li > div.ph > a"):
+                        if href := i.get("href"):
+                            stickers.append(f"https://ichigoproduction.com/{href[3:]}")
 
-                for i in soup.select("ul.tp5 > li > div.ph > a"):
-                    if href := i.get("href"):
-                        self.STICKER_LIST.append(
-                            f"https://ichigoproduction.com/{href[3:]}"
-                        )
+        except ClientError as e:
+            print(f"Error fetching Ichigo: {str(e)}")
 
-            except TimeoutError:
-                pass
+        return stickers
 
-        return True
+    async def load_stickers(self) -> bool:
+        """並行載入所有貼圖"""
+
+        async with ClientSession(timeout=ClientTimeout(total=10)) as session:
+            spy_family_tasks = [
+                self._fetch_spy_family_stickers(session, url)
+                for url in self.__SPY_FAMILY_URLS
+            ]
+
+            all_tasks = spy_family_tasks + [self._fetch_ichigo_stickers(session)]
+
+            results = await gather(*all_tasks, return_exceptions=True)
+
+            for result in results:
+                if isinstance(result, list):
+                    self.STICKER_LIST.extend(result)
+
+        return len(self.STICKER_LIST) > 0
 
 
 STICKER = StickerUtil()

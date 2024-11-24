@@ -14,7 +14,7 @@ from linebot.v3.messaging.models import (
 )
 
 from ..abs_bot import Bot
-from ..contact.bot import SPILT_CHAR as CONTACT_SPILT_CHAR
+from ..contact.bot import SPLIT_CHAR as CONTACT_SPLIT_CHAR
 from ..line_bot_util import EMPTY_POSTBACK_ACTION, get_sender
 from ..normal_util import list_to_regex
 from .course import ALL_COURSE_CODE, Course, SimpleCourse
@@ -201,13 +201,13 @@ class CourseBot(Bot):
                 )
             ]
 
-        return list[Message]()
+        return []
 
     async def handle_postback_event(self, payload: str) -> list[Message]:
         """處理回傳事件"""
 
         if payload.startswith("授課課程"):
-            payload = payload.split(CONTACT_SPILT_CHAR)[1]
+            payload = payload.split(CONTACT_SPLIT_CHAR)[1]
 
             if courses := search_simple_courses_by_criteria_and_kind(
                 payload,
@@ -245,7 +245,7 @@ class CourseBot(Bot):
                 )
             ]
 
-        return list[Message]()
+        return []
 
 
 COURSE_BOT = CourseBot()

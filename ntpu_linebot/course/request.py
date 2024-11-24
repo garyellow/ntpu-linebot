@@ -54,8 +54,8 @@ def prase_teacher_field(data: Bs4) -> tuple[list[str], list[str]]:
         the first being a list of teacher names, and the second being a list of teacher links.
     """
 
-    teachers = list[str]()
-    teachers_url = list[str]()
+    teachers: list[str] = []
+    teachers_url: list[str] = []
     for teacher in data.find_all("a"):
         teachers.append(teacher.text)
         teachers_url.append("?" + teacher.get("href").split("?")[1])
@@ -75,8 +75,8 @@ def prase_time_location_filed(data: Bs4) -> tuple[list[str], list[str]]:
         containing the parsed times and the second list containing the parsed locations.
     """
 
-    times = list[str]()
-    locations = list[str]()
+    times: list[str] = []
+    locations: list[str] = []
     for line_info in (str(line.text) for line in data.find_all("a")):
         if line_info.find("每週未維護") > -1:
             continue

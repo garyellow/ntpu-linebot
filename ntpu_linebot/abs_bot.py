@@ -22,7 +22,7 @@ class Bot:
             quote_token (Optional[str]): An optional quote token used for quoting the message.
 
         Returns:
-            List[Message]: A list of Message objects representing the bot's response to the text message.
+            list[Message]: A list of Message objects representing the bot's response to the text message.
         """
 
     @abstractmethod
