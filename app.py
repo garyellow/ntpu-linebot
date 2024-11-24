@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-from asyncio import gather
+from asyncio import gather, sleep
 
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.webhooks import (
@@ -42,7 +42,7 @@ async def before_server_start(sanic: Sanic):
     Async function called before the server starts.
 
     Args:
-        app (Sanic): The Sanic application instance.
+        sanic (Sanic): The Sanic application instance.
     """
 
     while not all(
@@ -53,7 +53,7 @@ async def before_server_start(sanic: Sanic):
             ntpu_course.healthz(sanic),
         )
     ):
-        pass
+        await sleep(1)
 
 
 @app.route("/", methods=["HEAD", "GET"])
@@ -83,18 +83,18 @@ async def healthy(request: Request) -> HTTPResponse:
     """
 
     if not await ntpu_id.healthz(request.app):
-        raise ServiceUnavailable("ID Unavailable")
+        raise ServiceUnavailable("ID Service Unavailable")
 
     if not await ntpu_contact.healthz(request.app):
-        raise ServiceUnavailable("Contact Unavailable")
+        raise ServiceUnavailable("Contact Service Unavailable")
 
     if not await ntpu_course.healthz(request.app):
-        raise ServiceUnavailable("Course Unavailable")
+        raise ServiceUnavailable("Course Service Unavailable")
 
     return empty()
 
 
-@app.post("/callback")
+@app.route("/callback", methods=["POST"])
 async def callback(request: Request) -> HTTPResponse:
     """
     Handle LINE Bot webhook events.
@@ -104,6 +104,10 @@ async def callback(request: Request) -> HTTPResponse:
 
     Returns:
         HTTPResponse: The response object indicating the success of the callback function.
+
+    Raises:
+        ServiceUnavailable: If any of the services (ID, Contact, Course) are unavailable.
+        Unauthorized: If the request signature is invalid.
     """
 
     if not all(

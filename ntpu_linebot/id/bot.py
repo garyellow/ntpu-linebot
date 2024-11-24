@@ -34,7 +34,7 @@ from .util import (
     student_info_format,
 )
 
-SPILT_CHAR = "@"
+SPLIT_CHAR = "@"
 
 
 def college_postback(college_name: str, year: str) -> PostbackAction:
@@ -49,7 +49,7 @@ def college_postback(college_name: str, year: str) -> PostbackAction:
         PostbackAction: A postback action object that represents the college.
     """
 
-    data = f"{year}{SPILT_CHAR}{college_name}"
+    data = f"{year}{SPLIT_CHAR}{college_name}"
     return PostbackAction(
         label=college_name,
         displayText=college_name,
@@ -58,13 +58,16 @@ def college_postback(college_name: str, year: str) -> PostbackAction:
     )
 
 
-def department_postback(department_code: str, year: str) -> PostbackAction:
+def department_postback(
+    department_code: str, year: str, is_law: bool = False
+) -> PostbackAction:
     """
     Creates a postback action object for a department.
 
     Args:
         department_code (str): The code of the department.
         year (str): The year for which the action is being created.
+        is_law (bool): Optional parameter indicating if the department is a law department.
 
     Returns:
         PostbackAction: A postback action object that represents the department.
@@ -74,17 +77,17 @@ def department_postback(department_code: str, year: str) -> PostbackAction:
 
     display_text = f"搜尋{year}學年度"
 
-    if department_code[0:2] == DEPARTMENT_CODE["法律"]:
+    if is_law:
         display_text += "法律系"
 
     display_text += DEPARTMENT_NAME[department_code]
 
-    if department_code[0:2] == DEPARTMENT_CODE["法律"]:
+    if is_law:
         display_text += "組"
     else:
         display_text += "系"
 
-    data = f"{year}{SPILT_CHAR}{department_code}"
+    data = f"{year}{SPLIT_CHAR}{department_code}"
 
     return PostbackAction(
         label=full_name,
@@ -115,7 +118,9 @@ def choose_department_message(
 
     department_class = "組別" if is_law else "科系"
 
-    actions = [department_postback(DEPARTMENT_CODE[name], year) for name in departments]
+    actions = [
+        department_postback(DEPARTMENT_CODE[name], year, is_law) for name in departments
+    ]
 
     while len(actions) > 4 and len(actions) % 3 != 0:
         actions.append(EMPTY_POSTBACK_ACTION)
@@ -209,25 +214,25 @@ class IDBot(Bot):
         """處理文字訊息"""
 
         if payload == self.__ALL_DEPARTMENT_CODE:
-            students_info = "\n".join(
+            department_info = "\n".join(
                 [f"{x}系 -> {y}" for x, y in DEPARTMENT_CODE.items()]
             )
 
             return [
                 TextMessage(
-                    text=students_info,
+                    text=department_info,
                     sender=get_sender(self.__SENDER_NAME),
                     quoteToken=quote_token,
                 ),
             ]
 
-        if m := search(self.__DEPARTMENT_REGEX, payload, IGNORECASE):
-            criteria = m.group()
+        if match := search(self.__DEPARTMENT_REGEX, payload, IGNORECASE):
+            criteria = match.group()
 
-            if text := DEPARTMENT_CODE.get(criteria.rstrip("系")):
+            if department_code := DEPARTMENT_CODE.get(criteria.rstrip("系")):
                 return [
                     TextMessage(
-                        text=text,
+                        text=department_code,
                         quickReply=QuickReply(
                             items=[
                                 QuickReplyItem(
@@ -243,10 +248,10 @@ class IDBot(Bot):
                     ),
                 ]
 
-            if text := FULL_DEPARTMENT_CODE.get(criteria):
+            if full_department_code := FULL_DEPARTMENT_CODE.get(criteria):
                 return [
                     TextMessage(
-                        text=text,
+                        text=full_department_code,
                         quickReply=QuickReply(
                             items=[
                                 QuickReplyItem(
@@ -270,13 +275,13 @@ class IDBot(Bot):
                 ),
             ]
 
-        if m := search(self.__DEPARTMENT_CODE_REGEX, payload, IGNORECASE):
-            criteria = m.group()
+        if match := search(self.__DEPARTMENT_CODE_REGEX, payload, IGNORECASE):
+            criteria = match.group()
 
-            if text := FULL_DEPARTMENT_NAME.get(criteria):
+            if full_department_name := FULL_DEPARTMENT_NAME.get(criteria):
                 return [
                     TextMessage(
-                        text=text,
+                        text=full_department_name,
                         quickReply=QuickReply(
                             items=[
                                 QuickReplyItem(
@@ -300,8 +305,8 @@ class IDBot(Bot):
                 ),
             ]
 
-        if m := search(self.__YEAR_REGEX, payload, IGNORECASE):
-            criteria = m.group()
+        if match := search(self.__YEAR_REGEX, payload, IGNORECASE):
+            criteria = match.group()
 
             if 2 <= len(criteria) <= 4:
                 year = int(criteria) if int(criteria) < 1911 else int(criteria) - 1911
@@ -329,7 +334,7 @@ class IDBot(Bot):
                             previewImageUrl=image_url,
                             sender=sender,
                             quoteToken=quote_token,
-                        )
+                        ),
                     ]
                 if year < 90:
                     return [
@@ -357,7 +362,7 @@ class IDBot(Bot):
                                 PostbackAction(
                                     label="哪次不是",
                                     displayText="哪次不是",
-                                    data=f"{year}{SPILT_CHAR}搜尋全系",
+                                    data=f"{year}{SPLIT_CHAR}搜尋全系",
                                     inputOption="openRichMenu",
                                 ),
                                 PostbackAction(
@@ -380,11 +385,11 @@ class IDBot(Bot):
                 ),
             ]
 
-        if m := search(self.__STUDENT_REGEX, payload, IGNORECASE):
-            criteria = m.group()
+        if match := search(self.__STUDENT_REGEX, payload, IGNORECASE):
+            criteria = match.group()
 
             if criteria.isdecimal() and 8 <= len(criteria) <= 9:
-                if (student := await search_student_by_uid(criteria)) is None:
+                if (student_info := await search_student_by_uid(criteria)) is None:
                     return [
                         TextMessage(
                             text=f"學號 {criteria} 不存在OAO",
@@ -397,7 +402,7 @@ class IDBot(Bot):
                     TextMessage(
                         text=student_info_format(
                             criteria,
-                            student,
+                            student_info,
                             order=[Order.YEAR, Order.FULL_DEPARTMENT, Order.NAME],
                             space=2,
                         ),
@@ -430,7 +435,7 @@ class IDBot(Bot):
                                 action=PostbackAction(
                                     label=show_text,
                                     displayText=f"{show_text}",
-                                    data=f"{year}{SPILT_CHAR}{department}",
+                                    data=f"{year}{SPLIT_CHAR}{department}",
                                     inputOption="closeRichMenu",
                                 ),
                             ),
@@ -439,15 +444,15 @@ class IDBot(Bot):
 
                 return messages
 
-            if students := search_students_by_name(criteria):
-                students = sorted(students, key=lambda s: int(s[0]))[-500:]
+            if student_list := search_students_by_name(criteria):
+                student_list = sorted(student_list, key=lambda s: int(s[0]))[-500:]
 
-                messages = list[TextMessage]()
-                for i in range(0, ceil(len(students) / 100)):
+                messages: list[Message] = []
+                for i in range(0, ceil(len(student_list) / 100)):
                     students_info = "\n".join(
                         [
                             student_info_format(student_id, student_name)
-                            for student_id, student_name in students[
+                            for student_id, student_name in student_list[
                                 i * 100 : (i + 1) * 100
                             ]
                         ]
@@ -471,7 +476,7 @@ class IDBot(Bot):
                 ),
             ]
 
-        return list[Message]()
+        return []
 
     async def handle_postback_event(self, payload: str) -> list[Message]:
         """處理回傳事件"""
@@ -484,8 +489,8 @@ class IDBot(Bot):
                 ),
             ]
 
-        if SPILT_CHAR in payload:
-            year, data = payload.split(SPILT_CHAR)
+        if SPLIT_CHAR in payload:
+            year, data = payload.split(SPLIT_CHAR)
 
             if data == "搜尋全系":
                 return [
@@ -579,7 +584,7 @@ class IDBot(Bot):
                 )
             ]
 
-        return list[Message]()
+        return []
 
 
 ID_BOT = IDBot()

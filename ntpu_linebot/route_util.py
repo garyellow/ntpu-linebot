@@ -34,7 +34,7 @@ async def handle_text_message(event: MessageEvent) -> None:
     if payload == "":
         return
 
-    messages = list[Message]()
+    messages: list[Message] = []
     if payload in __HELP_COMMANDS:
         messages += instruction()
 
@@ -61,7 +61,7 @@ async def handle_postback_event(event: PostbackEvent) -> None:
 
     payload = event.postback.data
 
-    messages = list[Message]()
+    messages: list[Message] = []
     if payload in __HELP_COMMANDS:
         messages += instruction()
 
@@ -123,7 +123,7 @@ async def handle_follow_join_event(
             sender=mes_sender,
         ),
         TextMessage(
-           text="資料來源：國立臺北大學\n數位學苑2.0(已無新資料)\n校園聯絡簿\n課程查詢系統",
+            text="資料來源：國立臺北大學\n數位學苑2.0(已無新資料)\n校園聯絡簿\n課程查詢系統",
             sender=mes_sender,
         ),
     ]

@@ -21,7 +21,7 @@ from ..normal_util import list_to_regex, partition
 from .contact import Contact, Individual, Organization
 from .util import search_contacts_by_criteria, search_contacts_by_name
 
-SPILT_CHAR = "#"
+SPLIT_CHAR = "#"
 
 
 def generate_individual_carousel_column(
@@ -40,7 +40,7 @@ def generate_individual_carousel_column(
     """
 
     texts = [f"{individual.organization} {individual.title}"]
-    actions = list[Action]()
+    actions: list[Action] = []
 
     if extension := individual.extension:
         texts.append(f"分機號碼: {extension}")
@@ -93,7 +93,7 @@ def generate_individual_carousel_column(
             PostbackAction(
                 label="查看更多",
                 displayText=f"搜尋 {individual.name} 的更多資訊",
-                data=f"查看更多{SPILT_CHAR}{individual.name}",
+                data=f"查看更多{SPLIT_CHAR}{individual.name}",
             )
         )
     else:
@@ -101,7 +101,7 @@ def generate_individual_carousel_column(
             PostbackAction(
                 label="授課課程",
                 displayText=f"搜尋 {individual.name} 的授課課程",
-                data=f"授課課程{SPILT_CHAR}{individual.name}",
+                data=f"授課課程{SPLIT_CHAR}{individual.name}",
             )
         )
 
@@ -130,8 +130,8 @@ def generate_organization_carousel_column(organization: Organization) -> Carouse
         CarouselColumn: The generated carousel column.
     """
 
-    texts = list[str]()
-    actions = list[Action]()
+    texts: list[str] = []
+    actions: list[Action] = []
 
     if superior := organization.superior:
         texts.append(f"上級單位: {superior}")
@@ -150,7 +150,7 @@ def generate_organization_carousel_column(organization: Organization) -> Carouse
         PostbackAction(
             label="查看成員",
             displayText=f"搜尋 {organization.name} 的成員",
-            data=f"查看成員{SPILT_CHAR}{organization.name}",
+            data=f"查看成員{SPLIT_CHAR}{organization.name}",
         )
     )
 
@@ -185,9 +185,9 @@ def generate_contact_templates(
 
     contacts = sorted(contacts, key=lambda c: isinstance(c, Organization))[:50]
 
-    templates = list[CarouselTemplate]()
+    templates: list[CarouselTemplate] = []
     for contact_group in partition(contacts, 10):
-        items = list[CarouselColumn]()
+        items: list[CarouselColumn] = []
         for contact in contact_group:
             if isinstance(contact, Individual):
                 items.append(generate_individual_carousel_column(contact, depth))
@@ -310,13 +310,13 @@ class ContactBot(Bot):
                 )
             ]
 
-        return list[Message]()
+        return []
 
     async def handle_postback_event(self, payload: str) -> list[Message]:
         """處理回傳事件"""
 
         if payload.startswith("查看更多"):
-            payload = payload.split(SPILT_CHAR)[1]
+            payload = payload.split(SPLIT_CHAR)[1]
 
             if contacts := search_contacts_by_name(payload):
                 return [
@@ -329,7 +329,7 @@ class ContactBot(Bot):
                 ]
 
         if payload.startswith("查看成員"):
-            payload = payload.split(SPILT_CHAR)[1]
+            payload = payload.split(SPLIT_CHAR)[1]
 
             if contacts := search_contacts_by_name(payload):
                 if isinstance(contact := contacts[0], Organization):
@@ -342,7 +342,7 @@ class ContactBot(Bot):
                         for template in generate_contact_templates(contact.members)
                     ]
 
-        return list[Message]()
+        return []
 
 
 CONTACT_BOT = ContactBot()

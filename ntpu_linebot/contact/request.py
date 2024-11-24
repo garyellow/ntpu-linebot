@@ -75,7 +75,7 @@ class ContactRequest:
             list[Contact]: A list of contacts, or throws an exception if the request fails.
         """
 
-        contacts = list[Contact]()
+        contacts: list[Contact] = []
         headers = {
             "User-Agent": self.__UA.random,
         }
@@ -102,7 +102,7 @@ class ContactRequest:
                     location = org_datas[2].text[5:]
                     website = org_datas[3].find("a").text
 
-                    members = list[Individual]()
+                    members: list[Individual] = []
                     member_data = organization.next_sibling.next_sibling
                     if member_data.get("class") == ["w100"]:
                         for data in member_data.find("tbody").find_all("tr"):
@@ -156,7 +156,7 @@ class ContactRequest:
             list[Contact]: A list of contact pages if found, otherwise throws an exception.
         """
 
-        contacts = list[Contact]()
+        contacts: list[Contact] = []
         headers = {
             "User-Agent": self.__UA.random,
         }
