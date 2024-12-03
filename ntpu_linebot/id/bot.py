@@ -249,7 +249,7 @@ class IDBot(Bot):
                                 PostbackAction(
                                     label="哪次不是",
                                     displayText="哪次不是",
-                                    data=f"{year}{self.split_char}搜尋全系",
+                                    data=f"搜尋全系{self.split_char}{year}",
                                     inputOption="openRichMenu",
                                 ),
                                 PostbackAction(
@@ -377,7 +377,7 @@ class IDBot(Bot):
             ]
 
         if self.split_char in payload:
-            year, data = payload.split(self.split_char)
+            data, year = payload.split(self.split_char)
 
             if data == "搜尋全系":
                 return [
@@ -464,12 +464,15 @@ class IDBot(Bot):
                     )
                 ]
 
-            return [
-                TextMessage(
-                    text=await search_students_by_year_and_department(int(year), data),
-                    sender=get_sender(self.__SENDER_NAME),
-                )
-            ]
+            if data in DEPARTMENT_NAME:
+                return [
+                    TextMessage(
+                        text=await search_students_by_year_and_department(
+                            int(year), data
+                        ),
+                        sender=get_sender(self.__SENDER_NAME),
+                    )
+                ]
 
         return []
 
@@ -485,7 +488,7 @@ class IDBot(Bot):
             PostbackAction: A postback action object that represents the college.
         """
 
-        data = f"{year}{self.split_char}{college_name}"
+        data = f"{college_name}{self.split_char}{year}"
         return PostbackAction(
             label=college_name,
             displayText=college_name,
