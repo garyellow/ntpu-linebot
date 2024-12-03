@@ -21,189 +21,6 @@ from ..normal_util import list_to_regex, partition
 from .contact import Contact, Individual, Organization
 from .util import search_contacts_by_criteria, search_contacts_by_name
 
-SPLIT_CHAR = "#"
-
-
-def generate_individual_carousel_column(
-    individual: Individual,
-    depth: bool = False,
-) -> CarouselColumn:
-    """
-    Generates a carousel column for an individual with their organization, title, extension, phone, email, and actions.
-
-    Args:
-        individual (Individual): The individual for whom the carousel column is generated.
-        depth (bool, optional): Flag to indicate whether to include depth actions. Defaults to False.
-
-    Returns:
-        CarouselColumn: The generated carousel column.
-    """
-
-    texts = [f"{individual.organization} {individual.title}"]
-    actions: list[Action] = []
-
-    if extension := individual.extension:
-        texts.append(f"分機號碼: {extension}")
-
-    if not depth and (phone := individual.phone):
-        actions.append(
-            ClipboardAction(
-                label="複製電話(含分機)",
-                clipboardText=phone,
-            )
-        )
-
-    if depth and (phone_url := individual.phone_url):
-        actions.append(
-            URIAction(
-                label=f"打電話給 {individual.name}"[:20],
-                uri=phone_url,
-            )
-        )
-
-    if len(actions) == 0 and (extension := individual.extension):
-        actions.append(
-            ClipboardAction(
-                label="複製分機號碼",
-                clipboardText=extension,
-            )
-        )
-
-    if email := individual.email:
-        texts.append(f"電子郵件: {email}")
-
-    if not depth and (email := individual.email):
-        actions.append(
-            ClipboardAction(
-                label="複製電子郵件",
-                clipboardText=email,
-            )
-        )
-
-    if depth and (email_url := individual.email_url):
-        actions.append(
-            URIAction(
-                label=f"寄信給 {individual.name}"[:20],
-                uri=email_url,
-            )
-        )
-
-    if not depth:
-        actions.append(
-            PostbackAction(
-                label="查看更多",
-                displayText=f"搜尋 {individual.name} 的更多資訊",
-                data=f"查看更多{SPLIT_CHAR}{individual.name}",
-            )
-        )
-    else:
-        actions.append(
-            PostbackAction(
-                label="授課課程",
-                displayText=f"搜尋 {individual.name} 的授課課程",
-                data=f"授課課程{SPLIT_CHAR}{individual.name}",
-            )
-        )
-
-    default_action = (
-        URIAction(label="搜尋連結", uri=individual.search_url)
-        if individual.search_url
-        else None
-    )
-
-    return CarouselColumn(
-        title=individual.name,
-        text=text if len(text := "\n".join(texts)) <= 60 else text[:59] + "…",
-        defaultAction=default_action,
-        actions=actions,
-    )
-
-
-def generate_organization_carousel_column(organization: Organization) -> CarouselColumn:
-    """
-    Generates a carousel column for the organization with the specified information.
-
-    Args:
-        organization (Organization): The organization for which the carousel column is generated.
-
-    Returns:
-        CarouselColumn: The generated carousel column.
-    """
-
-    texts: list[str] = []
-    actions: list[Action] = []
-
-    if superior := organization.superior:
-        texts.append(f"上級單位: {superior}")
-
-    if website := organization.website:
-        texts.append(f"網站網址: {website}")
-
-        actions.append(
-            URIAction(
-                label="查看網站",
-                uri=website,
-            )
-        )
-
-    actions.append(
-        PostbackAction(
-            label="查看成員",
-            displayText=f"搜尋 {organization.name} 的成員",
-            data=f"查看成員{SPLIT_CHAR}{organization.name}",
-        )
-    )
-
-    default_action = (
-        URIAction(label="搜尋連結", uri=organization.search_url)
-        if organization.search_url
-        else None
-    )
-
-    return CarouselColumn(
-        title=organization.name,
-        text=text if len(text := "\n".join(texts)) <= 60 else text[:59] + "…",
-        defaultAction=default_action,
-        actions=actions,
-    )
-
-
-def generate_contact_templates(
-    contacts: Sequence[Contact],
-    depth: bool = False,
-) -> list[CarouselTemplate]:
-    """
-    Generate contact templates based on the provided contacts and depth flag.
-
-    Parameters:
-        contacts (Sequence[Contact]): The list of contacts to generate templates for.
-        depth (bool, optional): Flag to indicate whether to include depth. Defaults to False.
-
-    Returns:
-        list[CarouselTemplate]: The list of generated carousel templates.
-    """
-
-    contacts = sorted(contacts, key=lambda c: isinstance(c, Organization))[:50]
-
-    templates: list[CarouselTemplate] = []
-    for contact_group in partition(contacts, 10):
-        items: list[CarouselColumn] = []
-        for contact in contact_group:
-            if isinstance(contact, Individual):
-                items.append(generate_individual_carousel_column(contact, depth))
-
-            if isinstance(contact, Organization):
-                items.append(generate_organization_carousel_column(contact))
-
-        max_action_cnt = max(len(i.actions) for i in items)
-        for i in items:
-            while len(i.actions) < max_action_cnt:
-                i.actions.append(EMPTY_POSTBACK_ACTION)
-
-        templates.append(CarouselTemplate(columns=items))
-
-    return templates
-
 
 class ContactBot(Bot):
     __SENDER_NAME = "聯繫魔法師"
@@ -221,6 +38,14 @@ class ContactBot(Bot):
         "連絡方式",
     ]
     __CONTACT_REGEX = list_to_regex(__VALID_CONTACT_STR)
+
+    @property
+    def __sender_name(self) -> str:
+        return self.__SENDER_NAME
+
+    @property
+    def __contact_regex(self):
+        return self.__CONTACT_REGEX
 
     async def handle_text_message(
         self,
@@ -275,21 +100,21 @@ class ContactBot(Bot):
                             ),
                         ],
                     ),
-                    sender=get_sender(self.__SENDER_NAME),
+                    sender=get_sender(self.__sender_name),
                 )
             ]
 
-        if m := search(self.__CONTACT_REGEX, payload, IGNORECASE):
+        if m := search(self.__contact_regex, payload, IGNORECASE):
             criteria = m.group()
 
             if contacts := search_contacts_by_name(criteria):
                 return [
                     TemplateMessage(
-                        altText="搜尋結果",
+                        altText="�����結果",
                         template=template,
-                        sender=get_sender(self.__SENDER_NAME),
+                        sender=get_sender(self.__sender_name),
                     )
-                    for template in generate_contact_templates(contacts)
+                    for template in self.__generate_contact_templates(contacts)
                 ]
 
             if contacts := await search_contacts_by_criteria(criteria):
@@ -297,15 +122,15 @@ class ContactBot(Bot):
                     TemplateMessage(
                         altText="搜尋結果",
                         template=template,
-                        sender=get_sender(self.__SENDER_NAME),
+                        sender=get_sender(self.__sender_name),
                     )
-                    for template in generate_contact_templates(contacts)
+                    for template in self.__generate_contact_templates(contacts)
                 ]
 
             return [
                 TextMessage(
                     text=f"查無含有「{criteria}」的聯絡資料",
-                    sender=get_sender(self.__SENDER_NAME),
+                    sender=get_sender(self.__sender_name),
                     quoteToken=quote_token,
                 )
             ]
@@ -316,20 +141,20 @@ class ContactBot(Bot):
         """處理回傳事件"""
 
         if payload.startswith("查看更多"):
-            payload = payload.split(SPLIT_CHAR)[1]
+            payload = payload.split(self.split_char)[1]
 
             if contacts := search_contacts_by_name(payload):
                 return [
                     TemplateMessage(
                         altText="更多資訊",
                         template=template,
-                        sender=get_sender(self.__SENDER_NAME),
+                        sender=get_sender(self.__sender_name),
                     )
-                    for template in generate_contact_templates(contacts, True)
+                    for template in self.__generate_contact_templates(contacts, True)
                 ]
 
         if payload.startswith("查看成員"):
-            payload = payload.split(SPLIT_CHAR)[1]
+            payload = payload.split(self.split_char)[1]
 
             if contacts := search_contacts_by_name(payload):
                 if isinstance(contact := contacts[0], Organization):
@@ -337,12 +162,199 @@ class ContactBot(Bot):
                         TemplateMessage(
                             altText="成員清單",
                             template=template,
-                            sender=get_sender(self.__SENDER_NAME),
+                            sender=get_sender(self.__sender_name),
                         )
-                        for template in generate_contact_templates(contact.members)
+                        for template in self.__generate_contact_templates(
+                            contact.members
+                        )
                     ]
 
         return []
+
+    def __generate_individual_carousel_column(
+        self,
+        individual: Individual,
+        depth: bool = False,
+    ) -> CarouselColumn:
+        """
+        Generates a carousel column for an individual with their organization, title, extension, phone, email, and actions.
+
+        Args:
+            individual (Individual): The individual for whom the carousel column is generated.
+            depth (bool, optional): Flag to indicate whether to include depth actions. Defaults to False.
+
+        Returns:
+            CarouselColumn: The generated carousel column.
+        """
+
+        texts = [f"{individual.organization} {individual.title}"]
+        actions: list[Action] = []
+
+        if extension := individual.extension:
+            texts.append(f"分機號碼: {extension}")
+
+        if not depth and (phone := individual.phone):
+            actions.append(
+                ClipboardAction(
+                    label="複製電話(含分機)",
+                    clipboardText=phone,
+                )
+            )
+
+        if depth and (phone_url := individual.phone_url):
+            actions.append(
+                URIAction(
+                    label=f"打電話給 {individual.name}"[:20],
+                    uri=phone_url,
+                )
+            )
+
+        if len(actions) == 0 and (extension := individual.extension):
+            actions.append(
+                ClipboardAction(
+                    label="複製分機號碼",
+                    clipboardText=extension,
+                )
+            )
+
+        if email := individual.email:
+            texts.append(f"電子郵件: {email}")
+
+        if not depth and (email := individual.email):
+            actions.append(
+                ClipboardAction(
+                    label="複製電子郵件",
+                    clipboardText=email,
+                )
+            )
+
+        if depth and (email_url := individual.email_url):
+            actions.append(
+                URIAction(
+                    label=f"寄信給 {individual.name}"[:20],
+                    uri=email_url,
+                )
+            )
+
+        if not depth:
+            actions.append(
+                PostbackAction(
+                    label="查看更多",
+                    displayText=f"搜尋 {individual.name} 的更多資訊",
+                    data=f"查��更多{self.split_char}{individual.name}",
+                )
+            )
+        else:
+            actions.append(
+                PostbackAction(
+                    label="授課課程",
+                    displayText=f"搜尋 {individual.name} 的授課課程",
+                    data=f"授課課程{self.split_char}{individual.name}",
+                )
+            )
+
+        default_action = (
+            URIAction(label="搜尋連結", uri=individual.search_url)
+            if individual.search_url
+            else None
+        )
+
+        return CarouselColumn(
+            title=individual.name,
+            text=text if len(text := "\n".join(texts)) <= 60 else text[:59] + "…",
+            defaultAction=default_action,
+            actions=actions,
+        )
+
+    def __generate_organization_carousel_column(
+        self,
+        organization: Organization,
+    ) -> CarouselColumn:
+        """
+        Generates a carousel column for the organization with the specified information.
+
+        Args:
+            organization (Organization): The organization for which the carousel column is generated.
+
+        Returns:
+            CarouselColumn: The generated carousel column.
+        """
+
+        texts: list[str] = []
+        actions: list[Action] = []
+
+        if superior := organization.superior:
+            texts.append(f"上級單位: {superior}")
+
+        if website := organization.website:
+            texts.append(f"網站網址: {website}")
+
+            actions.append(
+                URIAction(
+                    label="查看網站",
+                    uri=website,
+                )
+            )
+
+        actions.append(
+            PostbackAction(
+                label="查看成員",
+                displayText=f"搜尋 {organization.name} 的成員",
+                data=f"查看成員{self.split_char}{organization.name}",
+            )
+        )
+
+        default_action = (
+            URIAction(label="搜尋連結", uri=organization.search_url)
+            if organization.search_url
+            else None
+        )
+
+        return CarouselColumn(
+            title=organization.name,
+            text=text if len(text := "\n".join(texts)) <= 60 else text[:59] + "…",
+            defaultAction=default_action,
+            actions=actions,
+        )
+
+    def __generate_contact_templates(
+        self,
+        contacts: Sequence[Contact],
+        depth: bool = False,
+    ) -> list[CarouselTemplate]:
+        """
+        Generate contact templates based on the provided contacts and depth flag.
+
+        Parameters:
+            contacts (Sequence[Contact]): The list of contacts to generate templates for.
+            depth (bool, optional): Flag to indicate whether to include depth. Defaults to False.
+
+        Returns:
+            list[CarouselTemplate]: The list of generated carousel templates.
+        """
+
+        contacts = sorted(contacts, key=lambda c: isinstance(c, Organization))[:50]
+
+        templates: list[CarouselTemplate] = []
+        for contact_group in partition(contacts, 10):
+            items: list[CarouselColumn] = []
+            for contact in contact_group:
+                if isinstance(contact, Individual):
+                    items.append(
+                        self.__generate_individual_carousel_column(contact, depth)
+                    )
+
+                if isinstance(contact, Organization):
+                    items.append(self.__generate_organization_carousel_column(contact))
+
+            max_action_cnt = max(len(i.actions) for i in items)
+            for i in items:
+                while len(i.actions) < max_action_cnt:
+                    i.actions.append(EMPTY_POSTBACK_ACTION)
+
+            templates.append(CarouselTemplate(columns=items))
+
+        return templates
 
 
 CONTACT_BOT = ContactBot()
