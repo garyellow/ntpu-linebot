@@ -1,4 +1,5 @@
 # -*- coding:utf-8 -*-
+from random import sample
 from re import IGNORECASE, fullmatch, match, search
 from typing import Optional
 
@@ -14,7 +15,6 @@ from linebot.v3.messaging.models import (
 )
 
 from ..abs_bot import Bot
-from ..contact.bot import SPLIT_CHAR as CONTACT_SPLIT_CHAR
 from ..line_bot_util import EMPTY_POSTBACK_ACTION, get_sender
 from ..normal_util import list_to_regex
 from .course import ALL_COURSE_CODE, Course, SimpleCourse
@@ -23,101 +23,6 @@ from .util import (
     search_course_by_uid,
     search_simple_courses_by_criteria_and_kind,
 )
-
-
-def course_info_message(course: Course) -> ButtonsTemplate:
-    """
-    Generate message containing course information and actions for the LINE chatbot.
-
-    Args:
-        course (Course): The course object containing information about the course.
-
-    Returns:
-        ButtonsTemplate: The message template containing course information and actions.
-    """
-
-    actions = [
-        URIAction(label="課程大綱", uri=course.detail_url),
-        *[
-            URIAction(label=f"教師課表({name})", uri=url)
-            for (name, url) in course.teachers_name_url
-        ],
-        URIAction(label="課程查詢系統", uri=course.course_query_url),
-    ]
-
-    texts = [
-        f"教師：{', '.join(course.teachers)}",
-        f"時間：{', '.join(course.times)}",
-        f"地點：{', '.join(course.locations)}",
-    ]
-
-    if course.note:
-        texts.append(f"\n備註：{course.note}")
-
-    if len(text := "\n".join(texts)) > 60:
-        text = text[:59] + "…"
-
-    return ButtonsTemplate(title=course.title, text=text, actions=actions)
-
-
-def generate_course_text(course: SimpleCourse) -> str:
-    """
-    Generate a text representation of the given SimpleCourse object.
-
-    Args:
-        course (SimpleCourse): The SimpleCourse object for which to generate the text.
-
-    Returns:
-        str: The text representation of the SimpleCourse object.
-    """
-
-    texts = [
-        f"課程：{course.title if len(course.title) <= 15 else course.title[:14] + '…'}",
-        f"教師：{', '.join(course.teachers)}",
-        f"時間：{course.year}"
-        + ("上" if course.term == 1 else "下")
-        + f" {', '.join(course.times)}",
-    ]
-
-    if len(text := "\n".join(texts)) > 34:
-        text = text[:33] + "…"
-
-    return text
-
-
-def choose_course_message(courses: list[SimpleCourse]) -> CarouselTemplate:
-    """
-    Generates a carousel template with the details of the given courses for the LINE chatbot.
-
-    Args:
-        courses (list[SimpleCourse]): The list of courses to be displayed in the carousel.
-
-    Returns:
-        CarouselTemplate: The carousel template containing the course details for display.
-    """
-
-    texts = [generate_course_text(course) for course in courses]
-    actions = [
-        PostbackAction(
-            label=course.title,
-            displayText=f"查詢 {course.title} 的課程資訊",
-            data=course.uid,
-        )
-        for course in courses
-    ]
-
-    while len(actions) % 3 != 0:
-        actions.append(EMPTY_POSTBACK_ACTION)
-
-    return CarouselTemplate(
-        columns=[
-            CarouselColumn(
-                text="選擇要查詢的課程：\n\n" + "\n\n".join(texts[i * 3 : (i + 1) * 3]),
-                actions=actions[i * 3 : (i + 1) * 3],
-            )
-            for i in range(len(actions) // 3)
-        ]
-    )
 
 
 class CourseBot(Bot):
@@ -180,7 +85,7 @@ class CourseBot(Bot):
                 return [
                     TemplateMessage(
                         altText="請選擇要查詢的課程",
-                        template=choose_course_message(courses),
+                        template=self.__choose_course_message(courses),
                         sender=get_sender(self.__SENDER_NAME),
                     )
                 ]
@@ -207,7 +112,7 @@ class CourseBot(Bot):
         """處理回傳事件"""
 
         if payload.startswith("授課課程"):
-            payload = payload.split(CONTACT_SPLIT_CHAR)[1]
+            payload = payload.split(self.split_char)[1]
 
             if courses := search_simple_courses_by_criteria_and_kind(
                 payload,
@@ -216,7 +121,7 @@ class CourseBot(Bot):
                 return [
                     TemplateMessage(
                         altText="請選擇要查詢的課程",
-                        template=choose_course_message(courses),
+                        template=self.__choose_course_message(courses),
                         sender=get_sender(self.__SENDER_NAME),
                     )
                 ]
@@ -233,7 +138,7 @@ class CourseBot(Bot):
                 return [
                     TemplateMessage(
                         altText=f"{course.title}的課程資訊",
-                        template=course_info_message(course),
+                        template=self.__course_info_message(course),
                         sender=get_sender(self.__SENDER_NAME),
                     )
                 ]
@@ -246,6 +151,112 @@ class CourseBot(Bot):
             ]
 
         return []
+
+    def __course_info_message(self, course: Course) -> ButtonsTemplate:
+        """
+        Generate message containing course information and actions for the LINE chatbot.
+
+        Args:
+            course (Course): The course object containing information about the course.
+
+        Returns:
+            ButtonsTemplate: The message template containing course information and actions.
+        """
+
+        teacher_actions = [
+            URIAction(label=f"教師課表({name})", uri=url)
+            for (name, url) in course.teachers_name_url
+        ]
+
+        if len(teacher_actions) == 1:
+            teacher_actions.append(
+                PostbackAction(
+                    label="查看教師資訊",
+                    data=f"查看資訊{self.split_char}{course.teachers[0]}",
+                )
+            )
+
+        elif len(teacher_actions) > 2:
+            teacher_actions = sample(teacher_actions, 2)
+
+        actions = [
+            URIAction(label="課程大綱", uri=course.detail_url),
+            URIAction(label="課程查詢系統", uri=course.course_query_url),
+            *teacher_actions,
+        ]
+
+        texts = [
+            f"教師：{', '.join(course.teachers)}",
+            f"時間：{', '.join(course.times)}",
+            f"地點：{', '.join(course.locations)}",
+        ]
+
+        if course.note:
+            texts.append(f"\n備註：{course.note}")
+
+        if len(text := "\n".join(texts)) > 60:
+            text = text[:59] + "…"
+
+        return ButtonsTemplate(title=course.title, text=text, actions=actions)
+
+    def __generate_course_text(self, course: SimpleCourse) -> str:
+        """
+        Generate a text representation of the given SimpleCourse object.
+
+        Args:
+            course (SimpleCourse): The SimpleCourse object for which to generate the text.
+
+        Returns:
+            str: The text representation of the SimpleCourse object.
+        """
+
+        texts = [
+            f"課程：{course.title if len(course.title) <= 15 else course.title[:14] + '…'}",
+            f"教師：{', '.join(course.teachers)}",
+            f"時間：{course.year}"
+            + ("上" if course.term == 1 else "下")
+            + f" {', '.join(course.times)}",
+        ]
+
+        if len(text := "\n".join(texts)) > 34:
+            text = text[:33] + "…"
+
+        return text
+
+    def __choose_course_message(self, courses: list[SimpleCourse]) -> CarouselTemplate:
+        """
+        Generates a carousel template with the details of the given courses for the LINE chatbot.
+
+        Args:
+            courses (list[SimpleCourse]): The list of courses to be displayed in the carousel.
+
+        Returns:
+            CarouselTemplate: The carousel template containing the course details for display.
+        """
+
+        texts = [self.__generate_course_text(course) for course in courses]
+        actions = [
+            PostbackAction(
+                label=course.title,
+                displayText=f"查詢 {course.title} 的課程資訊",
+                data=course.uid,
+            )
+            for course in courses
+        ]
+
+        while len(actions) % 3 != 0:
+            actions.append(EMPTY_POSTBACK_ACTION)
+
+        return CarouselTemplate(
+            columns=[
+                CarouselColumn(
+                    text="選擇要查詢的課程：\n\n"
+                    + "\n\n".join(texts[i * 3 : (i + 1) * 3]),
+                    actions=actions[i * 3 : (i + 1) * 3],
+                )
+                for i in range(len(actions) // 3)
+            ]
+        )
 
 
 COURSE_BOT = CourseBot()

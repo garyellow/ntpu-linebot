@@ -5,7 +5,7 @@ from typing import Optional
 
 from sanic import Sanic
 
-from ntpu_linebot.contact.contact import Contact, Organization
+from ntpu_linebot.contact.contact import Contact, Individual, Organization
 
 from .request import CONTACT_REQUEST
 
@@ -74,7 +74,8 @@ def search_contacts_by_name(name: str) -> list[Contact]:
     return [
         contact
         for contact in CONTACT_REQUEST.CONTACT_DICT.values()
-        if name == contact.name
+        if isinstance(contact, Individual)
+        and name == contact.name
         or isinstance(contact, Organization)
         and name == contact.superior
     ]

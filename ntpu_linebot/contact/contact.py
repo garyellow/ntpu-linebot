@@ -43,7 +43,7 @@ class Individual(Contact):
         extension: str,
         email: str,
     ) -> None:
-        super().__init__(organization + name, name)
+        super().__init__(organization + title + name, name)
         self.__organization = organization
         self.__title = title
         self.__extension = extension

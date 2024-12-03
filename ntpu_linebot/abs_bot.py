@@ -1,12 +1,18 @@
 # -*- coding:utf-8 -*-
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import Optional
 
 from linebot.v3.messaging.models import Message
 
 
-class Bot:
+class Bot(ABC):
     """Abstract class for creating bots"""
+
+    @property
+    def split_char(self) -> str:
+        """Split character used by the bot"""
+
+        return "$"
 
     @abstractmethod
     async def handle_text_message(
