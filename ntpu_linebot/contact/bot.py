@@ -181,7 +181,9 @@ class ContactBot(Bot):
                             template=template,
                             sender=get_sender(self.__sender_name),
                         )
-                        for template in self.__generate_contact_templates(individual_contacts)
+                        for template in self.__generate_contact_templates(
+                            individual_contacts
+                        )
                     ]
 
         return []
