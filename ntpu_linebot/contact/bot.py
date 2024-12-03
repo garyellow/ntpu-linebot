@@ -169,6 +169,21 @@ class ContactBot(Bot):
                         )
                     ]
 
+        if payload.startswith("查看資訊"):
+            payload = payload.split(self.split_char)[1]
+
+            if contacts := search_contacts_by_name(payload):
+                individual_contacts = [c for c in contacts if isinstance(c, Individual)]
+                if individual_contacts:
+                    return [
+                        TemplateMessage(
+                            altText="更多資訊",
+                            template=template,
+                            sender=get_sender(self.__sender_name),
+                        )
+                        for template in self.__generate_contact_templates(individual_contacts)
+                    ]
+
         return []
 
     def __generate_individual_carousel_column(

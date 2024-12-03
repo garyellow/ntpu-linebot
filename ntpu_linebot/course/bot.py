@@ -1,4 +1,5 @@
 # -*- coding:utf-8 -*-
+from random import sample
 from re import IGNORECASE, fullmatch, match, search
 from typing import Optional
 
@@ -162,13 +163,26 @@ class CourseBot(Bot):
             ButtonsTemplate: The message template containing course information and actions.
         """
 
+        teacher_actions = [
+            URIAction(label=f"教師課表({name})", uri=url)
+            for (name, url) in course.teachers_name_url
+        ]
+
+        if len(teacher_actions) == 1:
+            teacher_actions.append(
+                PostbackAction(
+                    label="查看教師資訊",
+                    data=f"查看資訊{self.split_char}{course.teachers[0]}",
+                )
+            )
+
+        elif len(teacher_actions) > 2:
+            teacher_actions = sample(teacher_actions, 2)
+
         actions = [
             URIAction(label="課程大綱", uri=course.detail_url),
-            *[
-                URIAction(label=f"教師課表({name})", uri=url)
-                for (name, url) in course.teachers_name_url
-            ],
             URIAction(label="課程查詢系統", uri=course.course_query_url),
+            *teacher_actions,
         ]
 
         texts = [
