@@ -40,6 +40,6 @@ RUN \
     # Install oh-my-posh and set theme
     if [ "${OH_MY_POSH}" = "1" ]; then \
     curl -fsSL https://ohmyposh.dev/install.sh | bash && \
-    echo 'eval "$(oh-my-posh init bash --config .devcontainer/theme.omp.json)"' >> ${BASHRC_PATH}; \
-    echo 'eval "$(oh-my-posh init zsh --config .devcontainer/theme.omp.json)"' >> ${ZSHRC_PATH}; \
+    echo 'eval "$(oh-my-posh init bash --config https://raw.githubusercontent.com/garyellow/omp-config/refs/heads/main/theme.omp.yaml)"' >> ${BASHRC_PATH}; \
+    echo 'eval "$(oh-my-posh init zsh --config https://raw.githubusercontent.com/garyellow/omp-config/refs/heads/main/theme.omp.yaml)"' >> ${ZSHRC_PATH}; \
     fi
