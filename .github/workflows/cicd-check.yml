@@ -58,23 +58,27 @@ jobs:
               "imagePath": "ghcr.io/${{ github.repository }}:preview"
             }
 
-      - name: Wait for Deployment to Finish
+      - name: Wait for Deployment
         id: check
         run: |
-          while true; do
+          for i in {1..20}; do
+            status=$(curl -sSL \
+              -H "authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+              "https://api.render.com/v1/services/${{ fromJson(steps.render.outputs.response).service.id }}/deploys/${{ fromJson(steps.render.outputs.response).deployId }}" \
+              | jq -r .status)
+
+            [[ $status != *"_in_progress" ]] && {
+              echo "status=$status" >> "$GITHUB_OUTPUT"
+              [[ $status == *"fail"* ]] && exit 1
+              exit 0
+            }
+
+            echo "Checking deployment status: attempt $i/20..."
             sleep 15
-
-            response=$(curl -sSL https://api.render.com/v1/services/${{ fromJson(steps.render.outputs.response).service.id }}/deploys/${{ fromJson(steps.render.outputs.response).deployId }} -H 'authorization: Bearer ${{ secrets.RENDER_API_KEY }}')
-
-            if [[ $(echo $response | jq -r .status) != *_in_progress ]]; then
-              echo "status=$(echo $response | jq -r .status)" >> "$GITHUB_OUTPUT"
-              break
-            fi
           done
 
-      - if: steps.check.outputs.status != 'live'
-        name: Make Failure
-        run: exit 1
+          echo "Deployment timed out after 5 minutes"
+          exit 1
 
   cleanup:
     name: DELETE PREVIEW SERVICE

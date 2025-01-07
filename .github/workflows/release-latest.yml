@@ -18,6 +18,10 @@ on:
       - Dockerfile
       - .github/workflows/*.yml
 
+concurrency:
+  group: release-latest
+  cancel-in-progress: true
+
 jobs:
   release:
     name: RELEASE LATEST IMAGE TO REGISTRY
