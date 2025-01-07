@@ -1,5 +1,5 @@
 # 第一階段：安裝 poetry 並建立套件清單
-FROM python:3.12-alpine AS builder
+FROM python:3.13-alpine AS builder
 
 # 安裝 poetry
 RUN pip install poetry poetry-plugin-export
@@ -15,7 +15,7 @@ RUN poetry export -f requirements.txt --output requirements.txt --without-hashes
 RUN pip wheel --no-cache-dir --no-deps --wheel-dir wheels -r requirements.txt
 
 # 第二階段：建立執行環境
-FROM python:3.12-alpine AS runner
+FROM python:3.13-alpine AS runner
 
 # 設定 LABEL
 LABEL org.opencontainers.image.title="ntpu-linebot"
