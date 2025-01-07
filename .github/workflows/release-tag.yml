@@ -13,6 +13,10 @@ on:
       - 'v[0-9]+.[0-9]+'
       - 'v[0-9]+.[0-9]+.[0-9]+'
 
+concurrency:
+  group: ${{ github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
   release:
     name: RELEASE SPECIFIC IMAGE TO REGISTRY

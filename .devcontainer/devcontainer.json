@@ -4,7 +4,7 @@
 	"build": {
 		"dockerfile": "Dockerfile",
 		"args": {
-			"VARIANT": "3.12",
+			"VARIANT": "3.13",
 			"DOCKER_IN_DOCKER": "1",
 			"OH_MY_POSH": "0" // Requires Nerd fonts(https://www.nerdfonts.com/font-downloads), set to 1 to enable
 		}
