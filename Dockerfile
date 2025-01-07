@@ -2,7 +2,7 @@
 FROM python:3.12-alpine AS builder
 
 # 安裝 poetry
-RUN pip install poetry
+RUN pip install poetry poetry-plugin-export
 
 # 將 pyproject.toml 和 poetry.lock(如果有) 複製到容器中
 COPY pyproject.toml poetry.lock* ./
