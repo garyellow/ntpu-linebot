@@ -83,7 +83,6 @@ jobs:
   cleanup:
     name: DELETE PREVIEW SERVICE
     runs-on: ubuntu-latest
-    needs: cd
 
     steps:
       - name: Get Render Preview services
