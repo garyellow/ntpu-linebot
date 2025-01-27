@@ -17,6 +17,7 @@ class StickerUtil:
         "https://spy-family.net/tvseries/special/special3.php",
     ]
     __ICHIGO_PRODUCTION_URL = "https://ichigoproduction.com/special/present_icon.html"
+    __UA = UserAgent()
     STICKER_LIST: list[str] = []
 
     async def _fetch_spy_family_stickers(
@@ -36,7 +37,7 @@ class StickerUtil:
         stickers = []
         try:
             async with session.get(
-                url, headers={"User-Agent": UserAgent(browsers=["chrome", "safari"]).random}
+                url, headers={"User-Agent": self.__UA.random}
             ) as response:
                 if response.status == 200:
                     soup = Bs4(await response.text(), "lxml")
@@ -63,7 +64,7 @@ class StickerUtil:
         try:
             async with session.get(
                 self.__ICHIGO_PRODUCTION_URL,
-                headers={"User-Agent": UserAgent(browsers=["chrome", "safari"]).random},
+                headers={"User-Agent": self.__UA.random},
             ) as response:
                 if response.status == 200:
                     soup = Bs4(await response.text(), "lxml")

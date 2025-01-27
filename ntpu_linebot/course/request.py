@@ -97,7 +97,7 @@ class CourseRequest:
         "https://sea.cc.ntpu.edu.tw",
     ]
     __COURSE_QUERY_URL = "/pls/dev_stud/course_query_all.queryByKeyword"
-    __UA = UserAgent(browsers=["chrome", "safari"])
+    __UA = UserAgent()
     COURSE_DICT = dict[str, SimpleCourse]()
 
     async def check_url(self, url: Optional[str] = None) -> bool:
