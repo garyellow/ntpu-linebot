@@ -1,8 +1,8 @@
 # -*- coding:utf-8 -*-
-from asyncio import sleep
 from typing import Optional
 
 from aiohttp import ClientError, ClientSession
+from aiohttp.typedefs import LooseHeaders
 from asyncache import cached
 from bs4 import BeautifulSoup as Bs4
 from cachetools import TTLCache
@@ -71,18 +71,19 @@ class IDRequest:
         """
 
         url = self.__base_url + self.__STUDENT_SEARCH_URL
+        headers: LooseHeaders = {
+            "User-Agent": self.__UA.random,
+        }
+
         params = {
             "fmScope": "2",
             "page": "1",
             "fmKeyword": uid,
         }
-        headers = {
-            "User-Agent": self.__UA.random,
-        }
 
         try:
-            async with ClientSession() as session:
-                async with session.get(url, params=params, headers=headers) as res:
+            async with ClientSession(headers=headers) as session:
+                async with session.get(url, params=params) as res:
                     soup = Bs4(await res.text("utf-8"), "lxml")
 
             if student := soup.find("div", {"class": "bloglistTitle"}):
@@ -124,16 +125,14 @@ class IDRequest:
         }
 
         try:
-            async with ClientSession() as session:
-                async with session.get(url, params=params, headers=headers) as res:
+            async with ClientSession(headers=headers) as session:
+                async with session.get(url, params=params) as res:
                     data = Bs4(await res.text("utf-8"), "lxml")
                     pages = len(data.find_all("span", {"class": "item"}))
 
                 for i in range(1, pages):
-                    await sleep(0)
-
                     params["page"] = str(i)
-                    async with session.get(url, params=params, headers=headers) as res:
+                    async with session.get(url, params=params) as res:
                         data = Bs4(await res.text("utf-8"), "lxml")
 
                     for item in data.find_all("div", {"class": "bloglistTitle"}):
