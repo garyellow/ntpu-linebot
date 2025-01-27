@@ -103,7 +103,7 @@ class ContactRequest:
                     website = org_datas[3].find("a").text
 
                     members: list[Individual] = []
-                    member_data = organization.next_sibling
+                    member_data = organization.next_sibling.next_sibling
                     if member_data.get("class") == ["w100"]:
                         for data in member_data.find("tbody").find_all("tr"):
                             member_datas = data.find_all("td")
