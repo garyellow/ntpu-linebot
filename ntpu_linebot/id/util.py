@@ -190,7 +190,10 @@ async def load_student_dict() -> None:
     """Updates the student dict for each department and year."""
 
     cur_year = datetime.now().year - 1911
-    for year in range(cur_year, cur_year - 6, -1):
+    from_year = min(113, cur_year)
+    to_year = max(113, cur_year - 6)
+
+    for year in range(from_year, to_year - 5, -1):
         for dep in DEPARTMENT_CODE.values():
             await sleep(random.uniform(20, 40))
             await ID_REQUEST.get_students_by_year_and_department(year, dep)
