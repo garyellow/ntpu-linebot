@@ -138,7 +138,7 @@ class CourseRequest:
         self.__base_url = ""
         return False
 
-    @cached(TTLCache(maxsize=99, ttl=60 * 60 * 24 * 7))
+    @cached(TTLCache(maxsize=9, ttl=60 * 60 * 24 * 7))
     async def get_course_by_uid(self, uid: str) -> Course:
         """
         Asynchronously retrieves a course by UID from the specified URL and returns a Course object if found, otherwise returns None.

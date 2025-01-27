@@ -93,7 +93,7 @@ def instruction() -> list[TextMessage]:
 
     example_note = "\n".join(
         [
-            "P.S. 符號``中的部分是實際要輸入的",
+            "PS 符號``中的部分是實際要輸入的",
         ]
     )
 

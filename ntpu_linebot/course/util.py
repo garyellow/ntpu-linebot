@@ -41,8 +41,8 @@ async def load_course_dict() -> None:
     """Updates the course dict for each year."""
 
     cur_year = datetime.now().year - 1911
-    for year in range(cur_year, cur_year - 5, -1):
-        await sleep(random.uniform(10, 30))
+    for year in range(cur_year, cur_year - 3, -1):
+        await sleep(random.uniform(20, 40))
         await COURSE_REQUEST.get_simple_courses_by_year(year)
 
 
