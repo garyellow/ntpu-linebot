@@ -95,6 +95,8 @@ jobs:
         with:
           url: https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/preview
           bearerToken: ${{ secrets.RENDER_API_KEY }}
+          timeout: 30000
+          retry: 3
           data: |
             {
               "imagePath": "ghcr.io/${{ github.repository }}:${{ needs.fetch.outputs.head_ref }}"
