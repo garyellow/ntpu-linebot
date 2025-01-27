@@ -3,6 +3,7 @@ from re import search, sub
 from typing import Optional
 
 from aiohttp import ClientError, ClientSession
+from aiohttp.typedefs import LooseHeaders
 from asyncache import cached
 from bs4 import BeautifulSoup as Bs4
 from cachetools import TTLCache
@@ -151,6 +152,9 @@ class CourseRequest:
         """
 
         url = self.__base_url + self.__COURSE_QUERY_URL
+        headers: LooseHeaders = {
+            "User-Agent": self.__UA.random,
+        }
 
         is_over_99 = len(uid) == 9
         year = uid[: 2 + is_over_99]
@@ -164,14 +168,11 @@ class CourseRequest:
             "seq1": "A",
             "seq2": "M",
         }
-        headers = {
-            "User-Agent": self.__UA.random,
-        }
 
         try:
-            async with ClientSession() as session:
-                async with session.get(url, params=params, headers=headers) as res:
-                    soup = Bs4(await res.text(errors="ignore"), "lxml")
+            async with ClientSession(headers=headers) as session:
+                async with session.get(url, params=params) as res:
+                    soup = Bs4(await res.text(), "lxml")
 
             if table := soup.find("table"):
                 course_infos = table.find("tbody").find("tr")
@@ -222,22 +223,23 @@ class CourseRequest:
 
         courses = dict[str, SimpleCourse]()
         url = self.__base_url + self.__COURSE_QUERY_URL
+        headers = {
+            "User-Agent": self.__UA.random,
+        }
+
         params = {
             "qYear": str(year),
             "seq1": "A",
             "seq2": "M",
-        }
-        headers = {
-            "User-Agent": self.__UA.random,
         }
 
         for code in ALL_COURSE_CODE:
             params["courseno"] = code
 
             try:
-                async with ClientSession() as session:
-                    async with session.get(url, params=params, headers=headers) as res:
-                        soup = Bs4(await res.text(errors="ignore"), "lxml")
+                async with ClientSession(headers=headers) as session:
+                    async with session.get(url, params=params) as res:
+                        soup = Bs4(await res.text(), "lxml")
 
                 if table := soup.find("table"):
                     for course_info in table.find("tbody").find_all("tr"):

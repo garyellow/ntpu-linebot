@@ -36,11 +36,9 @@ class StickerUtil:
 
         stickers = []
         try:
-            async with session.get(
-                url, headers={"User-Agent": self.__UA.random}
-            ) as response:
-                if response.status == 200:
-                    soup = Bs4(await response.text(), "lxml")
+            async with session.get(url) as res:
+                if res.status == 200:
+                    soup = Bs4(await res.text(), "lxml")
                     for i in soup.select("ul.icondlLists > li > a"):
                         if href := i.get("href"):
                             stickers.append(
@@ -62,12 +60,9 @@ class StickerUtil:
 
         stickers = []
         try:
-            async with session.get(
-                self.__ICHIGO_PRODUCTION_URL,
-                headers={"User-Agent": self.__UA.random},
-            ) as response:
-                if response.status == 200:
-                    soup = Bs4(await response.text(), "lxml")
+            async with session.get(self.__ICHIGO_PRODUCTION_URL) as res:
+                if res.status == 200:
+                    soup = Bs4(await res.text(), "lxml")
                     for i in soup.select("ul.tp5 > li > div.ph > a"):
                         if href := i.get("href"):
                             stickers.append(f"https://ichigoproduction.com/{href[3:]}")
@@ -80,7 +75,10 @@ class StickerUtil:
     async def load_stickers(self) -> bool:
         """並行載入所有貼圖"""
 
-        async with ClientSession(timeout=ClientTimeout(total=10)) as session:
+        async with ClientSession(
+            timeout=ClientTimeout(total=10),
+            headers={"User-Agent": self.__UA.random},
+        ) as session:
             spy_family_tasks = [
                 self._fetch_spy_family_stickers(session, url)
                 for url in self.__SPY_FAMILY_URLS

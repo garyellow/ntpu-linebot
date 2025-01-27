@@ -1,9 +1,9 @@
 # -*- coding:utf-8 -*-
-from asyncio import sleep
 from typing import Optional
 from urllib.parse import quote
 
 from aiohttp import ClientError, ClientSession
+from aiohttp.typedefs import LooseHeaders
 from asyncache import cached
 from bs4 import BeautifulSoup as Bs4
 from bs4 import NavigableString
@@ -76,14 +76,14 @@ class ContactRequest:
         """
 
         contacts: list[Contact] = []
-        headers = {
+        headers: LooseHeaders = {
             "User-Agent": self.__UA.random,
         }
 
         try:
-            async with ClientSession() as session:
-                async with session.get(url, headers=headers) as res:
-                    soup = Bs4(await res.text(errors="ignore"), "lxml")
+            async with ClientSession(headers=headers) as session:
+                async with session.get(url) as res:
+                    soup = Bs4(await res.text(), "lxml")
 
                 for organization in soup.find_all(
                     "div", {"class": "alert alert-info mt-0 mb-0"}
@@ -157,19 +157,18 @@ class ContactRequest:
         """
 
         contacts: list[Contact] = []
-        headers = {
+        headers: LooseHeaders = {
             "User-Agent": self.__UA.random,
         }
 
         try:
-            async with ClientSession() as session:
-                async with session.get(url, headers=headers) as res:
+            async with ClientSession(headers=headers) as session:
+                async with session.get(url) as res:
                     soup = Bs4(await res.text(), "lxml")
 
                 for department in soup.find_all("div", {"class": "card-header"}):
                     url = f"{self.__base_url}/pls/ld/{department.find("a")["href"]}"
                     contacts += await self.get_contacts_by_url(url)
-                    await sleep(0)
 
         except ClientError as exc:
             self.__base_url = ""
