@@ -45,6 +45,7 @@ jobs:
     name: CD CHECK
     runs-on: ubuntu-latest
     needs: ci
+    concurrency: create-preview
 
     steps:
       - name: Create Render Preview Service

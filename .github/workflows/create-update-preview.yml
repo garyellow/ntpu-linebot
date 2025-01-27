@@ -10,7 +10,7 @@ on:
     types: [opened, reopened, synchronize]
 
 concurrency:
-  group: ${{ github.event.pull_request.number }}
+  group: preview-${{ github.ref_name }}
   cancel-in-progress: true
 
 jobs:
@@ -83,6 +83,7 @@ jobs:
     name: CREATE PREVIEW SERVICE
     runs-on: ubuntu-latest
     needs: [fetch, registry]
+    concurrency: create-preview
 
     permissions:
       pull-requests: write
