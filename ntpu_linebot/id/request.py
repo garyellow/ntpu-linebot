@@ -1,8 +1,7 @@
 # -*- coding:utf-8 -*-
 from typing import Optional
 
-from aiohttp import ClientError, ClientSession
-from aiohttp.typedefs import LooseHeaders
+from httpx import AsyncClient, HTTPError
 from asyncache import cached
 from bs4 import BeautifulSoup as Bs4
 from cachetools import TTLCache
@@ -38,11 +37,10 @@ class IDRequest:
             return False
 
         try:
-            async with ClientSession() as session:
-                async with session.head(url):
-                    pass
+            async with AsyncClient(headers={"User-Agent": self.__UA.random}) as client:
+                await client.head(url)
 
-        except ClientError:
+        except HTTPError:
             return False
 
         return True
@@ -74,9 +72,6 @@ class IDRequest:
         """
 
         url = self.__base_url + self.__STUDENT_SEARCH_URL
-        headers: LooseHeaders = {
-            "User-Agent": self.__UA.random,
-        }
 
         params = {
             "fmScope": "2",
@@ -85,16 +80,16 @@ class IDRequest:
         }
 
         try:
-            async with ClientSession(headers=headers) as session:
-                async with session.get(url, params=params) as res:
-                    soup = Bs4(await res.text("utf-8"), "lxml")
+            async with AsyncClient(headers={"User-Agent": self.__UA.random}) as client:
+                res = await client.get(url, params=params)
+                soup = Bs4(res.text, "lxml")
 
             if student := soup.find("div", {"class": "bloglistTitle"}):
                 name = student.find("a").text
                 self.STUDENT_DICT[uid] = name
                 return name
 
-        except ClientError:
+        except HTTPError:
             self.__base_url = ""
 
         raise ValueError("Student not found.")
@@ -128,15 +123,15 @@ class IDRequest:
         }
 
         try:
-            async with ClientSession(headers=headers) as session:
-                async with session.get(url, params=params) as res:
-                    data = Bs4(await res.text("utf-8"), "lxml")
-                    pages = len(data.find_all("span", {"class": "item"}))
+            async with AsyncClient(headers={"User-Agent": self.__UA.random}) as client:
+                res = await client.get(url, params=params)
+                data = Bs4(res.text, "lxml")
+                pages = len(data.find_all("span", {"class": "item"}))
 
                 for i in range(1, pages):
                     params["page"] = str(i)
-                    async with session.get(url, params=params) as res:
-                        data = Bs4(await res.text("utf-8"), "lxml")
+                    res = await client.get(url, params=params)
+                    data = Bs4(res.text, "lxml")
 
                     for item in data.find_all("div", {"class": "bloglistTitle"}):
                         name = item.find("a").text
@@ -144,7 +139,7 @@ class IDRequest:
                         self.STUDENT_DICT[number] = name
                         students[number] = name
 
-        except ClientError as exc:
+        except HTTPError as exc:
             self.__base_url = ""
             raise ValueError("An error occurred while fetching students.") from exc
 
