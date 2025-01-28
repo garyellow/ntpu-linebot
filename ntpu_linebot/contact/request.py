@@ -40,6 +40,9 @@ class ContactRequest:
         if url is None:
             url = self.__base_url
 
+        if not url:
+            return False
+
         try:
             async with ClientSession() as session:
                 async with session.head(url):

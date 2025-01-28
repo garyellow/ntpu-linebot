@@ -22,17 +22,13 @@ async def healthz(app: Sanic, force: bool = False) -> bool:
         bool: True if the health check is successful, False otherwise.
     """
 
-    if force:
-        await app.cancel_task("load_contact_dict", raise_exception=False)
-        app.add_task(load_contact_dict(), name="load_contact_dict")
-        return True
-
-    if not await CONTACT_REQUEST.check_url():
+    if force or not await CONTACT_REQUEST.check_url():
         if await CONTACT_REQUEST.change_base_url():
             await app.cancel_task("load_contact_dict", raise_exception=False)
             app.add_task(load_contact_dict(), name="load_contact_dict")
 
-        return False
+        else:
+            return False
 
     return True
 
