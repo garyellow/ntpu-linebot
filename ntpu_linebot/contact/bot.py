@@ -110,7 +110,7 @@ class ContactBot(Bot):
             if contacts := search_contacts_by_name(criteria):
                 return [
                     TemplateMessage(
-                        altText="�����結果",
+                        altText="搜尋結果",
                         template=template,
                         sender=get_sender(self.__sender_name),
                     )
@@ -258,7 +258,7 @@ class ContactBot(Bot):
                 PostbackAction(
                     label="查看更多",
                     displayText=f"搜尋 {individual.name} 的更多資訊",
-                    data=f"查��更多{self.split_char}{individual.name}",
+                    data=f"查詢更多{self.split_char}{individual.name}",
                 )
             )
         else:

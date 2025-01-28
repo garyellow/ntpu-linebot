@@ -74,11 +74,10 @@ def search_contacts_by_name(name: str) -> list[Contact]:
     return [
         contact
         for contact in CONTACT_REQUEST.CONTACT_DICT.values()
-        if isinstance(contact, Individual)
-        and name == contact.name
+        if name == contact.name
         or isinstance(contact, Organization)
         and name == contact.superior
-    ]
+    ].sort(key=lambda contact: (isinstance(contact, Individual), contact.name))
 
 
 async def search_contacts_by_criteria(criteria: str) -> list[Contact]:
@@ -99,6 +98,8 @@ async def search_contacts_by_criteria(criteria: str) -> list[Contact]:
         or isinstance(contact, Organization)
         and set(criteria).issubset(contact.superior)
     ]:
-        return contacts
+        return contacts.sort(
+            key=lambda contact: (isinstance(contact, Individual), contact.name)
+        )
 
     return await CONTACT_REQUEST.get_contacts_by_criteria(criteria)
