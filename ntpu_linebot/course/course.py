@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-ALL_COURSE_CODE = ["U", "M", "N", "P"]
+ALL_EDU_CODE = ["U", "M", "N", "P"]
 
 
 class SimpleCourse:
