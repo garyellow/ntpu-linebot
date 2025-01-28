@@ -22,23 +22,24 @@ async def healthz(app: Sanic, force: bool = False) -> bool:
         bool: True if the health check is successful, False otherwise.
     """
 
-    if force or not await CONTACT_REQUEST.check_url():
-        if await CONTACT_REQUEST.change_base_url():
-            await app.cancel_task("load_contact_dict", raise_exception=False)
-            app.add_task(load_contact_dict(), name="load_contact_dict")
+    if await CONTACT_REQUEST.check_url():
+        return True
 
-        else:
-            return False
+    if force or await CONTACT_REQUEST.change_base_url():
+        await app.cancel_task("load_contact_dict", raise_exception=False)
+        app.add_task(load_contact_dict(), name="load_contact_dict")
 
-    return True
+        return True
+
+    return False
 
 
 async def load_contact_dict() -> None:
     """Updates the contact dict for each year."""
 
-    await sleep(random.uniform(20, 40))
+    await sleep(random.uniform(15, 25))
     await CONTACT_REQUEST.get_administrative_contacts()
-    await sleep(random.uniform(20, 40))
+    await sleep(random.uniform(15, 25))
     await CONTACT_REQUEST.get_academic_contacts()
 
 

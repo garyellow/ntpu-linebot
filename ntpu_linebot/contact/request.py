@@ -2,8 +2,7 @@
 from typing import Optional
 from urllib.parse import quote
 
-from aiohttp import ClientError, ClientSession
-from aiohttp.typedefs import LooseHeaders
+from httpx import AsyncClient, HTTPError
 from asyncache import cached
 from bs4 import BeautifulSoup as Bs4
 from bs4 import NavigableString
@@ -44,11 +43,12 @@ class ContactRequest:
             return False
 
         try:
-            async with ClientSession() as session:
-                async with session.head(url):
-                    pass
+            async with AsyncClient(
+                headers={"User-Agent": self.__UA.random}
+            ) as client:
+                await client.head(url)
 
-        except ClientError:
+        except HTTPError:
             return False
 
         return True
@@ -79,14 +79,13 @@ class ContactRequest:
         """
 
         contacts: list[Contact] = []
-        headers: LooseHeaders = {
-            "User-Agent": self.__UA.random,
-        }
 
         try:
-            async with ClientSession(headers=headers) as session:
-                async with session.get(url) as res:
-                    soup = Bs4(await res.text(), "lxml")
+            async with AsyncClient(
+                headers={"User-Agent": self.__UA.random}
+            ) as client:
+                res = await client.get(url)
+                soup = Bs4(res.text, "lxml")
 
                 for organization in soup.find_all(
                     "div", {"class": "alert alert-info mt-0 mb-0"}
@@ -142,7 +141,7 @@ class ContactRequest:
                     contacts.append(organization)
                     self.CONTACT_DICT[organization.uid] = organization
 
-        except ClientError as exc:
+        except HTTPError as exc:
             self.__base_url = ""
             raise ValueError("An error occurred while fetching contacts.") from exc
 
@@ -160,20 +159,19 @@ class ContactRequest:
         """
 
         contacts: list[Contact] = []
-        headers: LooseHeaders = {
-            "User-Agent": self.__UA.random,
-        }
 
         try:
-            async with ClientSession(headers=headers) as session:
-                async with session.get(url) as res:
-                    soup = Bs4(await res.text(), "lxml")
+            async with AsyncClient(
+                headers={"User-Agent": self.__UA.random}
+            ) as client:
+                res = await client.get(url)
+                soup = Bs4(res.text, "lxml")
 
                 for department in soup.find_all("div", {"class": "card-header"}):
                     url = f"{self.__base_url}/pls/ld/{department.find("a")["href"]}"
                     contacts += await self.get_contacts_by_url(url)
 
-        except ClientError as exc:
+        except HTTPError as exc:
             self.__base_url = ""
             raise ValueError("An error occurred while fetching contacts.") from exc
 

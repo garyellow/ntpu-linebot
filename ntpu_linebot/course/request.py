@@ -2,14 +2,13 @@
 from re import search, sub
 from typing import Optional
 
-from aiohttp import ClientError, ClientSession
-from aiohttp.typedefs import LooseHeaders
+from httpx import AsyncClient, HTTPError, Timeout
 from asyncache import cached
 from bs4 import BeautifulSoup as Bs4
 from cachetools import TTLCache
 from fake_useragent import UserAgent
 
-from .course import ALL_COURSE_CODE, Course, SimpleCourse
+from .course import ALL_EDU_CODE, Course, SimpleCourse
 
 __CLASSROOM_STR_LIST = ["教室", "上課地點"]
 __CLASSROOM_REGEX = (
@@ -119,11 +118,10 @@ class CourseRequest:
             return False
 
         try:
-            async with ClientSession() as session:
-                async with session.head(url):
-                    pass
+            async with AsyncClient(headers={"User-Agent": self.__UA.random}) as client:
+                await client.head(url)
 
-        except ClientError:
+        except HTTPError:
             return False
 
         return True
@@ -155,9 +153,6 @@ class CourseRequest:
         """
 
         url = self.__base_url + self.__COURSE_QUERY_URL
-        headers: LooseHeaders = {
-            "User-Agent": self.__UA.random,
-        }
 
         is_over_99 = len(uid) == 9
         year = uid[: 2 + is_over_99]
@@ -173,9 +168,9 @@ class CourseRequest:
         }
 
         try:
-            async with ClientSession(headers=headers) as session:
-                async with session.get(url, params=params) as res:
-                    soup = Bs4(await res.text(), "lxml")
+            async with AsyncClient(headers={"User-Agent": self.__UA.random}) as client:
+                res = await client.get(url, params=params)
+                soup = Bs4(res.text, "lxml")
 
             if table := soup.find("table"):
                 course_infos = table.find("tbody").find("tr")
@@ -205,7 +200,7 @@ class CourseRequest:
 
                 return c
 
-        except ClientError:
+        except HTTPError:
             self.__base_url = ""
 
         raise ValueError("Course not found.")
@@ -226,9 +221,6 @@ class CourseRequest:
 
         courses = dict[str, SimpleCourse]()
         url = self.__base_url + self.__COURSE_QUERY_URL
-        headers = {
-            "User-Agent": self.__UA.random,
-        }
 
         params = {
             "qYear": str(year),
@@ -236,39 +228,42 @@ class CourseRequest:
             "seq2": "M",
         }
 
-        for code in ALL_COURSE_CODE:
-            params["courseno"] = code
+        try:
+            async with AsyncClient(
+                timeout=Timeout(60),
+                headers={"User-Agent": self.__UA.random},
+            ) as client:
+                for code in ALL_EDU_CODE:
+                    params["courseno"] = code
 
-            try:
-                async with ClientSession(headers=headers) as session:
-                    async with session.get(url, params=params) as res:
-                        soup = Bs4(await res.text(), "lxml")
+                    res = await client.get(url, params=params)
+                    soup = Bs4(res.text, "lxml")
 
-                if table := soup.find("table"):
-                    for course_info in table.find("tbody").find_all("tr"):
-                        course_field = course_info.find_all("td")
+                    if table := soup.find("table"):
+                        for course_info in table.find("tbody").find_all("tr"):
+                            course_field = course_info.find_all("td")
 
-                        term = int(course_field[2].text)
-                        no = course_field[3].text
-                        title = prase_title_field(course_field[7])[0]
-                        teachers = prase_teacher_field(course_field[8])[0]
-                        times = prase_time_location_filed(course_field[13])[0]
+                            term = int(course_field[2].text)
+                            no = course_field[3].text
+                            title = prase_title_field(course_field[7])[0]
+                            teachers = prase_teacher_field(course_field[8])[0]
+                            times = prase_time_location_filed(course_field[13])[0]
 
-                        sc = SimpleCourse(
-                            year=year,
-                            term=term,
-                            no=no,
-                            title=title,
-                            teachers=teachers,
-                            times=times,
-                        )
+                            sc = SimpleCourse(
+                                year=year,
+                                term=term,
+                                no=no,
+                                title=title,
+                                teachers=teachers,
+                                times=times,
+                            )
 
-                        self.COURSE_DICT[sc.uid] = sc
-                        courses[sc.uid] = sc
+                            self.COURSE_DICT[sc.uid] = sc
+                            courses[sc.uid] = sc
 
-            except ClientError as exc:
-                self.__base_url = ""
-                raise ValueError("An error occurred while fetching courses.") from exc
+        except HTTPError as exc:
+            self.__base_url = ""
+            raise ValueError("An error occurred while fetching courses.") from exc
 
         return courses
 

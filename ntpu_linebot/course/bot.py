@@ -17,7 +17,7 @@ from linebot.v3.messaging.models import (
 from ..abs_bot import Bot
 from ..line_bot_util import EMPTY_POSTBACK_ACTION, get_sender
 from ..normal_util import list_to_regex
-from .course import ALL_COURSE_CODE, Course, SimpleCourse
+from .course import ALL_EDU_CODE, Course, SimpleCourse
 from .util import (
     SearchKind,
     search_course_by_uid,
@@ -60,7 +60,7 @@ class CourseBot(Bot):
         "授課老師",
         "授課教授",
     ]
-    __UID_REGEX = r"\d{3,4}[" + "".join(ALL_COURSE_CODE) + r"]\d{4}"
+    __UID_REGEX = r"\d{3,4}[" + "".join(ALL_EDU_CODE) + r"]\d{4}"
     __SEARCH_REGEX = r"|".join(__VALID_CLASS_STR + __VALID_TEACHER_STR)
     __CLASS_REGEX = list_to_regex(__VALID_CLASS_STR)
     __TEACHER_REGEX = list_to_regex(__VALID_TEACHER_STR)
