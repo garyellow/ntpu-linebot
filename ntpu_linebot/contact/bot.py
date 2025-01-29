@@ -173,8 +173,9 @@ class ContactBot(Bot):
             payload = payload.split(self.split_char)[1]
 
             if contacts := search_contacts_by_name(payload):
-                individual_contacts = [c for c in contacts if isinstance(c, Individual)]
-                if individual_contacts:
+                if individual_contacts := [
+                    c for c in contacts if isinstance(c, Individual)
+                ]:
                     return [
                         TemplateMessage(
                             altText="更多資訊",
@@ -204,64 +205,60 @@ class ContactBot(Bot):
             CarouselColumn: The generated carousel column.
         """
 
+        # Generate texts
         texts = [f"{individual.organization} {individual.title}"]
-        actions: list[Action] = []
 
         if extension := individual.extension:
             texts.append(f"分機號碼: {extension}")
 
-        if not depth and (phone := individual.phone):
-            actions.append(
-                ClipboardAction(
-                    label="複製電話(含分機)",
-                    clipboardText=phone,
-                )
-            )
-
-        if depth and (phone_url := individual.phone_url):
-            actions.append(
-                URIAction(
-                    label=f"打電話給 {individual.name}"[:20],
-                    uri=phone_url,
-                )
-            )
-
-        if len(actions) == 0 and (extension := individual.extension):
-            actions.append(
-                ClipboardAction(
-                    label="複製分機號碼",
-                    clipboardText=extension,
-                )
-            )
-
         if email := individual.email:
             texts.append(f"電子郵件: {email}")
 
-        if not depth and (email := individual.email):
-            actions.append(
-                ClipboardAction(
-                    label="複製電子郵件",
-                    clipboardText=email,
-                )
-            )
-
-        if depth and (email_url := individual.email_url):
-            actions.append(
-                URIAction(
-                    label=f"寄信給 {individual.name}"[:20],
-                    uri=email_url,
-                )
-            )
+        # Generate actions
+        actions: list[Action] = []
 
         if not depth:
+            if phone := individual.phone:
+                actions.append(
+                    ClipboardAction(
+                        label="複製電話(含分機)",
+                        clipboardText=phone,
+                    )
+                )
+
+            if email := individual.email:
+                actions.append(
+                    ClipboardAction(
+                        label="複製電子郵件",
+                        clipboardText=email,
+                    )
+                )
+
             actions.append(
                 PostbackAction(
                     label="查看更多",
                     displayText=f"搜尋 {individual.name} 的更多資訊",
-                    data=f"查詢更多{self.split_char}{individual.name}",
+                    data=f"查看更多{self.split_char}{individual.name}",
                 )
             )
+
         else:
+            if phone_url := individual.phone_url:
+                actions.append(
+                    URIAction(
+                        label=f"打電話給 {individual.name}"[:20],
+                        uri=phone_url,
+                    )
+                )
+
+            if email_url := individual.email_url:
+                actions.append(
+                    URIAction(
+                        label=f"寄信給 {individual.name}"[:20],
+                        uri=email_url,
+                    )
+                )
+
             actions.append(
                 PostbackAction(
                     label="授課課程",
@@ -336,21 +333,21 @@ class ContactBot(Bot):
 
     def __generate_contact_templates(
         self,
-        contacts: Sequence[Contact],
+        contacts: list[Contact],
         depth: bool = False,
     ) -> list[CarouselTemplate]:
         """
         Generate contact templates based on the provided contacts and depth flag.
 
         Parameters:
-            contacts (Sequence[Contact]): The list of contacts to generate templates for.
+            contacts (list[Contact]): The list of contacts to generate templates for.
             depth (bool, optional): Flag to indicate whether to include depth. Defaults to False.
 
         Returns:
             list[CarouselTemplate]: The list of generated carousel templates.
         """
 
-        contacts = sorted(contacts, key=lambda c: isinstance(c, Organization))[:50]
+        contacts = sorted(contacts, key=lambda c: not isinstance(c, Organization))[:50]
 
         templates: list[CarouselTemplate] = []
         for contact_group in partition(contacts, 10):
