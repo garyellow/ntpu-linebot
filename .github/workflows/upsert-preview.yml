@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   prepare:
-    name: PREPARE HEAD REF
+    name: Prepare Image Tag Name
     runs-on: ubuntu-latest
 
     steps:
@@ -26,7 +26,7 @@ jobs:
       head_ref: ${{ steps.head_ref.outputs.head_ref }}
 
   upsert:
-    name: Push Preview Image to Registry
+    name: Push PR Preview Image to Registry
     runs-on: ubuntu-latest
     needs: prepare
 

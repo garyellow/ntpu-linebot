@@ -68,16 +68,13 @@ def search_contacts_by_name(name: str) -> list[Contact]:
         list[Contact]: A list of Contact objects with the matching name.
     """
 
-    return sorted(
-        [
-            contact
-            for contact in CONTACT_REQUEST.CONTACT_DICT.values()
-            if name == contact.name
-            or isinstance(contact, Organization)
-            and name == contact.superior
-        ],
-        key=lambda contact: (isinstance(contact, Individual), contact.name),
-    )
+    return [
+        contact
+        for contact in CONTACT_REQUEST.CONTACT_DICT.values()
+        if name == contact.name
+        or isinstance(contact, Organization)
+        and name == contact.superior
+    ]
 
 
 async def search_contacts_by_criteria(criteria: str) -> list[Contact]:
@@ -91,16 +88,13 @@ async def search_contacts_by_criteria(criteria: str) -> list[Contact]:
         list[Contact]: A list of contacts matching the criteria.
     """
 
-    if contacts := sorted(
-        [
-            contact
-            for contact in CONTACT_REQUEST.CONTACT_DICT.values()
-            if set(criteria).issubset(contact.name)
-            or isinstance(contact, Organization)
-            and set(criteria).issubset(contact.superior)
-        ],
-        key=lambda contact: (isinstance(contact, Individual), contact.name),
-    ):
+    if contacts := [
+        contact
+        for contact in CONTACT_REQUEST.CONTACT_DICT.values()
+        if set(criteria).issubset(contact.name)
+        or isinstance(contact, Organization)
+        and set(criteria).issubset(contact.superior)
+    ]:
         return contacts
 
     return await CONTACT_REQUEST.get_contacts_by_criteria(criteria)

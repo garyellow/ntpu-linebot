@@ -78,8 +78,8 @@ class Individual(Contact):
     def phone(self) -> Optional[str]:
         """Getter for phone"""
         return (
-            f"{super().SANXIA_NORMAL_PHONE},{self.__extension}"
-            if len(self.__extension) == 5
+            f"{super().SANXIA_NORMAL_PHONE},{self.__extension[:5]}"
+            if len(self.__extension) >= 5
             else None
         )
 
@@ -88,8 +88,8 @@ class Individual(Contact):
         """Getter for phone_url"""
         sp = super().SANXIA_NORMAL_PHONE
         return (
-            f"tel:+886-{sp[1]}-{sp[2:6]}-{sp[6:10]},{self.__extension}"
-            if len(self.__extension) == 5
+            f"tel:+886-{sp[1]}-{sp[2:6]}-{sp[6:10]},{self.__extension[:5]}"
+            if len(self.__extension) >= 5
             else None
         )
 
