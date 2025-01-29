@@ -1,3 +1,7 @@
+# This Action requires setting the following secrets:
+#
+# - DOCKERHUB_TOKEN (create from https://hub.docker.com/settings/security)
+
 name: Upsert Preview
 
 on:
@@ -16,7 +20,7 @@ jobs:
     steps:
       - name: Generate github.head_ref with underline style
         id: head_ref
-        run: echo "head_ref=$(echo ${{ github.head_ref }} | tr / _)" >> "$GITHUB_OUTPUT"
+        run: echo "head_ref=$(echo ${{ github.head_ref }} | tr / -)" >> "$GITHUB_OUTPUT"
 
     outputs:
       head_ref: ${{ steps.head_ref.outputs.head_ref }}
@@ -64,3 +68,5 @@ jobs:
         uses: docker/scout-action@v1
         with:
           command: quickview,cves,recommendations
+          dockerhub-user: ${{ github.repository_owner }}
+          dockerhub-password: ${{ secrets.DOCKERHUB_TOKEN }}

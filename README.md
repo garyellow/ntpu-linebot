@@ -60,3 +60,14 @@ docker compose up -d
 ```
 
 > 預設 port 為 10000
+
+## 生產環境更新（latest）
+
+```bash
+docker compose down
+docker compose pull
+# docker image prune -f # 有需要可以清除舊的 image
+docker compose up -d
+```
+
+> 也可以直接執行 `update.sh` 來更新
