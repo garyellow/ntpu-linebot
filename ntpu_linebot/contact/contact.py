@@ -99,13 +99,13 @@ class Organization(Contact):
         self,
         name: str,
         superior: str,
-        loaction: str,
+        location: str,
         website: str,
         members: list[Individual],
     ) -> None:
         super().__init__(superior + name, name)
         self.__superior = superior
-        self.__location = loaction
+        self.__location = location
         self.__website = website
         self.__members = members
 
