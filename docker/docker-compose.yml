@@ -1,0 +1,10 @@
+services:
+  ntpu-linebot:
+    image: garyellow/ntpu-linebot:latest
+    container_name: ntpu-linebot
+    restart: unless-stopped
+    ports:
+      - 10000:10000
+    environment:
+      - LINE_CHANNEL_ACCESS_TOKEN=${LINE_CHANNEL_ACCESS_TOKEN}
+      - LINE_CHANNEL_SECRET=${LINE_CHANNEL_SECRET}

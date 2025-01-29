@@ -35,7 +35,7 @@ ID：[@148wrcch](https://lin.ee/QiMmPBv)
 ### 安裝套件
 
 ```bash
-poetry install --sync
+poetry install
 ```
 
 ### 進入虛擬環境
@@ -47,5 +47,16 @@ poetry shell
 ### 測試執行
 
 ```bash
-sanic app:app --host=localhost --port=8000 --debug
+sanic app:app --debug
 ```
+
+### 生產環境執行（docker）
+
+> 需要先複製一份 docker/.env.example 到 docker/.env 並設定相關參數
+
+```bash
+cd docker
+docker compose up -d
+```
+
+> 預設 port 為 10000

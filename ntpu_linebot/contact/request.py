@@ -127,7 +127,6 @@ class ContactRequest:
                                 email=email,
                             )
 
-                            print(member_name, org_name, title, extension, email)
                             members.append(contact)
                             contacts.append(contact)
                             self.CONTACT_DICT[contact.uid] = contact
