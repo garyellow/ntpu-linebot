@@ -90,18 +90,18 @@ class ContactRequest:
                 for organization in soup.find_all(
                     "div", {"class": "alert alert-info mt-0 mb-0"}
                 ):
-                    names = organization.find_all(
+                    org_names = organization.find_all(
                         "a", {"class": "lang lang-zh-Hant mx-2"}
                     )
-                    if len(names) == 1:
+                    if len(org_names) == 1:
                         superior = ""
-                        name = names[0].text
+                        org_name = org_names[0].text
                     else:
-                        superior = names[0].text
-                        name = names[1].text
+                        superior = org_names[0].text
+                        org_name = org_names[1].text
 
                     org_datas = organization.find_all("li")
-                    location = org_datas[2].text[5:]
+                    location = org_datas[2].text.split("：")[1]
                     website = org_datas[3].find("a").text
 
                     members: list[Individual] = []
@@ -121,19 +121,21 @@ class ContactRequest:
 
                             contact = Individual(
                                 name=member_name,
-                                organization=name,
+                                organization=org_name,
                                 title=title,
                                 extension=extension,
                                 email=email,
                             )
+
+                            print(member_name, org_name, title, extension, email)
                             members.append(contact)
                             contacts.append(contact)
                             self.CONTACT_DICT[contact.uid] = contact
 
                     organization = Organization(
-                        name=name,
+                        name=org_name,
                         superior=superior,
-                        loaction=location,
+                        location=location,
                         website=website,
                         members=members,
                     )
