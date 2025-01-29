@@ -4,10 +4,27 @@ on:
   pull_request:
     types: [closed]
 
+concurrency:
+  group: preview-${{ github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
+  prepare:
+    name: PREPARE HEAD REF
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Generate github.head_ref with underline style
+        id: head_ref
+        run: echo "head_ref=$(echo ${{ github.head_ref }} | tr / _)" >> "$GITHUB_OUTPUT"
+
+    outputs:
+      head_ref: ${{ steps.head_ref.outputs.head_ref }}
+
   delete:
     name: Delete Preview Image
     runs-on: ubuntu-latest
+    needs: prepare
 
     permissions:
       packages: write
@@ -19,12 +36,12 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           container: ${{ github.event.repository.name }}
-          prune-tags-regexes: ^${{ github.head_ref }}$
+          prune-tags-regexes: ^${{ needs.prepare.outputs.head_ref }}$
 
       - name: Add comment to Pull Request
         uses: thollander/actions-comment-pull-request@v3
         with:
           message: |
-            ## Preview is deleted!
+            ## Preview Has Been Deleted!
 
-            The Preview Image have been deleted.
+            The Preview Image has been deleted.
