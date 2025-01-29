@@ -1,3 +1,7 @@
+# This Action requires setting the following secrets:
+#
+# - DOCKERHUB_TOKEN (create from https://hub.docker.com/settings/security)
+
 name: Upsert Preview
 
 on:
@@ -64,3 +68,5 @@ jobs:
         uses: docker/scout-action@v1
         with:
           command: quickview,cves,recommendations
+          dockerhub-user: ${{ github.repository_owner }}
+          dockerhub-password: ${{ secrets.DOCKERHUB_TOKEN }}
