@@ -16,6 +16,8 @@ jobs:
   prepare:
     name: Prepare Image Tag Name
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Generate github.head_ref with underline style
