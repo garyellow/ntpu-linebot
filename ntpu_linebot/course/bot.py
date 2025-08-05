@@ -1,10 +1,10 @@
 # -*- coding:utf-8 -*-
-from argparse import Action
 from random import sample
 from re import IGNORECASE, fullmatch, match, search
 from typing import Optional, cast
 
 from linebot.v3.messaging.models import (
+    Action,
     ButtonsTemplate,
     CarouselColumn,
     CarouselTemplate,
