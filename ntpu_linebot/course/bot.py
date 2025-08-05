@@ -265,7 +265,7 @@ class CourseBot(Bot):
         texts = [self.__generate_course_text(course) for course in courses]
         actions = [
             PostbackAction(
-                label=course.title[:20],
+                label=(course.title if len(course.title) <= 20 else course.title[:19] + '…'),
                 displayText=f"查詢 {course.title} 的課程資訊",
                 data=course.uid,
                 inputOption=None,
