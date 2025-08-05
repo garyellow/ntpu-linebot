@@ -8,7 +8,9 @@ from linebot.v3.messaging.models import PostbackAction, TextMessage
 
 from .sticker_util import STICKER
 
-EMPTY_POSTBACK_ACTION = PostbackAction(label=" ", data="null")
+EMPTY_POSTBACK_ACTION = PostbackAction(
+    label=" ", data="null", displayText=None, inputOption=None, fillInText=None
+)
 
 
 def get_sender(name: Optional[str] = None) -> Sender:
@@ -109,6 +111,8 @@ def instruction() -> list[TextMessage]:
                 ]
             ),
             sender=mes_sender,
+            quickReply=None,
+            quoteToken=None,
         ),
         TextMessage(
             text="\n\n".join(
@@ -121,13 +125,19 @@ def instruction() -> list[TextMessage]:
                 ]
             ),
             sender=mes_sender,
+            quickReply=None,
+            quoteToken=None,
         ),
         TextMessage(
             text="部分內容是由相關資料推斷\n不一定為正確資訊",
             sender=mes_sender,
+            quickReply=None,
+            quoteToken=None,
         ),
         TextMessage(
             text="資料來源：國立臺北大學\n數位學苑2.0(已無新資料)\n校園聯絡簿\n課程查詢系統",
             sender=mes_sender,
+            quickReply=None,
+            quoteToken=None,
         ),
     ]
