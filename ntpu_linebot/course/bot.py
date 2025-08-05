@@ -1,9 +1,10 @@
 # -*- coding:utf-8 -*-
 from random import sample
 from re import IGNORECASE, fullmatch, match, search
-from typing import Optional
+from typing import Optional, cast
 
 from linebot.v3.messaging.models import (
+    Action,
     ButtonsTemplate,
     CarouselColumn,
     CarouselTemplate,
@@ -73,6 +74,9 @@ class CourseBot(Bot):
         """處理文字訊息"""
 
         if match(self.__SEARCH_REGEX, payload, IGNORECASE):
+            kind = SearchKind.NONE
+            criteria = ""
+
             if m := search(self.__CLASS_REGEX, payload, IGNORECASE):
                 criteria = m.group()
                 kind = SearchKind.TITLE
@@ -87,6 +91,7 @@ class CourseBot(Bot):
                         altText="請選擇要查詢的課程",
                         template=self.__choose_course_message(courses),
                         sender=get_sender(self.__SENDER_NAME),
+                        quickReply=None,
                     )
                 ]
 
@@ -103,6 +108,7 @@ class CourseBot(Bot):
                     text=f"查無{condition_str}含有「{criteria}」的課程，請重新輸入",
                     sender=get_sender(self.__SENDER_NAME),
                     quoteToken=quote_token,
+                    quickReply=None,
                 )
             ]
 
@@ -113,7 +119,6 @@ class CourseBot(Bot):
 
         if payload.startswith("授課課程"):
             payload = payload.split(self.split_char)[1]
-
             if courses := search_simple_courses_by_criteria_and_kind(
                 payload,
                 SearchKind.STRICT_TEACHER,
@@ -123,6 +128,7 @@ class CourseBot(Bot):
                         altText="請選擇要查詢的課程",
                         template=self.__choose_course_message(courses),
                         sender=get_sender(self.__SENDER_NAME),
+                        quickReply=None,
                     )
                 ]
 
@@ -130,6 +136,8 @@ class CourseBot(Bot):
                 TextMessage(
                     text=f"查無授課教師為「{payload}」的課程",
                     sender=get_sender(self.__SENDER_NAME),
+                    quickReply=None,
+                    quoteToken=None,
                 )
             ]
 
@@ -140,6 +148,7 @@ class CourseBot(Bot):
                         altText=f"{course.title}的課程資訊",
                         template=self.__course_info_message(course),
                         sender=get_sender(self.__SENDER_NAME),
+                        quickReply=None,
                     )
                 ]
 
@@ -147,6 +156,8 @@ class CourseBot(Bot):
                 TextMessage(
                     text=f"查無 uid 為「{payload}」的課程",
                     sender=get_sender(self.__SENDER_NAME),
+                    quickReply=None,
+                    quoteToken=None,
                 )
             ]
 
@@ -162,17 +173,25 @@ class CourseBot(Bot):
         Returns:
             ButtonsTemplate: The message template containing course information and actions.
         """
-
-        teacher_actions = [
-            URIAction(label=f"教師課表({name})", uri=url)
-            for (name, url) in course.teachers_name_url
-        ]
+        teacher_actions: list[Action] = cast(
+            list[Action],
+            [
+                URIAction(label=f"教師課表({name})"[:20], uri=url, altUri=None)
+                for (name, url) in course.teachers_name_url
+            ],
+        )
 
         if len(teacher_actions) == 1:
             teacher_actions.append(
-                PostbackAction(
-                    label="查看教師資訊",
-                    data=f"查看資訊{self.split_char}{course.teachers[0]}",
+                cast(
+                    Action,
+                    PostbackAction(
+                        label="查看教師資訊",
+                        data=f"查看資訊{self.split_char}{course.teachers[0]}",
+                        displayText=None,
+                        inputOption=None,
+                        fillInText=None,
+                    ),
                 )
             )
 
@@ -180,8 +199,8 @@ class CourseBot(Bot):
             teacher_actions = sample(teacher_actions, 2)
 
         actions = [
-            URIAction(label="課程大綱", uri=course.detail_url),
-            URIAction(label="課程查詢系統", uri=course.course_query_url),
+            URIAction(label="課程大綱", uri=course.detail_url, altUri=None),
+            URIAction(label="課程查詢系統", uri=course.course_query_url, altUri=None),
             *teacher_actions,
         ]
 
@@ -197,7 +216,16 @@ class CourseBot(Bot):
         if len(text := "\n".join(texts)) > 60:
             text = text[:59] + "…"
 
-        return ButtonsTemplate(title=course.title, text=text, actions=actions)
+        return ButtonsTemplate(
+            title=course.title,
+            text=text,
+            actions=actions,
+            thumbnailImageUrl=None,
+            imageAspectRatio=None,
+            imageBackgroundColor=None,
+            imageSize=None,
+            defaultAction=None,
+        )
 
     def __generate_course_text(self, course: SimpleCourse) -> str:
         """
@@ -237,9 +265,11 @@ class CourseBot(Bot):
         texts = [self.__generate_course_text(course) for course in courses]
         actions = [
             PostbackAction(
-                label=course.title,
+                label=(course.title if len(course.title) <= 20 else course.title[:19] + '…'),
                 displayText=f"查詢 {course.title} 的課程資訊",
                 data=course.uid,
+                inputOption=None,
+                fillInText=None,
             )
             for course in courses
         ]
@@ -253,9 +283,14 @@ class CourseBot(Bot):
                     text="選擇要查詢的課程：\n\n"
                     + "\n\n".join(texts[i * 3 : (i + 1) * 3]),
                     actions=actions[i * 3 : (i + 1) * 3],
+                    thumbnailImageUrl=None,
+                    imageBackgroundColor=None,
+                    defaultAction=None,
                 )
                 for i in range(len(actions) // 3)
-            ]
+            ],
+            imageAspectRatio=None,
+            imageSize=None,
         )
 
 

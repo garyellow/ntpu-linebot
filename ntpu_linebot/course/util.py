@@ -61,6 +61,7 @@ async def search_course_by_uid(uid: str) -> Course:
 class SearchKind(Enum):
     """Enumeration representing the search arguments."""
 
+    NONE = auto()
     NO = auto()
     TITLE = auto()
     TEACHER = auto()
